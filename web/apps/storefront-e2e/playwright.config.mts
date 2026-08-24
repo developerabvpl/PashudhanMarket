@@ -37,7 +37,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run stub:api',
-      url: 'http://localhost:5199/api/catalog/products',
+      url: "http://localhost:5200/api/catalog/products",
       reuseExistingServer: true,
       timeout: 30_000,
       cwd: workspaceRoot,

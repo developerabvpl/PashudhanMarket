@@ -1,8 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthStore, HasPermissionDirective } from '@upbazaar/auth';
-import { LanguageSwitcher, ToastHost } from '@upbazaar/ui';
+import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
+import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
 import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
 
 @Component({
@@ -14,6 +18,10 @@ import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
     LanguageSwitcher,
     ToastHost,
     HasPermissionDirective,
+    MatToolbarModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatIconModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -24,35 +32,30 @@ import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
       {{ 'app.skipToContent' | transloco }}
     </a>
 
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3">
-        <a class="text-lg font-semibold text-ink" routerLink="/products">
-          {{ 'app.sellerPortal' | transloco }}
+    @if (signedIn()) {
+    <mat-toolbar color="primary">
+      <a class="font-semibold" routerLink="/products">{{ 'app.sellerPortal' | transloco }}</a>
+
+      <span class="flex-1"></span>
+
+      <!-- Hidden rather than disabled: an affordance the API would reject is just noise. -->
+      <a *hasPermission="productsWrite" mat-button routerLink="/products">
+        {{ 'seller.newProduct' | transloco }}
+      </a>
+
+      <upb-language-switcher />
+
+      <button mat-button [matMenuTriggerFor]="accountMenu">{{ displayName() }}</button>
+      <mat-menu #accountMenu="matMenu">
+        <a mat-menu-item routerLink="/change-password">
+          {{ 'changePassword.title' | transloco }}
         </a>
-
-        <nav class="flex items-center gap-4">
-          <!-- Hidden rather than disabled: an affordance the API would reject is just noise. -->
-          <a *hasPermission="productsWrite" class="text-ink hover:text-brand-700" routerLink="/products">
-            {{ 'seller.newProduct' | transloco }}
-          </a>
-
-          <upb-language-switcher />
-
-          @if (auth.isAuthenticated()) {
-          <span class="text-sm text-ink-muted">
-            {{ 'signIn.signedInAs' | transloco: { name: auth.userName() } }}
-          </span>
-          <button type="button" class="text-sm text-accent-600 hover:underline" (click)="auth.signOut()">
-            {{ 'nav.signOut' | transloco }}
-          </button>
-          } @else {
-          <a class="text-sm text-accent-600 hover:underline" routerLink="/sign-in">
-            {{ 'nav.signIn' | transloco }}
-          </a>
-          }
-        </nav>
-      </div>
-    </header>
+        <button mat-menu-item type="button" (click)="signOut()">
+          {{ 'nav.signOut' | transloco }}
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+    }
 
     <main id="main" tabindex="-1">
       <router-outlet />
@@ -62,6 +65,26 @@ import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
   `,
 })
 export class App {
-  protected readonly auth = inject(AuthStore);
+  private readonly auth = inject(AuthService);
+  private readonly currentUser = inject(CurrentUserStore);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+
   protected readonly productsWrite = CATALOG_PRODUCTS_WRITE;
+  protected readonly signedIn = this.currentUser.isSignedIn;
+  protected readonly displayName = this.currentUser.displayName;
+
+  constructor() {
+    // Restores the header for someone returning with a stored session, without waiting for a
+    // guarded route to run.
+    void this.currentUser.ensureLoaded();
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.auth.logout();
+
+    this.toast.info('auth.signedOut');
+
+    await this.router.navigate(['/sign-in']);
+  }
 }

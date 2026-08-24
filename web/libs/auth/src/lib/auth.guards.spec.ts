@@ -1,89 +1,156 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { provideRouter } from '@angular/router';
-import { AuthStore } from './auth-store';
-import { authGuard, permissionGuard } from './auth.guards';
-
-function makeToken(permissions: string[]): string {
-  const encode = (value: object) =>
-    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-  return `${encode({ alg: 'none' })}.${encode({
-    sub: 'u',
-    permission: permissions,
-    exp: Math.floor(Date.now() / 1000) + 3600,
-  })}.sig`;
-}
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
+import { Api, UserDto } from '@upbazaar/data-access';
+import { AuthTokenStore } from './auth-token-store';
+import { anonymousOnlyGuard, authGuard, permissionGuard } from './auth.guards';
 
 const route = {} as ActivatedRouteSnapshot;
-const state = { url: '/products/new' } as RouterStateSnapshot;
+const state = { url: '/staff' } as RouterStateSnapshot;
+
+function profile(permissions: string[]): UserDto {
+  return {
+    id: '11111111-1111-1111-1111-111111111111',
+    userType: 'Staff',
+    email: 'ops@upbazaar.test',
+    emailVerified: true,
+    mobile: null,
+    mobileVerified: false,
+    displayName: 'Ops',
+    preferredLanguage: 'en',
+    status: 'Active',
+    twoFactorEnabled: false,
+    roles: ['SupportAgent'],
+    permissions,
+    createdAtUtc: '2026-03-14T10:00:00Z',
+  };
+}
 
 describe('route guards', () => {
-  let auth: AuthStore;
+  let invoke: ReturnType<typeof vi.fn>;
+  let tokens: AuthTokenStore;
   let router: Router;
 
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    auth = TestBed.inject(AuthStore);
+    invoke = vi.fn();
+
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: Api, useValue: { invoke } }],
+    });
+
+    tokens = TestBed.inject(AuthTokenStore);
     router = TestBed.inject(Router);
   });
 
-  describe('authGuard', () => {
-    it('lets a signed-in user through', () => {
-      auth.signIn(makeToken([]));
+  /** Signs in with a token that has plenty of life left. */
+  function holdTokens(): void {
+    tokens.set({
+      accessToken: 'access',
+      expiresInSeconds: 900,
+      refreshToken: 'refresh',
+      refreshTokenExpiresAtUtc: new Date(Date.now() + 86_400_000).toISOString(),
+    });
+  }
 
-      const result = TestBed.runInInjectionContext(() => authGuard(route, state));
+  describe('authGuard', () => {
+    it('lets a signed-in user through once the profile has loaded', async () => {
+      holdTokens();
+      invoke.mockResolvedValue(profile([]));
+
+      const result = await TestBed.runInInjectionContext(() => authGuard(route, state));
 
       expect(result).toBe(true);
     });
 
-    it('sends a signed-out user to sign-in, remembering where they were going', () => {
-      const result = TestBed.runInInjectionContext(() => authGuard(route, state)) as UrlTree;
+    it('sends a signed-out visitor to sign-in, remembering where they were going', async () => {
+      const result = (await TestBed.runInInjectionContext(() =>
+        authGuard(route, state)
+      )) as UrlTree;
 
       expect(result).toBeInstanceOf(UrlTree);
-      expect(router.serializeUrl(result)).toBe('/sign-in?returnUrl=%2Fproducts%2Fnew');
+      expect(router.serializeUrl(result)).toBe('/sign-in?returnUrl=%2Fstaff');
+    });
+
+    it('treats a failed profile load as not signed in', async () => {
+      holdTokens();
+      invoke.mockRejectedValue(new Error('offline'));
+
+      const result = await TestBed.runInInjectionContext(() => authGuard(route, state));
+
+      expect(result).toBeInstanceOf(UrlTree);
     });
   });
 
   describe('permissionGuard', () => {
-    it('lets a user with the permission through', () => {
-      auth.signIn(makeToken(['catalog.products.write']));
+    it('lets a user holding the permission through', async () => {
+      holdTokens();
+      invoke.mockResolvedValue(profile(['identity.users.read']));
 
-      const result = TestBed.runInInjectionContext(() =>
-        permissionGuard('catalog.products.write')(route, state)
+      const result = await TestBed.runInInjectionContext(() =>
+        permissionGuard('identity.users.read')(route, state)
       );
 
       expect(result).toBe(true);
     });
 
-    it('requires all of the listed permissions', () => {
-      auth.signIn(makeToken(['catalog.products.write']));
+    it('requires every listed permission', async () => {
+      holdTokens();
+      invoke.mockResolvedValue(profile(['identity.users.read']));
 
-      const result = TestBed.runInInjectionContext(() =>
-        permissionGuard('catalog.products.write', 'catalog.stock.write')(route, state)
+      const result = await TestBed.runInInjectionContext(() =>
+        permissionGuard('identity.users.read', 'identity.users.manage')(route, state)
       );
 
       expect(result).toBeInstanceOf(UrlTree);
     });
 
-    it('sends a signed-in but unauthorized user to /forbidden, not back to sign-in', () => {
-      auth.signIn(makeToken(['ordering.orders.read']));
+    it('sends a signed-in but unauthorised user to /forbidden, not back to sign-in', async () => {
+      holdTokens();
+      invoke.mockResolvedValue(profile(['orders.read']));
 
-      const result = TestBed.runInInjectionContext(() =>
-        permissionGuard('catalog.products.write')(route, state)
-      ) as UrlTree;
+      const result = (await TestBed.runInInjectionContext(() =>
+        permissionGuard('identity.users.manage')(route, state)
+      )) as UrlTree;
 
-      expect(router.serializeUrl(result)).toContain('/forbidden');
-      expect(router.serializeUrl(result)).toContain('catalog.products.write');
+      const url = router.serializeUrl(result);
+
+      expect(url).toContain('/forbidden');
+      expect(url).toContain('identity.users.manage');
     });
 
-    it('sends a signed-out user to sign-in', () => {
-      const result = TestBed.runInInjectionContext(() =>
-        permissionGuard('catalog.products.write')(route, state)
-      ) as UrlTree;
+    it('sends a signed-out visitor to sign-in', async () => {
+      const result = (await TestBed.runInInjectionContext(() =>
+        permissionGuard('identity.users.manage')(route, state)
+      )) as UrlTree;
 
       expect(router.serializeUrl(result)).toContain('/sign-in');
+    });
+
+    it('loads the profile once even when two guards run together', async () => {
+      holdTokens();
+      invoke.mockResolvedValue(profile(['identity.users.read']));
+
+      await Promise.all([
+        TestBed.runInInjectionContext(() => permissionGuard('identity.users.read')(route, state)),
+        TestBed.runInInjectionContext(() => permissionGuard('identity.users.read')(route, state)),
+      ]);
+
+      // Two concurrent guards must share one request, not race each other.
+      expect(invoke).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('anonymousOnlyGuard', () => {
+    it('lets a signed-out visitor see the sign-in page', () => {
+      expect(TestBed.runInInjectionContext(() => anonymousOnlyGuard(route, state))).toBe(true);
+    });
+
+    it('redirects someone already signed in away from it', () => {
+      holdTokens();
+
+      const result = TestBed.runInInjectionContext(() => anonymousOnlyGuard(route, state));
+
+      expect(result).toBeInstanceOf(UrlTree);
     });
   });
 });

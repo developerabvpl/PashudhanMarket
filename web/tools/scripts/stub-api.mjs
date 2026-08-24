@@ -14,7 +14,7 @@
 import { createServer } from 'node:http';
 
 const portFlag = process.argv.indexOf('--port');
-const port = Number(portFlag === -1 ? process.env.STUB_API_PORT ?? 5199 : process.argv[portFlag + 1]);
+const port = Number(portFlag === -1 ? process.env.STUB_API_PORT ?? 5200 : process.argv[portFlag + 1]);
 
 export const PRODUCT_ID = '11111111-1111-1111-1111-111111111111';
 export const ORDER_ID = '44444444-4444-4444-4444-444444444444';

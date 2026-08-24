@@ -32,11 +32,14 @@ export default [
                 'type:util',
               ],
             },
+            // Auth sits above data-access: it calls the generated client to sign in, refresh and
+            // load the current user. data-access stays ignorant of it — apps hand it the auth
+            // interceptor at their composition root.
             {
-              sourceTag: 'type:data-access',
-              onlyDependOnLibsWithTags: ['type:auth', 'type:ui', 'type:util'],
+              sourceTag: 'type:auth',
+              onlyDependOnLibsWithTags: ['type:data-access', 'type:ui', 'type:util'],
             },
-            { sourceTag: 'type:auth', onlyDependOnLibsWithTags: ['type:ui', 'type:util'] },
+            { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:ui', 'type:util'] },
             { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:util'] },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:e2e', onlyDependOnLibsWithTags: [] },

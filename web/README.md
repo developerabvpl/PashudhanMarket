@@ -11,14 +11,28 @@ npm run start:seller       # SPA, http://localhost:4201
 npm run start:admin        # SPA, http://localhost:4202
 ```
 
-Each dev server proxies `/api` to `http://localhost:5199`, so run the API from the parent
+Each dev server proxies `/api` to the API on `http://localhost:5199`, so run it from the parent
 folder alongside them:
 
 ```bash
-dotnet run --project ../src/UPBazaar.Api
+dotnet run --project ../src/UPBazaar.Api --urls http://localhost:5199
 ```
 
 Same-origin is deliberate: the bearer token is only ever attached to `/api/**` on this origin.
+
+The storefront additionally proxies `/api/catalog` to `http://localhost:5200`, where
+`tools/scripts/stub-api.mjs` stands in for the Catalog module until it ships. Two origins is a
+transitional arrangement, not a design — see *The API client* below.
+
+To sign in as an administrator the API needs a seeded account, which it creates on first run
+from environment variables and never writes to a settings file:
+
+```bash
+UPBAZAAR_Identity__SuperAdmin__Email=admin@upbazaar.test UPBAZAAR_Identity__SuperAdmin__Password='<choose one>' dotnet run --project ../src/UPBazaar.Api --urls http://localhost:5199
+```
+
+Buyer OTP codes are not sent anywhere in development: the fake `ISmsSender` writes them to the
+API log at `src/UPBazaar.Api/logs/`.
 
 ## Verifying
 
@@ -41,9 +55,18 @@ Playwright needs its browser once per machine: `npx playwright install chromium`
 `libs/data-access/src/lib/api` is generated and must never be hand-edited.
 
 ```bash
-npm run gen:api                              # from ../openapi.json, committed by the API repo
-npm run gen:api -- --url http://localhost:5199   # from a running API, after changing an endpoint
+npm run gen:api                                  # from a running API on :5199
+npm run gen:api -- --url http://localhost:5199   # the same, said explicitly
+npm run gen:api -- --offline                     # from the last downloaded document
 ```
+
+**Transitional: the contract is a merge of two sources.** The live API does not serve Catalog,
+Orders or Payments yet, but the storefront, seller and admin features that call them already
+exist. So `tools/scripts/generate-api-client.mjs` overlays the archived contract onto the live
+one — live wins on any path or schema present in both, archived fills the gaps — and generates
+from the result, reporting how many paths it carried over. Delete the archived document and the
+overlay together on the day those modules ship; the generated code will shrink and any feature
+still calling a phantom endpoint will fail to compile, which is the point.
 
 The generator is `ng-openapi-gen`, chosen because it emits `HttpClient` calls. A fetch-based
 client would bypass Angular's interceptors, and both the bearer token and the global error
@@ -62,29 +85,53 @@ const product = await api.invoke(catalogGetProduct, { productId });
 apps/
   storefront          public catalogue, SSR, SEO + JSON-LD
   seller-portal       SPA, product creation with Signal Forms
-  admin-portal        SPA, order lookup
+  admin-portal        SPA, staff users and order lookup
   *-e2e               Playwright smoke suites, tagged @smoke
 libs/
   data-access         generated client + provider, problem-details mapping, error interceptor
-  auth                token store, interceptor, guards, *hasPermission, sign-in/forbidden pages
+  auth                token + profile stores, AuthService, interceptor, guards, portal pages
   ui                  theme tokens, i18n, toast, field errors, page states, language switcher
   util                India-format validators (GSTIN/PAN/IFSC/PIN/mobile), inr and dateIst pipes
 ```
 
-Dependencies run one way: `util <- ui <- auth <- data-access <- apps`. That is enforced by
+Dependencies run one way: `util <- ui <- data-access <- auth <- apps`. Auth sits above
+data-access because it calls the generated client to sign in, refresh and load the current user;
+data-access knows nothing of auth, and each app hands it `authInterceptor` at its composition
+root. That ordering is enforced by
 `@nx/enforce-module-boundaries` against the `type:*` tag on each project, so a reach sideways
 or upwards fails lint rather than review.
 
 ## How the pieces fit
 
-**State** is signals throughout — `AuthStore`, `ToastService` and the feature components all
+**State** is signals throughout — the auth stores, `ToastService` and the feature components all
 expose readonly signals and derive with `computed`. No component injects `HttpClient`.
 
-**Auth.** `AuthStore` reads identity and permissions out of the JWT and persists the session.
-`authInterceptor` attaches the token to same-origin `/api` calls and signs out on a 401; a 403
-is deliberately left alone, because the user is signed in and simply lacks the permission.
-Routes use `authGuard` and `permissionGuard('catalog.products.write')`, and
-`*hasPermission` hides affordances the API would reject.
+**Auth** is split in two on purpose. `AuthTokenStore` holds nothing but the tokens and their
+expiry; `CurrentUserStore` loads `/users/me` and exposes `user`, `roles` and `permissions`.
+Permissions come from that call rather than from decoding the JWT, so a token minted before a
+role change cannot silently grant what the server would refuse — and the client never has to
+trust a token it did not verify.
+
+`AuthService` is the only thing the screens talk to: `requestOtp`, `verifyOtp`, `login`,
+`verifyTwoFactor`, `register`, `refresh`, `logout`, and the password and TOTP calls.
+
+`authInterceptor` attaches the token to same-origin `/api` calls, skipping an explicit
+anonymous list so a login request never carries a stale bearer. On a 401 it refreshes once and
+retries, and concurrent 401s share one refresh through a single-flight coordinator — the server
+treats a replayed refresh token as theft and revokes the whole family, so two parallel refreshes
+would sign the user out. A 403 is deliberately left alone: the user is signed in and simply
+lacks the permission.
+
+Routes use `authGuard`, which awaits the profile load before deciding, and
+`permissionGuard('catalog.products.write')`, which routes to `/forbidden` naming what was
+required. `*hasPermission` hides affordances the API would reject anyway.
+
+**Sign-in surfaces differ by audience.** Buyers get a CDK bottom sheet (and an equivalent page)
+that leads with mobile OTP — number, then code, with a 30-second resend timer — and keeps
+email/password as a second tab, because a buyer on a phone has a number and rarely a password.
+Staff and sellers get Material email/password pages from `libs/auth/src/lib/portal`, plus
+forgot-password, change-password and a TOTP challenge screen. The storefront never imports those
+pages, which is what keeps Material out of its bundle.
 
 **Errors.** `toApiProblem` normalises any failure — including a network drop — into a code, a
 title and per-field messages. `httpErrorInterceptor` raises a toast for everything except
@@ -111,11 +158,13 @@ custom properties with a dark-scheme block; components use utilities such as `bg
 - **Language switching reloads the storefront.** Its pages are server-rendered, so the language
   has to be applied on the server; the two SPAs switch in place. See `reloadOnSwitch` on
   `LanguageSwitcher`.
-- **No token issuer.** Sign-in accepts a pasted JWT. Replace the body of `SignInPage.submit`
-  when an identity provider exists; the store, interceptor and guards already work off whatever
-  token they are handed.
 - **No cart or checkout in the storefront.** The Add to cart button is inert; the API's checkout
   endpoint is generated and ready to call.
 - **Product images** are placeholder paths keyed on SKU. The API has no image field yet.
-- **Angular Material is installed but unused.** The seller and admin screens are Tailwind-only
-  so far; Material components can be introduced per screen without further setup.
+- **Catalog, Orders and Payments are stubbed.** Those endpoints come from the archived contract
+  merged into the generated client, and the storefront's server render reads them from
+  `tools/scripts/stub-api.mjs` on port 5200 (override with `SSR_API_ORIGIN`). Identity is real.
+- **Password reset stops at the request.** `/auth/forgot-password` is wired and the API emails a
+  token, but there is no page yet that consumes the link.
+- **The storefront is Tailwind-only.** Material is used by the two portals; introducing it into
+  the storefront would cost the bundle savings the split currently buys.

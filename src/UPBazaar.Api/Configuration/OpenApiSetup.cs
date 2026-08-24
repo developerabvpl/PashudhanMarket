@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
+using UPBazaar.Api.OpenApi;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -42,6 +43,7 @@ public static class OpenApiSetup
         .AddOpenApi(options =>
         {
             options.Document.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+            options.Document.AddSchemaTransformer<NumericSchemaTransformer>();
             options.Document.AddDocumentTransformer((document, context, _) =>
             {
                 document.Info.Title = "UP Bazaar API";

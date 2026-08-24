@@ -1,47 +1,71 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { AuthStore } from './auth-store';
+import { AuthTokenStore } from './auth-token-store';
+import { CurrentUserStore } from './current-user-store';
 
-/** Requires a signed-in user; sends anyone else to sign-in with a return address. */
-export const authGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
-  const auth = inject(AuthStore);
+/**
+ * Requires a signed-in user.
+ *
+ * Awaits the profile load rather than trusting the token alone, so a route that renders a
+ * display name or checks a permission never paints before that data exists.
+ */
+export const authGuard: CanActivateFn = async (_route, state): Promise<boolean | UrlTree> => {
+  const tokens = inject(AuthTokenStore);
+  const currentUser = inject(CurrentUserStore);
   const router = inject(Router);
 
-  if (auth.isAuthenticated()) {
-    return true;
+  if (!tokens.isAuthenticated()) {
+    return signInRedirect(router, state.url);
   }
 
-  return router.createUrlTree(['/sign-in'], {
-    queryParams: { returnUrl: state.url },
-  });
+  const user = await currentUser.ensureLoaded();
+
+  return user !== null ? true : signInRedirect(router, state.url);
 };
 
 /**
- * Requires one or more permissions. Signed out sends to sign-in; signed in but unauthorized
- * lands on /forbidden, because bouncing a legitimate user to a login form they have already
- * completed reads as a broken app.
+ * Requires one or more permissions.
+ *
+ * Signed out goes to sign-in; signed in but unauthorised goes to /forbidden. Sending the
+ * second case back to a login form they have already completed is the classic way to make a
+ * permissions problem look like a broken app.
  *
  * ```ts
- * { path: 'products/new', canActivate: [permissionGuard('catalog.products.write')], ... }
+ * { path: 'staff', canActivate: [permissionGuard('identity.users.read')], ... }
  * ```
  */
 export function permissionGuard(...permissions: string[]): CanActivateFn {
-  return (_route, state): boolean | UrlTree => {
-    const auth = inject(AuthStore);
+  return async (_route, state): Promise<boolean | UrlTree> => {
+    const tokens = inject(AuthTokenStore);
+    const currentUser = inject(CurrentUserStore);
     const router = inject(Router);
 
-    if (!auth.isAuthenticated()) {
-      return router.createUrlTree(['/sign-in'], {
-        queryParams: { returnUrl: state.url },
-      });
+    if (!tokens.isAuthenticated()) {
+      return signInRedirect(router, state.url);
     }
 
-    if (auth.hasAll(permissions)) {
-      return true;
+    const user = await currentUser.ensureLoaded();
+
+    if (user === null) {
+      return signInRedirect(router, state.url);
     }
 
-    return router.createUrlTree(['/forbidden'], {
-      queryParams: { required: permissions.join(',') },
-    });
+    return currentUser.hasAll(permissions)
+      ? true
+      : router.createUrlTree(['/forbidden'], {
+          queryParams: { required: permissions.join(',') },
+        });
   };
+}
+
+/** Keeps anyone already signed in off the sign-in screen. */
+export const anonymousOnlyGuard: CanActivateFn = (): boolean | UrlTree => {
+  const tokens = inject(AuthTokenStore);
+  const router = inject(Router);
+
+  return tokens.isAuthenticated() ? router.createUrlTree(['/']) : true;
+};
+
+function signInRedirect(router: Router, returnUrl: string): UrlTree {
+  return router.createUrlTree(['/sign-in'], { queryParams: { returnUrl } });
 }

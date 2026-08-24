@@ -9,6 +9,7 @@ import {
   withInMemoryScrolling,
 } from '@angular/router';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { authInterceptor } from '@upbazaar/auth';
 import { provideDataAccess } from '@upbazaar/data-access';
 import { provideI18n, provideInitialLanguage } from '@upbazaar/ui';
 import { appRoutes } from './app.routes';
@@ -27,7 +28,7 @@ export const appConfig: ApplicationConfig = {
     ),
     // Same origin: the dev server proxies /api to the .NET API, so the bearer token never
     // leaves it. The server render overrides this with an absolute origin.
-    provideDataAccess(),
+    provideDataAccess({ interceptors: [authInterceptor] }),
     provideI18n(),
     provideInitialLanguage(),
   ],

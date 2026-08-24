@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthStore, HasPermissionDirective } from '@upbazaar/auth';
-import { LanguageSwitcher, ToastHost } from '@upbazaar/ui';
-import { ORDERING_ORDERS_READ } from './features/orders/orders.routes';
+import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
+import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
+import { IdentityPermissions, OrderingPermissions } from './core/permissions';
 
 @Component({
   selector: 'upb-root',
@@ -14,6 +17,9 @@ import { ORDERING_ORDERS_READ } from './features/orders/orders.routes';
     LanguageSwitcher,
     ToastHost,
     HasPermissionDirective,
+    MatToolbarModule,
+    MatButtonModule,
+    MatMenuModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -24,31 +30,36 @@ import { ORDERING_ORDERS_READ } from './features/orders/orders.routes';
       {{ 'app.skipToContent' | transloco }}
     </a>
 
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-        <a class="text-lg font-semibold text-ink" routerLink="/orders">
-          {{ 'app.adminPortal' | transloco }}
+    @if (signedIn()) {
+    <mat-toolbar color="primary">
+      <a class="font-semibold" routerLink="/staff">{{ 'app.adminPortal' | transloco }}</a>
+
+      <span class="flex-1"></span>
+
+      <!--
+        Each entry is gated by the permission its route requires, so the menu never offers a
+        page that would answer 403. The guard still enforces it; this only keeps the UI honest.
+      -->
+      <a *hasPermission="usersRead" mat-button routerLink="/staff">
+        {{ 'nav.staffUsers' | transloco }}
+      </a>
+      <a *hasPermission="ordersRead" mat-button routerLink="/orders">
+        {{ 'nav.orders' | transloco }}
+      </a>
+
+      <upb-language-switcher />
+
+      <button mat-button [matMenuTriggerFor]="accountMenu">{{ displayName() }}</button>
+      <mat-menu #accountMenu="matMenu">
+        <a mat-menu-item routerLink="/change-password">
+          {{ 'changePassword.title' | transloco }}
         </a>
-
-        <nav class="flex items-center gap-4">
-          <a *hasPermission="ordersRead" class="text-ink hover:text-brand-700" routerLink="/orders">
-            {{ 'nav.orders' | transloco }}
-          </a>
-
-          <upb-language-switcher />
-
-          @if (auth.isAuthenticated()) {
-          <button type="button" class="text-sm text-accent-600 hover:underline" (click)="auth.signOut()">
-            {{ 'nav.signOut' | transloco }}
-          </button>
-          } @else {
-          <a class="text-sm text-accent-600 hover:underline" routerLink="/sign-in">
-            {{ 'nav.signIn' | transloco }}
-          </a>
-          }
-        </nav>
-      </div>
-    </header>
+        <button mat-menu-item type="button" (click)="signOut()">
+          {{ 'nav.signOut' | transloco }}
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+    }
 
     <main id="main" tabindex="-1">
       <router-outlet />
@@ -58,6 +69,26 @@ import { ORDERING_ORDERS_READ } from './features/orders/orders.routes';
   `,
 })
 export class App {
-  protected readonly auth = inject(AuthStore);
-  protected readonly ordersRead = ORDERING_ORDERS_READ;
+  private readonly auth = inject(AuthService);
+  private readonly currentUser = inject(CurrentUserStore);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+
+  protected readonly usersRead = IdentityPermissions.UsersRead;
+  protected readonly ordersRead = OrderingPermissions.Read;
+
+  protected readonly signedIn = this.currentUser.isSignedIn;
+  protected readonly displayName = this.currentUser.displayName;
+
+  constructor() {
+    void this.currentUser.ensureLoaded();
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.auth.logout();
+
+    this.toast.info('auth.signedOut');
+
+    await this.router.navigate(['/sign-in']);
+  }
 }

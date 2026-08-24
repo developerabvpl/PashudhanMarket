@@ -1,3 +1,9 @@
+/*
+ * Material first: the prebuilt theme sets the CSS custom properties the components read, and
+ * Tailwind's preflight would otherwise reset type and spacing underneath them.
+ */
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
 @import 'tailwindcss';
 
 /* Design tokens live in libs/ui/theme; nothing here should hardcode a colour. */
@@ -6,3 +12,10 @@
 /* Tailwind scans from this file's folder, so shared library templates need declaring. */
 @source '../../../libs/ui/src/**/*.{html,ts}';
 @source '../../../libs/auth/src/**/*.{html,ts}';
+
+@layer base {
+  /* Material owns the surface colour inside its own components; this is the page behind them. */
+  body {
+    background-color: var(--color-surface-sunken);
+  }
+}

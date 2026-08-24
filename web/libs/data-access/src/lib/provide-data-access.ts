@@ -1,6 +1,10 @@
-import { EnvironmentProviders, Provider, makeEnvironmentProviders } from '@angular/core';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { authInterceptor } from '@upbazaar/auth';
+import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import {
+  HttpInterceptorFn,
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 import { provideApiConfiguration } from './api/api-configuration';
 import { httpErrorInterceptor } from './http-error.interceptor';
 
@@ -14,21 +18,31 @@ export interface DataAccessOptions {
    * "//api/..." — a request to a host literally called "api".
    */
   readonly rootUrl?: string;
+
+  /**
+   * Interceptors to run ahead of the built-in error reporter.
+   *
+   * This is how the auth interceptor gets in without data-access importing it. Auth sits above
+   * data-access — it calls the generated client to log in and refresh — so a direct import here
+   * would close a cycle. Each app passes `[authInterceptor]` from its composition root.
+   */
+  readonly interceptors?: readonly HttpInterceptorFn[];
 }
 
 /**
  * The one place HttpClient is configured. Components never inject HttpClient directly; they
- * go through the generated client, which means every call picks up both interceptors.
+ * go through the generated client, which means every call picks up the interceptors.
  *
- * Order matters: the auth interceptor runs first so it can attach the token and claim the
+ * Order matters: the supplied interceptors run first so auth can attach the token and claim the
  * 401, leaving the error interceptor to report everything else.
  */
 export function provideDataAccess(options: DataAccessOptions = {}): EnvironmentProviders {
-  const providers: Provider[] = [provideApiConfiguration(normalizeRootUrl(options.rootUrl))];
-
   return makeEnvironmentProviders([
-    ...providers,
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, httpErrorInterceptor])),
+    provideApiConfiguration(normalizeRootUrl(options.rootUrl)),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([...(options.interceptors ?? []), httpErrorInterceptor])
+    ),
   ]);
 }
 

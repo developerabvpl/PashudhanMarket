@@ -1,24 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-function tokenWith(permissions: string[]): string {
-  const encode = (value: object) =>
-    Buffer.from(JSON.stringify(value))
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-
-  return [
-    encode({ alg: 'none', typ: 'JWT' }),
-    encode({
-      sub: 'admin-1',
-      name: 'Ops',
-      permission: permissions,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    }),
-    'signature',
-  ].join('.');
-}
+import { mockAdminApi, signIn } from './fixtures/admin-mocks';
 
 const ORDER_ID = '44444444-4444-4444-4444-444444444444';
 
@@ -48,13 +29,15 @@ const order = {
 
 test.describe('@smoke admin order lookup', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/sign-in');
-    await page.getByLabel('Access token').fill(tokenWith(['ordering.orders.read']));
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    // The order screen needs orders.read; users.read comes along so the toolbar renders the
+    // same way it does for a real operator.
+    await mockAdminApi(page, { permissions: ['orders.read', 'identity.users.read'] });
 
-    // Without this the next locator can still match the sign-in textarea and the lookup
-    // form is filled on a page that is about to be replaced.
-    await page.waitForURL('**/orders');
+    await signIn(page);
+
+    // Sign-in lands on /staff, so navigate to the screen under test explicitly.
+    await page.goto('/orders');
+    await expect(page.getByRole('heading', { name: 'Order lookup' })).toBeVisible();
   });
 
   test('finds an order and shows its lines', async ({ page }) => {

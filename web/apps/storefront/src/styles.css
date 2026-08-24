@@ -6,3 +6,32 @@
 /* Tailwind scans from this file's folder, so shared library templates need declaring. */
 @source '../../../libs/ui/src/**/*.{html,ts}';
 @source '../../../libs/auth/src/**/*.{html,ts}';
+
+/* CDK overlay primitives, needed by the sign-in bottom sheet. */
+@import '@angular/cdk/overlay-prebuilt.css';
+
+@layer components {
+  /*
+   * The sheet sits at the bottom on a phone, where a thumb can reach it, and becomes an
+   * ordinary centred dialog once there is room.
+   */
+  .upb-auth-sheet {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  @media (min-width: 640px) {
+    .upb-auth-sheet {
+      position: static;
+      width: 28rem;
+      max-width: calc(100vw - 2rem);
+    }
+  }
+
+  .upb-auth-backdrop {
+    background: oklch(0 0 0 / 0.45);
+  }
+}

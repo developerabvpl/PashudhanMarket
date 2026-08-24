@@ -7,7 +7,7 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { AuthStore } from './auth-store';
+import { CurrentUserStore } from './current-user-store';
 
 /**
  * Structural directive that renders its content only when the user holds the permission.
@@ -22,7 +22,7 @@ import { AuthStore } from './auth-store';
  */
 @Directive({ selector: '[hasPermission]' })
 export class HasPermissionDirective {
-  private readonly auth = inject(AuthStore);
+  private readonly currentUser = inject(CurrentUserStore);
   private readonly templateRef = inject(TemplateRef<unknown>);
   private readonly viewContainer = inject(ViewContainerRef);
 
@@ -34,7 +34,7 @@ export class HasPermissionDirective {
   private readonly granted = computed(() => {
     const required = this.hasPermission();
     const permissions = typeof required === 'string' ? [required] : required;
-    const allowed = this.auth.hasAll(permissions);
+    const allowed = this.currentUser.hasAll(permissions);
 
     return this.hasPermissionElse() ? !allowed : allowed;
   });
