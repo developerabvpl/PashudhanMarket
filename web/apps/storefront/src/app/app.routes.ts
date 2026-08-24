@@ -15,6 +15,10 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
   },
   {
+    path: 'cart',
+    loadComponent: () => import('./features/cart/cart.page').then((m) => m.CartPage),
+  },
+  {
     path: 'sign-in',
     loadComponent: () => import('./features/auth/sign-in.page').then((m) => m.SignInPage),
   },

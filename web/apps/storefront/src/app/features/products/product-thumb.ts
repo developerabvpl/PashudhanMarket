@@ -95,12 +95,12 @@ export function productPhotoUrl(sku: string, name = ''): string | null {
   template: `
     @if (photoUrl(); as url) {
     <img
-      class="absolute inset-0 h-full w-full bg-surface object-contain p-2"
+      class="absolute inset-0 h-full w-full bg-surface object-contain"
       [src]="url"
       alt=""
       aria-hidden="true"
-      [attr.loading]="size() === 'detail' ? 'eager' : 'lazy'"
-      [attr.fetchpriority]="size() === 'detail' ? 'high' : null"
+      [attr.loading]="eager() ? 'eager' : 'lazy'"
+      [attr.fetchpriority]="eager() ? 'high' : null"
       decoding="async"
       (error)="photoFailed.set(true)"
     />
@@ -135,6 +135,18 @@ export class ProductThumb {
   readonly sku = input.required<string>();
 
   readonly size = input<'card' | 'detail'>('card');
+
+  /**
+   * Load this one immediately rather than lazily.
+   *
+   * Set it on whatever is above the fold. The first card in the catalogue is the page's Largest
+   * Contentful Paint element, and lazy-loading the LCP image delays the metric by a whole
+   * request — Angular warns about exactly this (NG0913).
+   */
+  readonly priority = input(false);
+
+  /** The product page's image is always the LCP candidate; in the grid, only the first row is. */
+  protected readonly eager = computed(() => this.priority() || this.size() === 'detail');
 
   /** Set once the browser reports the file did not load, which drops us to the drawn tile. */
   protected readonly photoFailed = signal(false);

@@ -150,6 +150,21 @@ its subject to a crop. The thumbnail is positioned absolutely inside that square
 in-flow `<img>` contributes its intrinsic height and overrides the box's `aspect-ratio`, which
 is how one 182x500 bottle stretched its cards to two and a half times the height of the rest.
 
+### The basket
+
+`CartStore` holds it: signals for the lines, the count and the subtotal, persisted to
+localStorage under one key. The header badge reads `count`, and because the badge is decorative
+the count also goes into the link's `aria-label`.
+
+A product with no price is refused rather than added at zero — the catalogue carries listings
+whose seller has not set one, and a basket that totals them as free is worse than a button that
+does nothing. Restored lines are validated on the way in, so a hand-edited or half-written entry
+is dropped instead of turning the subtotal into `NaN`.
+
+The Add to cart button sits on a server-rendered page, so a click can land before hydration.
+`withEventReplay()` is what catches it and applies it once Angular takes over — there is a smoke
+test that clicks at `waitUntil: 'commit'` to keep that honest.
+
 ## Layout
 
 ```
@@ -239,8 +254,10 @@ is why the storefront rendered dark for every visitor for as long as it did.
 - **Language switching reloads the storefront.** Its pages are server-rendered, so the language
   has to be applied on the server; the two SPAs switch in place. See `reloadOnSwitch` on
   `LanguageSwitcher`.
-- **No cart or checkout in the storefront.** The Add to cart button is inert; the API's checkout
-  endpoint is generated and ready to call.
+- **The basket is client-side and there is no checkout.** `CartStore` keeps it in localStorage,
+  so it survives a reload but not a change of device, and the checkout button is disabled with a
+  reason. Cart and Ordering do not exist in the API yet; when they do, the store is the only
+  thing that needs a server behind it.
 - **Photography is per category, not per product.** All eight agarbatti listings share
   `agb.jpg`. Categories with no file, and any file that fails to load, fall back to a drawn tile.
   See `apps/storefront/public/media/products/README.md`.

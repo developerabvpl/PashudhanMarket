@@ -103,6 +103,7 @@ import { ProductThumb } from './product-thumb';
               class="aspect-square w-full"
               [name]="product.name"
               [sku]="product.sku"
+              [priority]="$index < 4"
             />
 
             <div class="flex flex-1 flex-col p-4">

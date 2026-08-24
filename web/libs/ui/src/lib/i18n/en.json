@@ -260,5 +260,30 @@
     "help": "Help",
     "helpBody": "Questions about an order or a listing? Reach the support desk from your account page.",
     "copyright": "© 2026 UP Bazaar. A Government of Uttar Pradesh initiative."
+  },
+  "cart": {
+    "title": "Your basket",
+    "metaDescription": "The items you have added to your UP Bazaar basket.",
+    "empty": "Your basket is empty.",
+    "browse": "Browse products",
+    "itemCount": "{{count}} items",
+    "each": "each",
+    "quantityFor": "Quantity for {{name}}",
+    "decrease": "Reduce quantity",
+    "increase": "Increase quantity",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "subtotalNote": "Delivery and taxes are worked out at checkout.",
+    "checkout": "Proceed to checkout",
+    "checkoutUnavailable": "Checkout opens once ordering goes live.",
+    "keepShopping": "Keep shopping",
+    "clear": "Empty the basket",
+    "added": "Added to your basket.",
+    "removed": "Removed from your basket.",
+    "cleared": "Your basket is empty.",
+    "alreadyInCart": "{{count}} already in your basket.",
+    "viewCart": "View basket",
+    "openEmpty": "Basket, empty",
+    "openWithCount": "Basket, {{count}} items"
   }
 }

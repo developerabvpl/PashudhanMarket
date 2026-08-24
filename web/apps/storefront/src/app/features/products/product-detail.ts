@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input } f
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ProductDto } from '@upbazaar/data-access';
+import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
 import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
+import { CartStore } from '../cart/cart.store';
 import { ProductThumb, productPhotoUrl } from './product-thumb';
 
 const ORIGIN = 'https://upbazaar.example';
@@ -99,9 +101,19 @@ const ORIGIN = 'https://upbazaar.example';
               type="button"
               class="mt-5 w-full rounded-control bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               [disabled]="available() === 0"
+              (click)="addToCart(item)"
             >
               {{ 'catalog.addToCart' | transloco }}
             </button>
+
+            @if (inCart() > 0) {
+            <p class="mt-3 text-center text-sm text-ink-muted">
+              {{ 'cart.alreadyInCart' | transloco: { count: inCart() } }}
+              <a class="text-accent-600 hover:underline" routerLink="/cart">
+                {{ 'cart.viewCart' | transloco }}
+              </a>
+            </p>
+            }
             } @else {
             <p class="text-2xl font-bold text-ink">{{ 'catalog.priceOnRequest' | transloco }}</p>
             <p class="mt-1 text-sm leading-relaxed text-ink-muted">
@@ -151,6 +163,8 @@ const ORIGIN = 'https://upbazaar.example';
 export class ProductDetail {
   private readonly seo = inject(SeoService);
   private readonly transloco = inject(TranslocoService);
+  private readonly cart = inject(CartStore);
+  private readonly toast = inject(ToastService);
 
   /** Resolved by productDetailResolver; null only while a failed load redirects away. */
   readonly product = input.required<ProductDto | null>();
@@ -159,6 +173,13 @@ export class ProductDetail {
     const item = this.product();
 
     return item === null ? 0 : item.onHandQuantity - item.reservedQuantity;
+  });
+
+  /** How many of this product are already in the basket. */
+  readonly inCart = computed(() => {
+    const item = this.product();
+
+    return item === null ? 0 : this.cart.quantityOf(item.id);
   });
 
   /** The category photograph, when the category has one. */
@@ -174,6 +195,12 @@ export class ProductDetail {
 
     return productFacts(item?.name ?? '');
   });
+
+  protected addToCart(item: ProductDto): void {
+    if (this.cart.add(item)) {
+      this.toast.success('cart.added');
+    }
+  }
 
   constructor() {
     effect(() => {

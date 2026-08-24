@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService, CurrentUserStore } from '@upbazaar/auth';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
 import { AuthSheetService } from './features/auth/auth-sheet.service';
+import { CartStore } from './features/cart/cart.store';
 
 @Component({
   selector: 'upb-root',
@@ -46,6 +47,37 @@ import { AuthSheetService } from './features/auth/auth-sheet.service';
 
         <div class="flex flex-1 items-center justify-end gap-2 sm:gap-3">
           <upb-language-switcher [reloadOnSwitch]="true" />
+
+          <a
+            class="relative rounded-control p-2 text-ink transition-colors hover:bg-surface-sunken"
+            routerLink="/cart"
+            routerLinkActive="bg-surface-sunken"
+            [attr.aria-label]="cartLabel()"
+          >
+            <svg
+              class="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6" />
+              <circle cx="10" cy="20" r="1.4" />
+              <circle cx="17" cy="20" r="1.4" />
+            </svg>
+
+            @if (cartCount() > 0) {
+            <span
+              class="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white"
+              aria-hidden="true"
+            >
+              {{ cartCount() }}
+            </span>
+            }
+          </a>
 
           @if (displayName(); as name) {
           <div class="relative">
@@ -163,14 +195,26 @@ export class App {
   private readonly currentUser = inject(CurrentUserStore);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly cart = inject(CartStore);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly displayName = this.currentUser.displayName;
+  protected readonly cartCount = this.cart.count;
   protected readonly menuOpen = signal(false);
 
   constructor() {
     // A visitor arriving with a stored session should see their name in the header without
     // having to touch a guarded route first.
     void this.currentUser.ensureLoaded();
+  }
+
+  /** The icon carries no text, and the badge is hidden, so the count goes in the label. */
+  protected cartLabel(): string {
+    const count = this.cartCount();
+
+    return count === 0
+      ? this.transloco.translate('cart.openEmpty')
+      : this.transloco.translate('cart.openWithCount', { count });
   }
 
   /** First character of the display name, for the avatar disc. */
