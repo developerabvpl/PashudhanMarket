@@ -1,0 +1,13 @@
+@host = https://localhost:7001
+
+### Liveness and database probe
+GET {{host}}/health
+
+### OpenAPI document
+GET {{host}}/openapi/v1.json
+
+# Module request collections live next to their modules:
+#   src/UPBazaar.Modules.Catalog/UPBazaar.Modules.Catalog.http
+#   src/UPBazaar.Modules.Ordering/UPBazaar.Modules.Ordering.http
+#   src/UPBazaar.Modules.Payments/UPBazaar.Modules.Payments.http
+#   src/UPBazaar.Modules.Shipping/UPBazaar.Modules.Shipping.http

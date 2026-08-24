@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
+    <ProjectReference Include="..\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Catalog.Contracts\UPBazaar.Modules.Catalog.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="UPBazaar.Modules.Catalog.http" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+</Project>

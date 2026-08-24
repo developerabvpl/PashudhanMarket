@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    Single place to move the whole solution to a new target framework.
+    When the .NET 10 SDK is installed, change TargetFramework to net10.0 and bump
+    the EfVersion / AspNetVersion properties in Directory.Packages.props.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

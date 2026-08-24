@@ -1,0 +1,109 @@
+{
+  "app": {
+    "storefront": "UP Bazaar",
+    "sellerPortal": "UP Bazaar Seller",
+    "adminPortal": "UP Bazaar Admin",
+    "skipToContent": "Skip to main content",
+    "languageLabel": "Language",
+    "english": "English",
+    "hindi": "हिन्दी"
+  },
+  "nav": {
+    "products": "Products",
+    "orders": "Orders",
+    "payments": "Payments",
+    "shipments": "Shipments",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "state": {
+    "loading": "Loading",
+    "error": "Something went wrong.",
+    "empty": "Nothing to show yet.",
+    "retry": "Try again"
+  },
+  "toast": {
+    "region": "Notifications",
+    "dismiss": "Dismiss notification"
+  },
+  "errors": {
+    "unexpected": "Something went wrong. Please try again.",
+    "offline": "Cannot reach the server. Check your connection.",
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You do not have permission to do that.",
+    "notFound": "We could not find what you were looking for.",
+    "conflict": "That conflicts with the current state. Refresh and retry."
+  },
+  "validation": {
+    "required": "This field is required.",
+    "gstin": "Enter a valid 15-character GSTIN.",
+    "pan": "Enter a valid PAN, for example ABCDE1234F.",
+    "ifsc": "Enter a valid IFSC code, for example SBIN0001234.",
+    "pincode": "Enter a valid 6-digit PIN code.",
+    "mobile": "Enter a valid 10-digit mobile number.",
+    "positivePrice": "Price must be greater than zero.",
+    "panGstinMismatch": "The PAN does not match the one inside the GSTIN."
+  },
+  "catalog": {
+    "title": "Products",
+    "metaDescription": "Shop handloom, handicraft and home goods from sellers across Uttar Pradesh.",
+    "searchLabel": "Search products",
+    "searchPlaceholder": "Search sarees, brassware, dari...",
+    "resultCount": "{{count}} products",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "sku": "SKU",
+    "addToCart": "Add to cart",
+    "productMetaDescription": "{{name}} — {{price}} on UP Bazaar. {{availability}}.",
+    "availabilityInStock": "Available now",
+    "availabilityOutOfStock": "Currently unavailable",
+    "backToProducts": "Back to products"
+  },
+  "seller": {
+    "newProduct": "Add a product",
+    "productName": "Product name",
+    "productNameHint": "Shown to buyers in search results.",
+    "sku": "SKU",
+    "skuHint": "Your own stock code. Must be unique.",
+    "description": "Description",
+    "price": "Price",
+    "currency": "Currency",
+    "category": "Category",
+    "initialStock": "Opening stock",
+    "sellerId": "Seller ID",
+    "save": "Save product",
+    "saving": "Saving...",
+    "created": "Product created as a draft.",
+    "publish": "Publish",
+    "published": "Product published."
+  },
+  "admin": {
+    "orderLookup": "Order lookup",
+    "orderId": "Order ID",
+    "find": "Find order",
+    "orderNumber": "Order number",
+    "status": "Status",
+    "placedAt": "Placed",
+    "total": "Total",
+    "lines": "Items",
+    "quantity": "Qty",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total",
+    "payment": "Payment",
+    "notFound": "No order with that ID."
+  },
+  "forbidden": {
+    "title": "You do not have access",
+    "body": "This page needs a permission your account does not have.",
+    "required": "Required: {{permissions}}",
+    "back": "Go back"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "tokenLabel": "Access token",
+    "tokenHint": "Paste a JWT issued by the UP Bazaar API.",
+    "submit": "Sign in",
+    "invalid": "That token could not be read.",
+    "signedInAs": "Signed in as {{name}}"
+  }
+}

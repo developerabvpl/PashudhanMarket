@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>upbazaar-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
+    <ProjectReference Include="..\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Catalog\UPBazaar.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Ordering\UPBazaar.Modules.Ordering.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Payments\UPBazaar.Modules.Payments.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Shipping\UPBazaar.Modules.Shipping.csproj" />
+  </ItemGroup>
+
+</Project>

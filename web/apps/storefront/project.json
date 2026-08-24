@@ -1,0 +1,97 @@
+{
+  "name": "storefront",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "upb",
+  "sourceRoot": "apps/storefront/src",
+  "tags": [
+    "type:app",
+    "scope:storefront"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/storefront",
+        "browser": "apps/storefront/src/main.ts",
+        "tsConfig": "apps/storefront/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/storefront/public"
+          }
+        ],
+        "styles": [
+          "apps/storefront/src/styles.css"
+        ],
+        "server": "apps/storefront/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/storefront/src/server.ts"
+        },
+        "outputMode": "server"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "development",
+      "configurations": {
+        "production": {
+          "buildTarget": "storefront:build:production"
+        },
+        "development": {
+          "buildTarget": "storefront:build:development"
+        }
+      },
+      "options": {
+        "proxyConfig": "apps/storefront/proxy.conf.json",
+        "port": 4200
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "watch": false
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "storefront:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/storefront/browser",
+        "spa": true
+      }
+    }
+  }
+}

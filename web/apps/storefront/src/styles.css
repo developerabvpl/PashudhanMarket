@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+/* Design tokens live in libs/ui/theme; nothing here should hardcode a colour. */
+@import '../../../libs/ui/src/lib/theme/tokens.css';
+
+/* Tailwind scans from this file's folder, so shared library templates need declaring. */
+@source '../../../libs/ui/src/**/*.{html,ts}';
+@source '../../../libs/auth/src/**/*.{html,ts}';

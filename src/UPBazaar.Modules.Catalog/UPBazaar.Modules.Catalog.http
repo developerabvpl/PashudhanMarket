@@ -1,0 +1,45 @@
+@host = https://localhost:7001
+@token = {{$dotenv UPBAZAAR_TOKEN}}
+@categoryId = 00000000-0000-0000-0000-000000000000
+@productId = 00000000-0000-0000-0000-000000000000
+
+### List products
+GET {{host}}/api/catalog/products?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+### Search products in a category
+GET {{host}}/api/catalog/products?search=saree&categoryId={{categoryId}}
+Authorization: Bearer {{token}}
+
+### Get one product
+GET {{host}}/api/catalog/products/{{productId}}
+Authorization: Bearer {{token}}
+
+### Create a product (draft)
+POST {{host}}/api/catalog/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sellerId": "11111111-1111-1111-1111-111111111111",
+  "sku": "UPB-SAREE-001",
+  "name": "Banarasi Silk Saree",
+  "description": "Handwoven silk saree from Varanasi.",
+  "categoryId": "{{categoryId}}",
+  "price": 4599.00,
+  "currency": "INR",
+  "initialStock": 25
+}
+
+### Publish the product
+POST {{host}}/api/catalog/products/{{productId}}/publish
+Authorization: Bearer {{token}}
+
+### Adjust stock after a stock take
+PUT {{host}}/api/catalog/products/{{productId}}/stock
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "onHand": 18
+}

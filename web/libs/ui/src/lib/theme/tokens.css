@@ -1,0 +1,106 @@
+/**
+ * UP Bazaar design tokens.
+ *
+ * The single source of colour, spacing and radius for all three apps. Components reference
+ * these through Tailwind utilities (bg-surface, text-brand, ...) and never write a hex value
+ * inline, so a palette change lands in one file.
+ *
+ * Imported by each app's styles.css after `@import "tailwindcss"`.
+ */
+
+@theme {
+  /* Brand: marigold, the colour of a UP bazaar street front. */
+  --color-brand-50: oklch(0.97 0.03 84);
+  --color-brand-100: oklch(0.94 0.06 84);
+  --color-brand-200: oklch(0.89 0.11 84);
+  --color-brand-300: oklch(0.83 0.15 82);
+  --color-brand-400: oklch(0.77 0.18 74);
+  --color-brand-500: oklch(0.70 0.19 60);
+  --color-brand-600: oklch(0.61 0.18 50);
+  --color-brand-700: oklch(0.51 0.15 45);
+  --color-brand-800: oklch(0.41 0.12 44);
+  --color-brand-900: oklch(0.33 0.09 44);
+
+  /* Accent: indigo, for links and focus rings that must not read as the brand action. */
+  --color-accent-400: oklch(0.66 0.16 268);
+  --color-accent-500: oklch(0.58 0.19 267);
+  --color-accent-600: oklch(0.50 0.20 266);
+
+  /* Neutrals */
+  --color-ink: oklch(0.22 0.01 60);
+  --color-ink-muted: oklch(0.48 0.01 60);
+  --color-surface: oklch(1 0 0);
+  --color-surface-sunken: oklch(0.97 0.004 80);
+  --color-surface-raised: oklch(1 0 0);
+  --color-border: oklch(0.90 0.005 80);
+
+  /* Status. Contrast against --color-surface is at least 4.5:1 for text use. */
+  --color-success: oklch(0.55 0.14 152);
+  --color-warning: oklch(0.68 0.15 75);
+  --color-danger: oklch(0.55 0.20 27);
+  --color-info: oklch(0.58 0.12 235);
+
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.06), 0 4px 12px oklch(0 0 0 / 0.05);
+  --shadow-raised: 0 8px 24px oklch(0 0 0 / 0.12);
+
+  --font-sans: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+}
+
+/**
+ * Dark surfaces. Only the neutrals flip: the brand hue stays put so the marigold reads the
+ * same in both themes.
+ */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-ink: oklch(0.95 0.005 80);
+    --color-ink-muted: oklch(0.72 0.01 80);
+    --color-surface: oklch(0.21 0.008 70);
+    --color-surface-sunken: oklch(0.17 0.008 70);
+    --color-surface-raised: oklch(0.26 0.009 70);
+    --color-border: oklch(0.33 0.01 70);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--color-surface-sunken);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible focus everywhere: required for the Lighthouse a11y budget. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .upb-card {
+    background-color: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /** Screen-reader-only, for labels a sighted user gets from context. */
+  .upb-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}

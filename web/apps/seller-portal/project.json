@@ -1,0 +1,92 @@
+{
+  "name": "seller-portal",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "upb",
+  "sourceRoot": "apps/seller-portal/src",
+  "tags": [
+    "type:app",
+    "scope:seller"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/seller-portal",
+        "browser": "apps/seller-portal/src/main.ts",
+        "tsConfig": "apps/seller-portal/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/seller-portal/public"
+          }
+        ],
+        "styles": [
+          "apps/seller-portal/src/styles.css"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "development",
+      "configurations": {
+        "production": {
+          "buildTarget": "seller-portal:build:production"
+        },
+        "development": {
+          "buildTarget": "seller-portal:build:development"
+        }
+      },
+      "options": {
+        "proxyConfig": "apps/seller-portal/proxy.conf.json",
+        "port": 4201
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "watch": false
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "seller-portal:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/seller-portal/browser",
+        "spa": true
+      }
+    }
+  }
+}

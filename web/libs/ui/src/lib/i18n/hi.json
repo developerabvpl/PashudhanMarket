@@ -1,0 +1,109 @@
+{
+  "app": {
+    "storefront": "यूपी बाज़ार",
+    "sellerPortal": "यूपी बाज़ार विक्रेता",
+    "adminPortal": "यूपी बाज़ार प्रशासन",
+    "skipToContent": "मुख्य सामग्री पर जाएँ",
+    "languageLabel": "भाषा",
+    "english": "English",
+    "hindi": "हिन्दी"
+  },
+  "nav": {
+    "products": "उत्पाद",
+    "orders": "ऑर्डर",
+    "payments": "भुगतान",
+    "shipments": "शिपमेंट",
+    "signIn": "साइन इन",
+    "signOut": "साइन आउट"
+  },
+  "state": {
+    "loading": "लोड हो रहा है",
+    "error": "कुछ गड़बड़ हो गई।",
+    "empty": "अभी दिखाने के लिए कुछ नहीं है।",
+    "retry": "फिर कोशिश करें"
+  },
+  "toast": {
+    "region": "सूचनाएँ",
+    "dismiss": "सूचना हटाएँ"
+  },
+  "errors": {
+    "unexpected": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
+    "offline": "सर्वर से संपर्क नहीं हो पा रहा। अपना कनेक्शन जाँचें।",
+    "unauthorized": "जारी रखने के लिए साइन इन करें।",
+    "forbidden": "आपके पास यह करने की अनुमति नहीं है।",
+    "notFound": "जो आप ढूँढ रहे थे वह नहीं मिला।",
+    "conflict": "यह मौजूदा स्थिति से मेल नहीं खाता। रीफ़्रेश करके फिर कोशिश करें।"
+  },
+  "validation": {
+    "required": "यह फ़ील्ड आवश्यक है।",
+    "gstin": "मान्य 15-अंकीय GSTIN दर्ज करें।",
+    "pan": "मान्य PAN दर्ज करें, जैसे ABCDE1234F।",
+    "ifsc": "मान्य IFSC कोड दर्ज करें, जैसे SBIN0001234।",
+    "pincode": "मान्य 6-अंकीय पिन कोड दर्ज करें।",
+    "mobile": "मान्य 10-अंकीय मोबाइल नंबर दर्ज करें।",
+    "positivePrice": "क़ीमत शून्य से अधिक होनी चाहिए।",
+    "panGstinMismatch": "PAN, GSTIN में मौजूद PAN से मेल नहीं खाता।"
+  },
+  "catalog": {
+    "title": "उत्पाद",
+    "metaDescription": "उत्तर प्रदेश के विक्रेताओं से हथकरघा, हस्तशिल्प और घरेलू सामान ख़रीदें।",
+    "searchLabel": "उत्पाद खोजें",
+    "searchPlaceholder": "साड़ी, पीतल, दरी खोजें...",
+    "resultCount": "{{count}} उत्पाद",
+    "inStock": "स्टॉक में",
+    "outOfStock": "स्टॉक में नहीं",
+    "sku": "एसकेयू",
+    "addToCart": "कार्ट में डालें",
+    "productMetaDescription": "{{name}} — यूपी बाज़ार पर {{price}}। {{availability}}।",
+    "availabilityInStock": "अभी उपलब्ध",
+    "availabilityOutOfStock": "फ़िलहाल अनुपलब्ध",
+    "backToProducts": "उत्पादों पर वापस"
+  },
+  "seller": {
+    "newProduct": "उत्पाद जोड़ें",
+    "productName": "उत्पाद का नाम",
+    "productNameHint": "खोज परिणामों में ख़रीदारों को यही दिखेगा।",
+    "sku": "एसकेयू",
+    "skuHint": "आपका अपना स्टॉक कोड। अद्वितीय होना चाहिए।",
+    "description": "विवरण",
+    "price": "क़ीमत",
+    "currency": "मुद्रा",
+    "category": "श्रेणी",
+    "initialStock": "प्रारंभिक स्टॉक",
+    "sellerId": "विक्रेता आईडी",
+    "save": "उत्पाद सहेजें",
+    "saving": "सहेजा जा रहा है...",
+    "created": "उत्पाद ड्राफ़्ट के रूप में बन गया।",
+    "publish": "प्रकाशित करें",
+    "published": "उत्पाद प्रकाशित हो गया।"
+  },
+  "admin": {
+    "orderLookup": "ऑर्डर खोज",
+    "orderId": "ऑर्डर आईडी",
+    "find": "ऑर्डर ढूँढें",
+    "orderNumber": "ऑर्डर संख्या",
+    "status": "स्थिति",
+    "placedAt": "दिनांक",
+    "total": "कुल",
+    "lines": "वस्तुएँ",
+    "quantity": "मात्रा",
+    "unitPrice": "प्रति इकाई क़ीमत",
+    "lineTotal": "पंक्ति कुल",
+    "payment": "भुगतान",
+    "notFound": "इस आईडी का कोई ऑर्डर नहीं मिला।"
+  },
+  "forbidden": {
+    "title": "आपके पास पहुँच नहीं है",
+    "body": "इस पृष्ठ के लिए ऐसी अनुमति चाहिए जो आपके खाते में नहीं है।",
+    "required": "आवश्यक: {{permissions}}",
+    "back": "वापस जाएँ"
+  },
+  "signIn": {
+    "title": "साइन इन",
+    "tokenLabel": "एक्सेस टोकन",
+    "tokenHint": "यूपी बाज़ार API से जारी JWT यहाँ चिपकाएँ।",
+    "submit": "साइन इन",
+    "invalid": "यह टोकन पढ़ा नहीं जा सका।",
+    "signedInAs": "{{name}} के रूप में साइन इन"
+  }
+}
