@@ -1,0 +1,31 @@
+# One public origin in front of the storefront. Copy into sites-available and adjust
+# server_name, the certificate paths and the upstream ports.
+#
+# The /api split is not cosmetic: the browser calls the API on its own origin, so without these
+# two locations the first paint is correct and the page empties the moment it hydrates.
+
+server {
+  listen 80;
+  server_name upbazaar.example www.upbazaar.example;
+
+  # The catalogue. Serves the 70 products from tools/data/catalog.json.
+  location /api/catalog/ {
+    proxy_pass http://127.0.0.1:5200;
+    proxy_set_header Host $host;
+  }
+
+  # The .NET API, for sign-in. Optional: leave it out and the storefront still works, it just
+  # cannot sign anyone in. The API needs SQL Server to start at all.
+  location /api/ {
+    proxy_pass http://127.0.0.1:5199;
+    proxy_set_header Host $host;
+  }
+
+  # The storefront. Host must be forwarded: Angular checks it against NG_ALLOWED_HOSTS, and an
+  # unforwarded Host of 127.0.0.1 is what turns the whole site into a 400.
+  location / {
+    proxy_pass http://127.0.0.1:4000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
