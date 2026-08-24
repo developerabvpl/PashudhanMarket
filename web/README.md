@@ -267,6 +267,12 @@ is why the storefront rendered dark for every visitor for as long as it did.
 - **Catalog, Orders and Payments are stubbed.** Those endpoints come from the archived contract
   merged into the generated client, and the storefront's server render reads them from
   `tools/scripts/stub-api.mjs` on port 5200 (override with `SSR_API_ORIGIN`). Identity is real.
+
+  **There is no product table.** The database holds Identity (`identity.*`), the shared audit
+  and outbox tables (`shared.*`) and Hangfire's own — all of them live and in use. Products are
+  `tools/data/catalog.json` and nothing else, so do not go looking for them in SQL, and do not
+  read "the catalogue is a JSON file" as "the database is unused": pulling the connection string
+  takes sign-in, OTP, staff admin, the audit log and the job dashboard down with it.
 - **Password reset stops at the request.** `/auth/forgot-password` is wired and the API emails a
   token, but there is no page yet that consumes the link.
 - **The storefront is Tailwind-only.** Material is used by the two portals; introducing it into
