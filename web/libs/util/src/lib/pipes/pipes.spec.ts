@@ -41,3 +41,20 @@ describe('DateIstPipe', () => {
     expect(pipe.transform(value as never)).toBe('');
   });
 });
+
+describe('InrCurrencyPipe auto decimals', () => {
+  const pipe = new InrCurrencyPipe();
+
+  it('drops the paise on a whole rupee amount, the way a shelf price reads', () => {
+    expect(pipe.transform(139, 'symbol', 'auto')).toBe('₹139');
+    expect(pipe.transform(123456, 'symbol', 'auto')).toBe('₹1,23,456');
+  });
+
+  it('keeps them the moment there are any', () => {
+    expect(pipe.transform(139.5, 'symbol', 'auto')).toBe('₹139.50');
+  });
+
+  it('still defaults to two decimals, which is what an order total wants', () => {
+    expect(pipe.transform(139)).toBe('₹139.00');
+  });
+});

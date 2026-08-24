@@ -84,7 +84,7 @@ const ORIGIN = 'https://upbazaar.example';
 
           <div class="mt-6 rounded-card border border-border bg-surface p-5">
             @if (item.price > 0) {
-            <p class="text-3xl font-bold text-ink">{{ item.price | inr }}</p>
+            <p class="text-3xl font-bold text-ink">{{ item.price | inr: 'symbol' : 'auto' }}</p>
             <p
               class="mt-1 font-medium"
               [class.text-success]="available() > 0"

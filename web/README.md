@@ -89,20 +89,45 @@ The storefront's products come from `tools/data/catalog.json`, generated from th
 workbook and served by the stub:
 
 ```bash
-node tools/scripts/import-catalog.mjs                 # tools/data/*.xlsx -> catalog.json
+node tools/scripts/import-catalog.mjs                  # tools/data/*.xlsx -> catalog.json
 node tools/scripts/import-catalog.mjs --source other.xlsx
+node tools/scripts/import-catalog.mjs --no-estimates   # leave unpriced rather than estimate
 ```
 
 Ids are UUIDv5 over a fixed namespace, so re-importing updates the catalogue in place instead of
 duplicating it and existing product URLs keep resolving. SKUs are `UPB-<category>-<n>`, and the
 category segment is what `ProductThumb` keys its colour on.
 
-**The workbook has no prices, no stock and no photographs**, and the importer invents none. An
-imported product carries `price: 0`, which the storefront renders as *Price on request* with the
-Add to cart button disabled, and no `Offer` node reaches the JSON-LD — publishing `price: 0`
-would advertise the product as free in a search result. Product tiles are a generated wash and
-monogram rather than an `<img>` at a path that does not exist. Fill in prices and stock, and the
-existing priced path takes over with no code change.
+### Prices are indicative until someone supplies real ones
+
+**The workbook has no price, stock or image columns.** Photographs stay absent — tiles are a
+generated wash and monogram rather than an `<img>` at a path that does not exist. Prices and
+stock are filled in, and it matters where from:
+
+| Source | When | `priceSource` |
+| --- | --- | --- |
+| `tools/data/prices.csv` | A row exists for that SKU | `supplied` |
+| `tools/scripts/pricing.mjs` | Otherwise | `estimated` |
+| Nothing | `--no-estimates` was passed | `none` |
+
+**Nothing marked `estimated` is a real supplier price.** Those figures are derived from the pack
+size and weight stated in each listing title against a per-category rate, so a 500ml ark costs
+about twice a 250ml one and a pack of six soaps costs more than a bar. They are consistent and
+plausible, which is what design and demo work needs; they are not researched. The importer says
+so on every run, and `catalog.json` carries a `priceWarning` saying so too.
+
+To replace them, add rows to `tools/data/prices.csv` and re-import:
+
+```csv
+sku,price,stock
+UPB-AGB-001,180,120
+UPB-ARK-006,225,
+UPB-GHN-004,0,0
+```
+
+A price of `0` is not free — it means "not for sale yet", and the storefront renders it as *Price
+on request* with the cart button disabled and **no `Offer` node in the JSON-LD**, because
+publishing `price: 0` would advertise the product as free in a search result.
 
 ## Layout
 
@@ -192,8 +217,9 @@ the light values for everyone. That is worth knowing before adding a second them
   endpoint is generated and ready to call.
 - **No product photographs.** Tiles are a generated wash and monogram; the API has no image
   field and the import had no images. See `ProductThumb`.
-- **No prices or stock on the imported catalogue.** Everything reads *Price on request* until a
-  seller fills them in. See *The catalogue* above.
+- **Prices and stock are estimates, not supplier figures.** Every imported listing is priced by
+  `tools/scripts/pricing.mjs`. Replace them through `tools/data/prices.csv` before anyone treats
+  the storefront as a price list. See *The catalogue* above.
 - **Catalog, Orders and Payments are stubbed.** Those endpoints come from the archived contract
   merged into the generated client, and the storefront's server render reads them from
   `tools/scripts/stub-api.mjs` on port 5200 (override with `SSR_API_ORIGIN`). Identity is real.

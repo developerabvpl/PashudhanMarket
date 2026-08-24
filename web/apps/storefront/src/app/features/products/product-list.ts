@@ -35,7 +35,7 @@ import { ProductThumb } from './product-thumb';
               name="q"
               type="search"
               class="w-full rounded-control border border-border bg-surface px-4 py-3 text-ink shadow-card placeholder:text-ink-muted"
-              [value]="queryText()"
+              [attr.value]="queryText()"
               [attr.placeholder]="'catalog.searchPlaceholder' | transloco"
             />
           </label>
@@ -116,7 +116,7 @@ import { ProductThumb } from './product-thumb';
 
               <div class="mt-auto pt-3">
                 @if (product.price > 0) {
-                <p class="text-lg font-bold text-ink">{{ product.price | inr }}</p>
+                <p class="text-lg font-bold text-ink">{{ product.price | inr: 'symbol' : 'auto' }}</p>
                 <p
                   class="mt-0.5 text-xs font-medium"
                   [class.text-success]="product.availableQuantity > 0"
@@ -205,7 +205,15 @@ export class ProductList {
   /** Resolved by categoriesResolver; empty when the taxonomy call failed. */
   readonly categories = input<CategoryDto[]>([]);
 
-  /** Current search term, echoed back into the input after a reload. */
+  /**
+   * Current search term, echoed back into the input after a reload.
+   *
+   * Bound as an attribute, not a property. This page is server-rendered, so the search box is
+   * on screen and typeable before hydration finishes; a `[value]` property binding re-applies
+   * itself during hydration and wipes whatever was typed in that window. Setting the attribute
+   * seeds the initial value and then leaves a dirty input alone, which is what a browser's own
+   * back-navigation restore does too.
+   */
   readonly q = input<string>('');
 
   /** Current category filter, read from the query string to highlight the active chip. */

@@ -10,12 +10,24 @@ const catalog = JSON.parse(
   readFileSync(resolve(__dirname, '../../../tools/data/catalog.json'), 'utf8')
 ) as {
   categories: { id: string; name: string }[];
-  products: { id: string; sku: string; name: string; brand: string | null; categoryId: string }[];
+  products: {
+    id: string;
+    sku: string;
+    name: string;
+    brand: string | null;
+    categoryId: string;
+    price: number;
+    onHandQuantity: number;
+  }[];
 };
 
 const product = catalog.products[0];
 const category = catalog.categories.find((c) => c.id === product.categoryId)!;
 const categoryCount = catalog.products.filter((p) => p.categoryId === category.id).length;
+
+/** The two stock states the product page renders differently. */
+const inStock = catalog.products.find((p) => p.price > 0 && p.onHandQuantity > 0)!;
+const soldOut = catalog.products.find((p) => p.price > 0 && p.onHandQuantity === 0)!;
 
 /** A term that matches some but not all of the catalogue. */
 const TERM = 'agarbatti';
@@ -52,7 +64,7 @@ test.describe('@smoke storefront catalogue', () => {
     expect(html).toContain('application/ld+json');
   });
 
-  test('sets SEO tags and emits JSON-LD without a price it does not have', async ({ page }) => {
+  test('sets SEO tags and publishes the offer', async ({ page }) => {
     await page.goto(`/products/${product.id}`);
 
     await expect(page).toHaveTitle(`${product.name} | UP Bazaar`);
@@ -65,9 +77,14 @@ test.describe('@smoke storefront catalogue', () => {
     const node = parsed['@graph'].find((n: { '@type': string }) => n['@type'] === 'Product');
 
     expect(node.sku).toBe(product.sku);
-    // The import carries no prices, so there must be no Offer: one would read as "free".
-    expect(node.offers).toBeUndefined();
     expect(node.brand).toEqual({ '@type': 'Brand', name: product.brand });
+    expect(node.offers.price).toBe(product.price);
+    expect(node.offers.priceCurrency).toBe('INR');
+    expect(node.offers.availability).toBe(
+      product.onHandQuantity > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock'
+    );
   });
 
   test('search puts the term in the URL and narrows the list', async ({ page }) => {
@@ -102,12 +119,19 @@ test.describe('@smoke storefront catalogue', () => {
     await expect(page.getByText('Page 2 of 3')).toBeVisible();
   });
 
-  test('an unpriced listing says so instead of showing a zero', async ({ page }) => {
-    await page.goto(`/products/${product.id}`);
+  test('shows the price and lets a stocked product be added', async ({ page }) => {
+    await page.goto(`/products/${inStock.id}`);
 
-    await expect(page.getByText('Price on request')).toBeVisible();
+    await expect(page.getByText('In stock')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
+    await expect(page.getByText('Price on request')).toHaveCount(0);
+  });
+
+  test('a sold-out product keeps its price but refuses the cart', async ({ page }) => {
+    await page.goto(`/products/${soldOut.id}`);
+
+    await expect(page.getByText('Out of stock')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
-    await expect(page.getByText('₹0')).toHaveCount(0);
   });
 
   test('shows an empty state when nothing matches', async ({ page }) => {

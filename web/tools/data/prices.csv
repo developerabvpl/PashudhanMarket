@@ -1,0 +1,15 @@
+# Real prices and opening stock, keyed by SKU. Anything listed here overrides the indicative
+# estimate that tools/scripts/pricing.mjs would otherwise produce.
+#
+#   sku,price,stock
+#
+# price is in whole rupees. 0 means "not for sale yet" and the storefront shows "price on
+# request". Leave stock blank to keep the generated opening stock.
+#
+# Re-run `node tools/scripts/import-catalog.mjs` after editing.
+#
+# Example:
+#   UPB-AGB-001,180,120
+#   UPB-ARK-006,225,
+#   UPB-GHN-004,0,0
+sku,price,stock
