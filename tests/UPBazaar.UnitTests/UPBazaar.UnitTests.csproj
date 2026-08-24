@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <IsPackable>false</IsPackable>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,10 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
-    <ProjectReference Include="..\..\src\UPBazaar.Modules.Catalog\UPBazaar.Modules.Catalog.csproj" />
-    <ProjectReference Include="..\..\src\UPBazaar.Modules.Ordering\UPBazaar.Modules.Ordering.csproj" />
-    <ProjectReference Include="..\..\src\UPBazaar.Modules.Payments\UPBazaar.Modules.Payments.csproj" />
-    <ProjectReference Include="..\..\src\UPBazaar.Modules.Shipping\UPBazaar.Modules.Shipping.csproj" />
+    <ProjectReference Include="..\..\src\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

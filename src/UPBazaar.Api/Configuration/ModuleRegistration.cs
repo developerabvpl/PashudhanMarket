@@ -1,0 +1,54 @@
+using UPBazaar.Modules.Academy;
+using UPBazaar.Modules.Cart;
+using UPBazaar.Modules.Catalog;
+using UPBazaar.Modules.Cms;
+using UPBazaar.Modules.Crm;
+using UPBazaar.Modules.Identity;
+using UPBazaar.Modules.Inventory;
+using UPBazaar.Modules.Notifications;
+using UPBazaar.Modules.Orders;
+using UPBazaar.Modules.Payments;
+using UPBazaar.Modules.Promotions;
+using UPBazaar.Modules.Reporting;
+using UPBazaar.Modules.Reviews;
+using UPBazaar.Modules.Sellers;
+using UPBazaar.Modules.Settlements;
+using UPBazaar.Modules.Shipping;
+
+namespace UPBazaar.Api.Configuration;
+
+/// <summary>
+/// The one list of modules in the system.
+///
+/// It is explicit rather than assembly-scanned so that the set of modules a build contains is
+/// a decision in source control, visible in a diff, and identical between the API host, the
+/// design-time migration factory and the tests.
+/// </summary>
+public static class ModuleRegistration
+{
+    /// <summary>Registers every module with the host.</summary>
+    /// <param name="services">Service collection.</param>
+    /// <returns>The same collection, for chaining.</returns>
+    public static IServiceCollection AddModules(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return services
+            .AddIdentityModule()
+            .AddSellersModule()
+            .AddCatalogModule()
+            .AddInventoryModule()
+            .AddCartModule()
+            .AddOrdersModule()
+            .AddPaymentsModule()
+            .AddShippingModule()
+            .AddSettlementsModule()
+            .AddPromotionsModule()
+            .AddReviewsModule()
+            .AddCrmModule()
+            .AddAcademyModule()
+            .AddCmsModule()
+            .AddNotificationsModule()
+            .AddReportingModule();
+    }
+}

@@ -14,11 +14,6 @@
     <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
     <ProjectReference Include="..\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Shipping.Contracts\UPBazaar.Modules.Shipping.Contracts.csproj" />
-    <ProjectReference Include="..\UPBazaar.Modules.Ordering.Contracts\UPBazaar.Modules.Ordering.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="UPBazaar.Modules.Shipping.http" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>

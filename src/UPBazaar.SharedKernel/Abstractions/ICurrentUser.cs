@@ -1,6 +1,6 @@
 namespace UPBazaar.SharedKernel.Abstractions;
 
-/// <summary>The authenticated principal for the current request, if any.</summary>
+/// <summary>The authenticated principal for the current request, if there is one.</summary>
 public interface ICurrentUser
 {
     string? UserId { get; }

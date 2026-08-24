@@ -1,8 +1,8 @@
 namespace UPBazaar.SharedKernel.Primitives;
 
 /// <summary>
-/// Marks an entity whose changes are stamped and written to the audit log by the
-/// persistence interceptor. Implement this on anything an admin or seller can change.
+/// Marks an entity whose changes are stamped and written to the audit log. Implementing this
+/// is the entire opt-in: the audit interceptor does the rest.
 /// </summary>
 public interface IAuditable
 {

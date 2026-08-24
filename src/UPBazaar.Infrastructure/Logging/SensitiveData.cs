@@ -1,8 +1,9 @@
 namespace UPBazaar.Infrastructure.Logging;
 
 /// <summary>
-/// Single source of truth for what must never reach a log sink or the audit trail.
-/// Both the Serilog destructuring policy and the audit interceptor consult this.
+/// Single source of truth for what must never reach a log sink or the audit trail. Both the
+/// Serilog destructuring policy and the audit interceptor consult this, so a field cannot be
+/// protected in one place and leaked in the other.
 /// </summary>
 public static class SensitiveData
 {
@@ -19,6 +20,8 @@ public static class SensitiveData
     /// <summary>True when a property with this name must be masked.</summary>
     public static bool IsSensitive(string propertyName)
     {
+        ArgumentNullException.ThrowIfNull(propertyName);
+
         foreach (var fragment in Fragments)
         {
             if (propertyName.Contains(fragment, StringComparison.OrdinalIgnoreCase))

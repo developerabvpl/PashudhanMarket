@@ -1,13 +1,16 @@
 @host = https://localhost:7001
 
-### Liveness and database probe
+### Liveness and SQL probe
 GET {{host}}/health
 
-### OpenAPI document
+### Build and module inventory
+GET {{host}}/api/v1/system/info
+
+### OpenAPI document (Development only)
 GET {{host}}/openapi/v1.json
 
-# Module request collections live next to their modules:
-#   src/UPBazaar.Modules.Catalog/UPBazaar.Modules.Catalog.http
-#   src/UPBazaar.Modules.Ordering/UPBazaar.Modules.Ordering.http
-#   src/UPBazaar.Modules.Payments/UPBazaar.Modules.Payments.http
-#   src/UPBazaar.Modules.Shipping/UPBazaar.Modules.Shipping.http
+### Background job dashboard - needs platform.jobs.view
+GET {{host}}/jobs
+
+# Module request collections live next to each module as it grows an endpoint:
+#   src/UPBazaar.Modules.<Name>/UPBazaar.Modules.<Name>.http

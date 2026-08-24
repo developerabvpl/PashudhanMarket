@@ -1,0 +1,144 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,js,ts,html,css,props,targets,csproj,http}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+indent_size = 4
+max_line_length = 120
+
+#### Namespaces and usings ####
+
+csharp_style_namespace_declarations = file_scoped:error
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_using_directive_placement = outside_namespace:error
+
+#### Language rules ####
+
+# var only when the type is obvious from the right-hand side.
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+csharp_prefer_braces = true:error
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+csharp_style_expression_bodied_constructors = false:suggestion
+
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_not_pattern = true:warning
+
+csharp_style_throw_expression = true:suggestion
+csharp_style_conditional_delegate_call = true:warning
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_collection_expression = when_types_exactly_match:suggestion
+
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_null_propagation = true:warning
+dotnet_style_coalesce_expression = true:warning
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+dotnet_style_readonly_field = true:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:error
+
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+dotnet_style_qualification_for_event = false:warning
+
+dotnet_style_predefined_type_for_locals_parameters_members = true:warning
+dotnet_style_predefined_type_for_member_access = true:warning
+
+#### Naming ####
+
+dotnet_naming_rule.interfaces_start_with_i.severity = error
+dotnet_naming_rule.interfaces_start_with_i.symbols = interface
+dotnet_naming_rule.interfaces_start_with_i.style = begins_with_i
+
+dotnet_naming_rule.types_are_pascal_case.severity = error
+dotnet_naming_rule.types_are_pascal_case.symbols = type
+dotnet_naming_rule.types_are_pascal_case.style = pascal_case
+
+dotnet_naming_rule.members_are_pascal_case.severity = error
+dotnet_naming_rule.members_are_pascal_case.symbols = member
+dotnet_naming_rule.members_are_pascal_case.style = pascal_case
+
+dotnet_naming_rule.constants_are_pascal_case.severity = error
+dotnet_naming_rule.constants_are_pascal_case.symbols = constant
+dotnet_naming_rule.constants_are_pascal_case.style = pascal_case
+
+dotnet_naming_rule.private_fields_are_camel_case_with_underscore.severity = error
+dotnet_naming_rule.private_fields_are_camel_case_with_underscore.symbols = private_field
+dotnet_naming_rule.private_fields_are_camel_case_with_underscore.style = underscore_camel_case
+
+dotnet_naming_symbols.interface.applicable_kinds = interface
+dotnet_naming_symbols.interface.applicable_accessibilities = *
+
+dotnet_naming_symbols.type.applicable_kinds = class, struct, interface, enum, delegate
+dotnet_naming_symbols.type.applicable_accessibilities = *
+
+dotnet_naming_symbols.member.applicable_kinds = property, event, method
+dotnet_naming_symbols.member.applicable_accessibilities = *
+
+dotnet_naming_symbols.constant.applicable_kinds = field
+dotnet_naming_symbols.constant.required_modifiers = const
+
+dotnet_naming_symbols.private_field.applicable_kinds = field
+dotnet_naming_symbols.private_field.applicable_accessibilities = private
+
+dotnet_naming_style.begins_with_i.required_prefix = I
+dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+#### Analyzer severities ####
+
+# Unawaited task: silent data loss in a request pipeline.
+dotnet_diagnostic.CS4014.severity = error
+# ConfigureAwait is irrelevant in ASP.NET Core; nothing captures a context.
+dotnet_diagnostic.CA2007.severity = none
+# The API surface is internal to this solution, so culture-explicit overloads are noise.
+dotnet_diagnostic.CA1303.severity = none
+dotnet_diagnostic.CA1848.severity = none
+
+[tests/**/*.cs]
+# Tests name themselves in prose and reach into internals on purpose.
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1861.severity = none
+
+[src/UPBazaar.Infrastructure/Persistence/Migrations/*.cs]
+# Generated by "dotnet ef"; regenerating it would only undo any hand-editing.
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
+#### Deliberate analyzer exemptions ####
+
+[*.cs]
+# CA1716: "Error" collides with a Visual Basic keyword. This solution is C#-only and Error is
+# the name the domain uses; renaming it to ErrorInfo would make every call site worse.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1711: IDomainEventHandler ends in "EventHandler". The rule is aimed at types that are not
+# .NET events; this one handles domain events, which is exactly what the name says.
+dotnet_diagnostic.CA1711.severity = none

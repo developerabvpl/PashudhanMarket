@@ -1,55 +1,94 @@
 using Microsoft.EntityFrameworkCore;
-using UPBazaar.Infrastructure.Persistence.Audit;
-using UPBazaar.Infrastructure.Persistence.Idempotency;
-using UPBazaar.Infrastructure.Persistence.Outbox;
+using UPBazaar.Infrastructure.Persistence.Shared;
 using UPBazaar.SharedKernel.Modules;
+using UPBazaar.SharedKernel.Outbox;
 
 namespace UPBazaar.Infrastructure.Persistence;
 
 /// <summary>
-/// One DbContext for the whole monolith, but each module owns its schema and supplies its own
-/// IEntityTypeConfiguration classes. Modules never reference each other's entities; the model
-/// is assembled here purely so that a single migration history covers the database.
+/// One DbContext for the whole monolith, assembled from the modules registered in the host.
+///
+/// A single context means a single migration history and a single transaction across a
+/// request, which is what lets the outbox be atomic with the state change that raised the
+/// event. Isolation between modules is by schema and by the rule that a module only ever
+/// touches its own tables, not by separate contexts.
 /// </summary>
 public sealed class UPBazaarDbContext : DbContext
 {
+    /// <summary>Schema for platform tables that belong to no single module.</summary>
     public const string SharedSchema = "shared";
 
-    private readonly IReadOnlyCollection<IModuleSchema> _modules;
+    private readonly IReadOnlyCollection<IModule> _modules;
 
-    public UPBazaarDbContext(
-        DbContextOptions<UPBazaarDbContext> options,
-        IEnumerable<IModuleSchema> modules)
-        : base(options) => _modules = modules.ToList();
+    public UPBazaarDbContext(DbContextOptions<UPBazaarDbContext> options, IEnumerable<IModule> modules)
+        : base(options)
+    {
+        ArgumentNullException.ThrowIfNull(modules);
+
+        _modules = [.. modules];
+    }
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
-    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
-    /// <summary>Modules registered in this host, exposed for diagnostics and tests.</summary>
-    public IReadOnlyCollection<IModuleSchema> Modules => _modules;
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+
+    /// <summary>Modules composed into this model. Exposed for diagnostics and tests.</summary>
+    public IReadOnlyCollection<IModule> Modules => _modules;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+
         modelBuilder.HasDefaultSchema(SharedSchema);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UPBazaarDbContext).Assembly);
 
-        foreach (var assembly in _modules.Select(m => m.Assembly).Distinct())
+        foreach (var module in _modules)
         {
-            modelBuilder.ApplyConfigurationsFromAssembly(assembly);
+            modelBuilder.ApplyConfigurationsFromAssembly(module.Assembly);
         }
+
+        ApplyModuleSchemas(modelBuilder);
     }
 
     /// <summary>
-    /// Enforces the storage conventions globally so no individual configuration has to
-    /// remember them: money is decimal(18,2) and every timestamp is datetime2.
+    /// Enforces the storage conventions globally, so no individual configuration has to
+    /// remember them: money is decimal(18,2), every timestamp is datetime2, and a string
+    /// without an explicit length does not become nvarchar(max).
     /// </summary>
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+
         configurationBuilder.Properties<decimal>().HavePrecision(18, 2);
         configurationBuilder.Properties<DateTime>().HaveColumnType("datetime2");
         configurationBuilder.Properties<string>().HaveMaxLength(256);
+    }
+
+    /// <summary>
+    /// Puts every entity declared by a module into that module's schema unless its
+    /// configuration said otherwise. Schema-per-module then holds even when someone adds an
+    /// entity and forgets the ToTable call.
+    /// </summary>
+    private void ApplyModuleSchemas(ModelBuilder modelBuilder)
+    {
+        foreach (var module in _modules)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (entityType.ClrType.Assembly != module.Assembly)
+                {
+                    continue;
+                }
+
+                if (entityType.GetSchema() is null)
+                {
+                    entityType.SetSchema(module.Schema);
+                }
+            }
+        }
     }
 }

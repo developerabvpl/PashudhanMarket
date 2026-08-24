@@ -1,22 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.DependencyInjection;
+using UPBazaar.Api.Configuration;
 using UPBazaar.Infrastructure.Persistence;
-using UPBazaar.Modules.Catalog;
-using UPBazaar.Modules.Ordering;
-using UPBazaar.Modules.Payments;
-using UPBazaar.Modules.Shipping;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Api.Persistence;
 
 /// <summary>
-/// Used by "dotnet ef" only. It lists the modules explicitly so migrations never depend on
-/// booting the web host, and so a missing connection string cannot break tooling.
+/// Used by <c>dotnet ef</c> only.
+///
+/// It builds the context directly rather than booting the web host, so migrations do not
+/// depend on Hangfire reaching SQL Server or on a connection string being present. The module
+/// list comes from <see cref="ModuleRegistration"/>, so the design-time model is by
+/// construction the same one the running application composes.
 /// </summary>
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPBazaarDbContext>
 {
     private const string FallbackConnectionString =
-        @"Server=(localdb)\MSSQLLocalDB;Database=UPBazaar;Trusted_Connection=True;TrustServerCertificate=True";
+        @"Server=.\SQLEXPRESS;Database=UPBazaar;Trusted_Connection=True;TrustServerCertificate=True";
 
     public UPBazaarDbContext CreateDbContext(string[] args)
     {
@@ -32,14 +34,21 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPB
             })
             .Options;
 
-        IModuleSchema[] modules =
-        [
-            new CatalogModuleSchema(),
-            new OrderingModuleSchema(),
-            new PaymentsModuleSchema(),
-            new ShippingModuleSchema(),
-        ];
+        return new UPBazaarDbContext(options, ResolveModules());
+    }
 
-        return new UPBazaarDbContext(options, modules);
+    /// <summary>
+    /// Runs the real registration against a throwaway container and reads the modules back
+    /// out. Keeping a second hand-written list here is how design-time models drift from the
+    /// running one; this cannot drift, because it is the same code path.
+    /// </summary>
+    private static IEnumerable<IModule> ResolveModules()
+    {
+        var services = new ServiceCollection();
+        services.AddModules();
+
+        using var provider = services.BuildServiceProvider();
+
+        return [.. provider.GetServices<IModule>()];
     }
 }

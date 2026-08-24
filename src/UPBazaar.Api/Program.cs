@@ -1,74 +1,93 @@
-using System.Text;
-using Hangfire;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using System.Globalization;
 using Serilog;
-using UPBazaar.Api.Extensions;
-using UPBazaar.Api.OpenApi;
+using UPBazaar.Api.Configuration;
+using UPBazaar.Api.Middleware;
 using UPBazaar.Infrastructure;
+using UPBazaar.Infrastructure.Identity;
 using UPBazaar.Infrastructure.Logging;
-using UPBazaar.Infrastructure.Messaging;
-using UPBazaar.Modules.Catalog;
-using UPBazaar.Modules.Ordering;
-using UPBazaar.Modules.Payments;
-using UPBazaar.Modules.Shipping;
+using UPBazaar.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// UPBAZAAR_-prefixed environment variables override configuration, so a deployment can set
+// UPBAZAAR_ConnectionStrings__UPBazaar without colliding with anything else on the host. The
+// design-time migration factory reads the same variable, so both agree about which database
+// a command targets.
+builder.Configuration.AddEnvironmentVariables("UPBAZAAR_");
+
+// Serilog: console for a terminal, a rolling file for anything after the fact. Both carry the
+// correlation id pushed by the middleware, and the destructuring policy masks PII on the way.
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
-    // Rule 7: nothing that looks like PII or a secret reaches a sink.
+    .Enrich.WithProperty("Application", "UPBazaar.Api")
     .Destructure.With(new SensitiveDataDestructuringPolicy())
-    .WriteTo.Console());
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.File(
+        path: Path.Combine(context.HostingEnvironment.ContentRootPath, "logs", "upbazaar-.log"),
+        formatProvider: CultureInfo.InvariantCulture,
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        shared: true));
 
-builder.Services.AddControllers()
-    .AddCatalogApplicationPart()
-    .AddOrderingApplicationPart()
-    .AddPaymentsApplicationPart()
-    .AddShippingApplicationPart();
+builder.Services.AddControllers();
+builder.Services.AddApiVersioningAndDocs();
 
-builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi(options =>
+// ProblemDetails for framework-generated responses (404, 405, 415); the exception handler
+// covers the rest, so every failure leaves through the same shape.
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
 {
-    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
-    options.AddDocumentTransformer<RelativeServerTransformer>();
+    context.ProblemDetails.Instance =
+        $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+    context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.TraceIdentifier;
 });
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services
-    .AddCatalogModule()
-    .AddOrderingModule()
-    .AddPaymentsModule()
-    .AddShippingModule();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddModules();
 
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
+
+// Deny by default: an endpoint that forgets to state its policy is unreachable rather than
+// accidentally public.
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+    .AddPolicy(HangfireSetup.DashboardPolicy, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireClaim(CurrentUser.PermissionClaimType, HangfireSetup.DashboardPermission));
+
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy())
+    .AddSqlServer(
+        builder.Configuration.GetConnectionString(DependencyInjection.ConnectionStringName)
+            ?? string.Empty,
+        name: "sql",
+        tags: ["ready"]);
+
 builder.Services.AddBackgroundJobs(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
+// Correlation first: everything downstream, including the request log line and the exception
+// handler, reads the id it sets.
+app.UseCorrelationId();
+app.UseSerilogRequestLogging(options =>
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("CorrelationId", httpContext.TraceIdentifier);
+        diagnosticContext.Set("UserId", httpContext.User.Identity?.Name);
+    });
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    // The fallback policy would otherwise put the documentation behind a token.
-    app.MapOpenApi().AllowAnonymous();
-
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "UP Bazaar API v1");
-        options.RoutePrefix = "swagger";
-    });
-
-    app.MapScalarApiReference(options => options
-            .WithTitle("UP Bazaar API")
-            .WithOpenApiRoutePattern("/openapi/{documentName}.json"))
-        .AllowAnonymous();
+    app.MapApiDocumentation();
 }
 
 app.UseAuthentication();
@@ -76,10 +95,22 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous();
+app.MapJobsDashboard();
+
+// The deny-by-default fallback policy is also applied to requests that match no endpoint,
+// which would turn every typo into a 401 and leave a caller unable to tell a missing route
+// from a forbidden one. This terminal endpoint is anonymous, so an unknown path gets an honest
+// 404 in problem-details form while real endpoints keep their 401 and 403.
+app.MapFallback(() => Results.Problem(
+        title: "No endpoint matches this route.",
+        statusCode: StatusCodes.Status404NotFound,
+        type: "https://upbazaar.dev/errors/http.404"))
+    .AllowAnonymous()
+    .ExcludeFromDescription();
 
 app.ScheduleRecurringJobs();
 
-app.Run();
+await app.RunAsync();
 
 /// <summary>Exposed so the integration test host can reference this entry point.</summary>
 public partial class Program;

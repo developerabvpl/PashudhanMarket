@@ -1,22 +1,17 @@
 namespace UPBazaar.SharedKernel.Primitives;
 
 /// <summary>
-/// Base type for all persisted entities: bigint identity <see cref="Id"/> for storage,
-/// <see cref="PublicId"/> for anything crossing a module or API boundary.
+/// Base for every persisted entity: a bigint identity key for storage and a stable
+/// <see cref="PublicId"/> for anything that crosses a module or API boundary.
 /// </summary>
 public abstract class Entity
 {
-    private readonly List<IDomainEvent> _domainEvents = [];
-
-    /// <summary>Clustered identity key. Never exposed outside the owning module.</summary>
+    /// <summary>Clustered identity key. Never leaves the owning module.</summary>
     public long Id { get; protected set; }
 
-    /// <summary>Stable public identifier - this is what APIs and other modules use.</summary>
+    /// <summary>
+    /// The identifier APIs and other modules use. Version 7 so it sorts by creation time and
+    /// does not fragment the index the way a random GUID would.
+    /// </summary>
     public Guid PublicId { get; protected set; } = Guid.CreateVersion7();
-
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-
-    protected void Raise(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
-
-    public void ClearDomainEvents() => _domainEvents.Clear();
 }

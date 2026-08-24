@@ -1,18 +1,19 @@
 namespace UPBazaar.SharedKernel.Primitives;
 
 /// <summary>
-/// A fact that has already happened inside a module. Domain events are captured on the
-/// aggregate, written to the shared outbox in the same transaction as the state change,
-/// and dispatched asynchronously - including to handlers in other modules.
+/// Something that has already happened inside a module. Domain events are raised on the
+/// aggregate, persisted to the outbox in the same transaction as the state change, and
+/// dispatched afterwards - including to handlers that live in other modules.
 /// </summary>
 public interface IDomainEvent
 {
+    /// <summary>Stable identity of this occurrence, used to de-duplicate delivery.</summary>
     Guid EventId { get; }
 
     DateTime OccurredAtUtc { get; }
 }
 
-/// <summary>Convenience base record for domain events.</summary>
+/// <summary>Convenience base for domain events.</summary>
 public abstract record DomainEvent : IDomainEvent
 {
     public Guid EventId { get; init; } = Guid.CreateVersion7();

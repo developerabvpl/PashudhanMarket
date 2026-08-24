@@ -1,6 +1,6 @@
 namespace UPBazaar.SharedKernel.Abstractions;
 
-/// <summary>Injectable clock. All timestamps are UTC; never call DateTime.Now.</summary>
+/// <summary>Injectable clock. Everything is UTC; never call <c>DateTime.Now</c>.</summary>
 public interface IClock
 {
     DateTime UtcNow { get; }

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using UPBazaar.Infrastructure.Persistence.Audit;
+using UPBazaar.Infrastructure.Persistence.Shared;
 
 namespace UPBazaar.Infrastructure.Persistence.Configurations;
 
@@ -8,7 +8,7 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 {
     public void Configure(EntityTypeBuilder<AuditLog> builder)
     {
-        builder.ToTable("AuditLog", "audit");
+        builder.ToTable("AuditLog", UPBazaarDbContext.SharedSchema);
 
         builder.HasKey(x => x.Id);
 
@@ -18,10 +18,11 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(x => x.Changes).HasColumnType("nvarchar(max)");
         builder.Property(x => x.UserId).HasMaxLength(64);
         builder.Property(x => x.UserName).HasMaxLength(256);
-        builder.Property(x => x.TraceId).HasMaxLength(64);
-        builder.Property(x => x.OccurredAtUtc).HasColumnType("datetime2").IsRequired();
+        builder.Property(x => x.CorrelationId).HasMaxLength(64);
+        builder.Property(x => x.OccurredAtUtc).IsRequired();
 
         builder.HasIndex(x => new { x.EntityType, x.EntityPublicId });
         builder.HasIndex(x => x.OccurredAtUtc);
+        builder.HasIndex(x => x.CorrelationId);
     }
 }

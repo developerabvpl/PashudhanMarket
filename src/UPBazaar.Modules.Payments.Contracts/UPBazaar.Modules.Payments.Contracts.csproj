@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    The only surface other modules may reference: interfaces, DTOs, permission names and the
+    domain events this module publishes. No entities, no handlers, no EF.
+  -->
+
   <ItemGroup>
     <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
   </ItemGroup>

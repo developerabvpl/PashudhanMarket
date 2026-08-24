@@ -1,54 +1,79 @@
-using Microsoft.AspNetCore.Authorization;
+using System.Reflection;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using UPBazaar.Infrastructure.Authorization;
-using UPBazaar.Infrastructure.ExternalServices;
-using UPBazaar.Infrastructure.ExternalServices.Notifications;
-using UPBazaar.Infrastructure.ExternalServices.Payments;
-using UPBazaar.Infrastructure.ExternalServices.Shipping;
-using UPBazaar.Infrastructure.ExternalServices.Storage;
+using UPBazaar.Infrastructure.Correlation;
 using UPBazaar.Infrastructure.Identity;
 using UPBazaar.Infrastructure.Messaging;
+using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Infrastructure.Persistence;
-using UPBazaar.Infrastructure.Persistence.Idempotency;
 using UPBazaar.Infrastructure.Persistence.Interceptors;
 using UPBazaar.Infrastructure.Time;
 using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
+using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Infrastructure;
 
+/// <summary>Composition root for everything that is not a module.</summary>
 public static class DependencyInjection
 {
+    /// <summary>Name of the connection string in configuration.</summary>
     public const string ConnectionStringName = "UPBazaar";
 
+    /// <summary>
+    /// Registers persistence, the dispatcher, and the ambient services modules depend on.
+    /// Call before <c>AddModule</c>, so a module can override anything it needs to.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <returns>The same collection, for chaining.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         services.AddHttpContextAccessor();
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICorrelationContext, CorrelationContext>();
         services.AddScoped<IDispatcher, Dispatcher>();
-        services.AddScoped<IIdempotencyService, IdempotencyService>();
-
-        services.AddPersistence(configuration);
-        services.AddPermissionAuthorization();
-        services.AddExternalServices(configuration);
-
         services.AddScoped<OutboxProcessor>();
 
+        services.AddPersistence(configuration);
+
         return services;
+    }
+
+    /// <summary>
+    /// Wires one module into the host: its schema declaration, its validators, and every
+    /// command, query and domain event handler it declares.
+    /// </summary>
+    /// <typeparam name="TModule">The module's <see cref="IModule"/> implementation.</typeparam>
+    /// <param name="services">Service collection.</param>
+    /// <returns>The same collection, for chaining.</returns>
+    public static IServiceCollection AddModule<TModule>(this IServiceCollection services)
+        where TModule : class, IModule, new()
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        var module = new TModule();
+
+        services.AddSingleton<IModule>(module);
+        services.AddValidatorsFromAssembly(module.Assembly, includeInternalTypes: true);
+
+        return services.AddHandlersFrom(module.Assembly);
     }
 
     private static IServiceCollection AddPersistence(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<AuditInterceptor>();
         services.AddScoped<OutboxInterceptor>();
 
         services.AddDbContext<UPBazaarDbContext>((provider, options) =>
@@ -62,54 +87,43 @@ public static class DependencyInjection
                     sql.EnableRetryOnFailure();
                 });
 
+            // Order matters: audit rows describe the state change, and the outbox drains the
+            // events that change raised. Both must land in the caller's transaction.
             options.AddInterceptors(
-                provider.GetRequiredService<AuditableEntityInterceptor>(),
+                provider.GetRequiredService<AuditInterceptor>(),
                 provider.GetRequiredService<OutboxInterceptor>());
         });
 
-        services.AddHealthChecks().AddDbContextCheck<UPBazaarDbContext>("database");
-
         return services;
     }
 
-    private static IServiceCollection AddPermissionAuthorization(this IServiceCollection services)
+    /// <summary>
+    /// Scans an assembly for handler implementations and registers each against every handler
+    /// interface it closes. A module therefore declares a handler simply by writing one.
+    /// </summary>
+    private static IServiceCollection AddHandlersFrom(this IServiceCollection services, Assembly assembly)
     {
-        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        Type[] handlerInterfaces =
+        [
+            typeof(ICommandHandler<>),
+            typeof(ICommandHandler<,>),
+            typeof(IQueryHandler<,>),
+            typeof(IDomainEventHandler<>),
+        ];
 
-        // Nothing is reachable without an explicit [Authorize] or [AllowAnonymous].
-        services.AddAuthorizationBuilder()
-            .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+        var implementations = assembly.GetTypes()
+            .Where(t => t is { IsAbstract: false, IsInterface: false, IsGenericTypeDefinition: false });
 
-        return services;
-    }
-
-    private static IServiceCollection AddExternalServices(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        services.AddOptions<ExternalServicesOptions>()
-            .Bind(configuration.GetSection(ExternalServicesOptions.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-
-        var options = configuration
-            .GetSection(ExternalServicesOptions.SectionName)
-            .Get<ExternalServicesOptions>() ?? new ExternalServicesOptions();
-
-        if (!options.UseSandbox)
+        foreach (var implementation in implementations)
         {
-            throw new NotSupportedException(
-                "Live Razorpay and Shiprocket adapters are not implemented yet. Implement "
-                + "IPaymentGateway and IShippingProvider against the provider APIs, register them "
-                + "here, or set ExternalServices:UseSandbox to true.");
-        }
+            var contracts = implementation.GetInterfaces()
+                .Where(i => i.IsGenericType && handlerInterfaces.Contains(i.GetGenericTypeDefinition()));
 
-        services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
-        services.AddSingleton<IShippingProvider, FakeShippingProvider>();
-        services.AddSingleton<ISmsSender, FakeSmsSender>();
-        services.AddSingleton<IEmailSender, FakeEmailSender>();
-        services.AddSingleton<IBlobStorage, FakeBlobStorage>();
+            foreach (var contract in contracts)
+            {
+                services.AddScoped(contract, implementation);
+            }
+        }
 
         return services;
     }

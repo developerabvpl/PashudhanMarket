@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Serilog.Core;
 using Serilog.Events;
@@ -6,8 +7,12 @@ using Serilog.Events;
 namespace UPBazaar.Infrastructure.Logging;
 
 /// <summary>
-/// Destructures our own types property by property and masks anything whose name looks
-/// sensitive, so logging a whole DTO cannot leak PII or a secret by accident.
+/// Destructures this solution's own types property by property, masking anything whose name
+/// looks sensitive.
+///
+/// Without it, logging a whole DTO is one careless line away from putting a phone number or a
+/// gateway signature into a log file. Third-party types are left to Serilog's defaults, since
+/// masking by name would be guesswork there.
 /// </summary>
 public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
 {
@@ -16,8 +21,11 @@ public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
     public bool TryDestructure(
         object value,
         ILogEventPropertyValueFactory propertyValueFactory,
-        out LogEventPropertyValue? result)
+        [NotNullWhen(true)] out LogEventPropertyValue? result)
     {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(propertyValueFactory);
+
         var type = value.GetType();
 
         if (!IsOwnType(type))
@@ -28,9 +36,8 @@ public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
 
         var properties = Properties.GetOrAdd(
             type,
-            static t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-                .ToArray());
+            static t => [.. t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)]);
 
         var logged = new List<LogEventProperty>(properties.Length);
 
@@ -48,8 +55,9 @@ public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
             {
                 propertyValue = property.GetValue(value);
             }
-            catch (Exception ex)
+            catch (TargetInvocationException ex)
             {
+                // A computed property that throws must not take the log line down with it.
                 logged.Add(new LogEventProperty(property.Name, new ScalarValue($"<{ex.GetType().Name}>")));
                 continue;
             }
@@ -60,6 +68,7 @@ public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
         }
 
         result = new StructureValue(logged, type.Name);
+
         return true;
     }
 

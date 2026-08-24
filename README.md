@@ -1,7 +1,11 @@
 # UP Bazaar API
 
-Modular monolith for the UP Bazaar marketplace: ASP.NET Core Web API, EF Core code-first
+Modular monolith for the UP Bazaar marketplace. .NET 10, ASP.NET Core, EF Core 10 code-first
 against SQL Server, Hangfire for background work, Serilog for logging.
+
+Sixteen modules — Identity, Sellers, Catalog, Inventory, Cart, Orders, Payments, Shipping,
+Settlements, Promotions, Reviews, Crm, Academy, Cms, Notifications, Reporting — each owning a
+SQL schema and a `.Contracts` project that is the only thing other modules may reference.
 
 ## Running it
 
@@ -9,15 +13,25 @@ against SQL Server, Hangfire for background work, Serilog for logging.
 dotnet run --project src/UPBazaar.Api
 ```
 
-Swagger is at `/swagger`, Scalar at `/scalar`, health at `/health`. Both documentation
-endpoints are Development-only.
+| Surface | Path | Notes |
+| --- | --- | --- |
+| Swagger UI | `/swagger` | Development only |
+| Scalar | `/scalar/v1` | Development only |
+| OpenAPI document | `/openapi/v1.json` | one document per API version |
+| Health | `/health` | self plus a SQL Server probe |
+| Job dashboard | `/jobs` | requires the `platform.jobs.view` permission |
+| API | `/api/v1/...` | version is a URL segment |
 
-The development connection string in `appsettings.Development.json` points at
-`.\SQLEXPRESS`. Change it, or override it without touching the file:
+The development connection string in `appsettings.Development.json` points at `.\SQLEXPRESS`.
+Override it without editing the file:
 
 ```bash
-dotnet user-secrets set "ConnectionStrings:UPBazaar" "<your connection string>" --project src/UPBazaar.Api
+dotnet user-secrets set "ConnectionStrings:UPBazaar" "<connection string>" --project src/UPBazaar.Api
 ```
+
+Every setting also accepts a `UPBAZAAR_`-prefixed environment variable, so
+`UPBAZAAR_ConnectionStrings__UPBazaar` works in a container without colliding with anything
+else on the host. The design-time migration factory reads the same variable.
 
 Create or update the database:
 
@@ -25,115 +39,105 @@ Create or update the database:
 dotnet ef database update -p src/UPBazaar.Infrastructure -s src/UPBazaar.Api
 ```
 
-`openapi.json` at the repository root is the contract the Angular workspace in `web/` generates
-its client from. It is a build artifact, not something to hand-edit — refresh it by running the
-API and fetching the document:
-
-```bash
-curl -s http://localhost:5199/openapi/v1.json -o openapi.json
-```
-
-The document declares a relative server URL, so the file is identical on every machine.
-
 ## Testing
 
 ```bash
 dotnet test
 ```
 
-Unit tests need nothing. Integration tests need SQL Server and pick it up in this order:
+Unit tests need nothing. Integration tests need SQL Server and resolve it in this order:
 
 1. `UPBAZAAR_TEST_SQL` — a server-level connection string; each run creates and drops its own
    database on that server.
-2. A SQL Server container, when a Docker daemon is reachable.
+2. A SQL Server container via Testcontainers, when a Docker daemon is reachable.
 3. Neither — the database tests report as **skipped**, not failed.
 
 ```bash
-# example: reuse a local SQL Server Express instead of Docker
+# reuse a local SQL Server Express instead of Docker
 UPBAZAAR_TEST_SQL="Server=.\SQLEXPRESS;Trusted_Connection=True;TrustServerCertificate=True" dotnet test
 ```
 
-Integration tests authenticate through a test scheme that reads permissions from an
-`X-Test-Permissions` header, so the real policy provider is exercised and a missing
-permission still produces a 403.
-
-The Angular front ends live in [`web/`](web/README.md) and generate their API client from that
-same `openapi.json`.
+The integration host turns on container scope validation, so a singleton that captures a
+scoped service fails in CI rather than on someone's first `dotnet run`.
 
 ## Layout
 
 ```
 src/
-  UPBazaar.SharedKernel          primitives, Result, messaging contracts - no dependencies
-  UPBazaar.Infrastructure        DbContext, outbox, audit, idempotency, auth, external I/O
-  UPBazaar.Api                   host: DI wiring, auth, OpenAPI, Hangfire, migrations target
-  UPBazaar.Modules.<Name>            domain + application + controllers for one module
-  UPBazaar.Modules.<Name>.Contracts  the only thing other modules may reference
+  UPBazaar.SharedKernel                primitives, Result, messaging contracts - no dependencies
+  UPBazaar.Infrastructure              DbContext, interceptors, dispatcher, outbox processor
+  UPBazaar.Api                         host: logging, auth, versioning, docs, health, jobs
+  UPBazaar.Modules.<Name>              domain, application and endpoints for one module
+  UPBazaar.Modules.<Name>.Contracts    interfaces, DTOs, permissions, published events
 tests/
-  UPBazaar.UnitTests             domain logic, no I/O
-  UPBazaar.IntegrationTests      WebApplicationFactory + real SQL Server
+  UPBazaar.UnitTests                   domain and infrastructure logic, no I/O
+  UPBazaar.IntegrationTests            WebApplicationFactory against a real SQL Server
 ```
 
-Each module owns a SQL schema — `catalog`, `ordering`, `payments`, `shipping` — plus the
-shared `shared` and `audit` schemas. A module never queries another module's tables: it either
-calls an interface from that module's `.Contracts` project, or reacts to a domain event.
+A module never queries another module's tables. It either calls an interface from that
+module's `.Contracts` project, or reacts to a domain event delivered through the outbox.
 
 ## How the pieces fit
 
-**Messaging.** Controllers depend only on `IDispatcher`. It resolves the single handler for a
-command or query and runs any FluentValidation validators first, so handlers assume a
-well-formed request and controllers stay thin. Handlers return `Result`, which
-`ResultExtensions` maps to an HTTP status and RFC 7807 problem details.
+**Dispatcher.** `IDispatcher` in SharedKernel, implemented in Infrastructure — roughly 150
+lines instead of a MediatR dependency. It resolves the single handler for a command or query,
+runs any registered FluentValidation validators first, and returns a `Result`. Handlers are
+discovered by convention: writing `ICommandHandler<T>` in a module is the whole registration.
 
-**Outbox.** Domain events raised on an aggregate are written to `shared.OutboxMessage` inside
-the same transaction as the state change, by an EF interceptor. A Hangfire recurring job drains
-the outbox and dispatches each event to `IDomainEventHandler<T>` implementations, wherever they
-live. That is the only sanctioned way an action in one module causes an effect in another —
-for example, placing an order books a shipment.
+**One DbContext, schema per module.** `UPBazaarDbContext` applies
+`IEntityTypeConfiguration` classes from every registered module's assembly, then forces each
+module's entities into that module's schema even if a configuration forgot to say so. One
+context means one migration history and one transaction per request, which is what lets the
+outbox be atomic with the state change that raised the event.
 
-**Idempotency.** Checkout, refunds and the Razorpay webhook all reserve a key in
-`shared.IdempotencyRecord` before doing any work. A retry with the same key replays the stored
-response; the same key with a different body is a 409. The unique index on the key is what makes
-a concurrent duplicate lose the race instead of running twice.
+**Interceptors.** `AuditInterceptor` stamps `IAuditable` entities and writes `shared.AuditLog`
+rows describing what changed, with sensitive fields masked. `OutboxInterceptor` drains domain
+events off aggregates into `shared.OutboxMessages`. Both run inside the caller's transaction,
+so neither can record something a rollback undid.
 
-**Auditing.** Implementing `IAuditable` is the whole opt-in. The persistence interceptor stamps
-the entity and writes an `audit.AuditLog` row with the changed properties, redacting anything
-whose name looks sensitive.
+**Outbox.** `OutboxProcessor` runs on a Hangfire recurring job, reads the oldest unprocessed
+batch, and dispatches each event to its handlers wherever they live. Failures are recorded per
+message with an attempt count, so one poison event cannot block the queue.
 
-**Authorization.** Every endpoint carries `[Authorize("<permission>")]` unless explicitly
-`[AllowAnonymous]`, and a fallback policy rejects anything that forgets. `PermissionPolicyProvider`
-turns a permission name into a policy on demand, so adding an endpoint never means editing a
-central list. Permission names live in each module's Contracts project.
+**Correlation.** Middleware honours an inbound `X-Correlation-Id` or mints one, sanitises it,
+echoes it, and pushes it onto the Serilog context. Audit rows and outbox messages carry it too,
+so one identifier ties a user action to every log line and side effect it produced.
 
-**External I/O.** Razorpay, Shiprocket, SMS, email and blob storage sit behind interfaces in
-`UPBazaar.Infrastructure/ExternalServices`, each with a `Fake*` implementation.
-`ExternalServices:UseSandbox` selects between them and defaults to `true`.
+**Errors.** A global `IExceptionHandler` returns RFC 7807 problem details carrying the
+correlation id and nothing else — stack traces leak schema and file paths. Framework responses
+(404, 405, 415) get the same shape through `AddProblemDetails`.
 
-## Conventions worth knowing
+**Authorization.** A fallback policy denies by default, so an endpoint that forgets to declare
+a policy is unreachable rather than accidentally public. Because that policy also applies to
+requests matching no endpoint, an explicit anonymous fallback endpoint returns an honest 404
+for unknown routes instead of a misleading 401.
 
-- Every schema change ships with a migration in the same commit. Applied migrations are never edited.
+## Conventions
+
+- Warnings are errors, solution-wide. Three analyzer rules are switched off in `.editorconfig`,
+  each with the reason written next to it.
 - Money is `decimal(18,2)`, timestamps are `datetime2` UTC, ids are `bigint` identity plus a
-  `Guid PublicId` that is the only id crossing a module or API boundary. The first two are
+  `Guid PublicId` — the only id that crosses a module or API boundary. The first two are
   enforced globally in `UPBazaarDbContext.ConfigureConventions`.
-- `Stock`, `Payment` and `SettlementLine` carry `rowversion` concurrency tokens.
-- Nothing that looks like PII or a secret is logged: `SensitiveDataDestructuringPolicy` masks it
-  on the way to the sink, and the audit interceptor masks it on the way to the database.
-- No secrets in `appsettings.*.json`. Use user-secrets or environment variables.
-- Each module has a `.http` file next to it holding a request for every endpoint it exposes.
+- `PublicId` is a version 7 GUID, so it sorts by creation time instead of fragmenting indexes.
+- Every schema change ships with a migration in the same commit. Applied migrations are never
+  edited.
+- No secrets in `appsettings.*.json`.
 
 ## Current state
 
-Everything above is wired and covered by tests. Deliberately not built yet:
+The platform is wired and tested; the modules are skeletons. Each has its registration, its
+schema declaration and its permission names, and no entities yet — which is why `Baseline`
+creates only the four `shared.*` tables.
 
-- **Live payment and shipping adapters.** Only the sandbox fakes exist. Starting the app with
-  `ExternalServices:UseSandbox=false` fails fast with a message naming what to implement.
-- **Identity.** JWT bearer validation is configured against a symmetric key, but nothing issues
-  tokens. Development falls back to an ephemeral signing key so a fresh clone still runs.
-- **Categories** have no endpoints yet; the catalog exposes products and stock only.
-- **Seller payouts.** Settlement lines are created and reversed, but nothing pays them out.
+Deliberately not built yet:
 
-## Target framework
-
-The solution is on `net9.0` because that is the newest SDK installed on this machine. Moving to
-.NET 10 is a one-line change to `TargetFramework` in `Directory.Build.props` plus the `EfVersion`
-and `AspNetVersion` properties in `Directory.Packages.props`.
+- **No token issuer.** JWT bearer validation is configured against a symmetric key, and
+  Development falls back to an ephemeral one so a fresh clone runs. Issuance belongs to the
+  Identity module.
+- **Outbox processing is single-writer.** `DisableConcurrentExecution` keeps one worker on the
+  queue. Running more than one instance needs a row-level claim added to `OutboxProcessor`.
+- **`web/` targets the previous API.** The Angular workspace in `web/` and the `openapi.json`
+  at the repository root describe the archived .NET 9 design, whose endpoints this rebuild does
+  not yet have. Regenerate its client once the modules grow endpoints; until then the two are
+  intentionally out of step.

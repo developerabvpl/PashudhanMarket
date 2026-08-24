@@ -5,7 +5,18 @@ namespace UPBazaar.UnitTests.SharedKernel;
 public sealed class ResultTests
 {
     [Fact]
-    public void A_failed_result_cannot_have_its_value_read()
+    public void A_successful_result_carries_no_error()
+    {
+        var result = Result.Success("ok");
+
+        result.IsSuccess.ShouldBeTrue();
+        result.IsFailure.ShouldBeFalse();
+        result.Error.ShouldBe(Error.None);
+        result.Value.ShouldBe("ok");
+    }
+
+    [Fact]
+    public void Reading_the_value_of_a_failed_result_is_a_programming_error()
     {
         var result = Result.Failure<string>(Error.NotFound("x.not_found", "Missing."));
 
@@ -13,24 +24,36 @@ public sealed class ResultTests
     }
 
     [Fact]
-    public void A_successful_result_carries_no_error()
+    public void A_failure_keeps_the_code_and_type_it_was_given()
     {
-        var result = Result.Success("ok");
+        var result = Result.Failure(Error.Conflict("orders.already_paid", "Already paid."));
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Error.ShouldBe(Error.None);
-        result.Value.ShouldBe("ok");
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("orders.already_paid");
+        result.Error.Type.ShouldBe(ErrorType.Conflict);
     }
 
     [Fact]
     public void Validation_failures_travel_with_the_result()
     {
-        var errors = new Dictionary<string, string[]> { ["Price"] = ["Price must be greater than zero."] };
+        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["Price"] = ["Price must be greater than zero."],
+        };
 
         var result = Result.ValidationFailure<string>(errors);
 
         result.Error.Type.ShouldBe(ErrorType.Validation);
         result.ValidationErrors["Price"].ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public void A_value_converts_implicitly_to_a_successful_result()
+    {
+        Result<int> result = 42;
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(42);
     }
 
     [Fact]
@@ -40,5 +63,13 @@ public sealed class ResultTests
 
         page.TotalPages.ShouldBe(3);
         page.HasNextPage.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void The_last_page_reports_no_next_page()
+    {
+        var page = new PagedList<int>([7], Page: 3, PageSize: 3, TotalCount: 7);
+
+        page.HasNextPage.ShouldBeFalse();
     }
 }

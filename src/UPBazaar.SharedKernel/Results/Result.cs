@@ -1,8 +1,8 @@
 namespace UPBazaar.SharedKernel.Results;
 
 /// <summary>
-/// Outcome of a command or query. Handlers return this instead of throwing for expected
-/// failures; controllers map it to an HTTP status via ResultExtensions.
+/// The outcome of a command or query. Handlers return this rather than throwing for expected
+/// failures, and the API maps it to a status code in one place.
 /// </summary>
 public class Result
 {
@@ -28,11 +28,17 @@ public class Result
 
     public Error Error { get; }
 
-    /// <summary>Validation failures keyed by property, surfaced as RFC 7807 problem details.</summary>
+    /// <summary>Per-property messages, surfaced as an RFC 7807 validation problem.</summary>
     public IReadOnlyDictionary<string, string[]> ValidationErrors { get; init; }
         = new Dictionary<string, string[]>();
 
     public static Result Success() => new(true, Error.None);
+
+    public static Result Failure(Error error) => new(false, error);
+
+    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+
+    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 
     public static Result ValidationFailure(IReadOnlyDictionary<string, string[]> errors) =>
         new(false, Error.Validation("validation.failed", "One or more validation errors occurred."))
@@ -45,14 +51,10 @@ public class Result
         {
             ValidationErrors = errors,
         };
-
-    public static Result Failure(Error error) => new(false, error);
-
-    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
-
-    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 }
 
+/// <summary>A <see cref="Result"/> that carries a value when it succeeds.</summary>
+/// <typeparam name="TValue">Type produced on success.</typeparam>
 public class Result<TValue> : Result
 {
     private readonly TValue? _value;
@@ -60,7 +62,7 @@ public class Result<TValue> : Result
     protected internal Result(TValue? value, bool isSuccess, Error error)
         : base(isSuccess, error) => _value = value;
 
-    /// <summary>The value. Only valid when IsSuccess is true.</summary>
+    /// <summary>The value. Reading it on a failed result is a programming error and throws.</summary>
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failed result cannot be accessed.");

@@ -1,17 +1,31 @@
 <Project>
 
-  <!--
-    Single place to move the whole solution to a new target framework.
-    When the .NET 10 SDK is installed, change TargetFramework to net10.0 and bump
-    the EfVersion / AspNetVersion properties in Directory.Packages.props.
-  -->
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!--
+      Warnings are errors everywhere. A warning nobody has to fix is a warning everybody
+      learns to scroll past, and the ones that matter here (nullability, unawaited tasks)
+      are exactly the ones that become production bugs.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors></WarningsNotAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Public API docs are enforced by review, not by the compiler. -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>

@@ -1,0 +1,43 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UPBazaar.Api/UPBazaar.Api.csproj" />
+    <Project Path="src/UPBazaar.Infrastructure/UPBazaar.Infrastructure.csproj" />
+    <Project Path="src/UPBazaar.Modules.Academy.Contracts/UPBazaar.Modules.Academy.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Academy/UPBazaar.Modules.Academy.csproj" />
+    <Project Path="src/UPBazaar.Modules.Cart.Contracts/UPBazaar.Modules.Cart.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Cart/UPBazaar.Modules.Cart.csproj" />
+    <Project Path="src/UPBazaar.Modules.Catalog.Contracts/UPBazaar.Modules.Catalog.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Catalog/UPBazaar.Modules.Catalog.csproj" />
+    <Project Path="src/UPBazaar.Modules.Cms.Contracts/UPBazaar.Modules.Cms.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Cms/UPBazaar.Modules.Cms.csproj" />
+    <Project Path="src/UPBazaar.Modules.Crm.Contracts/UPBazaar.Modules.Crm.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Crm/UPBazaar.Modules.Crm.csproj" />
+    <Project Path="src/UPBazaar.Modules.Identity.Contracts/UPBazaar.Modules.Identity.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Identity/UPBazaar.Modules.Identity.csproj" />
+    <Project Path="src/UPBazaar.Modules.Inventory.Contracts/UPBazaar.Modules.Inventory.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Inventory/UPBazaar.Modules.Inventory.csproj" />
+    <Project Path="src/UPBazaar.Modules.Notifications.Contracts/UPBazaar.Modules.Notifications.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Notifications/UPBazaar.Modules.Notifications.csproj" />
+    <Project Path="src/UPBazaar.Modules.Orders.Contracts/UPBazaar.Modules.Orders.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Orders/UPBazaar.Modules.Orders.csproj" />
+    <Project Path="src/UPBazaar.Modules.Payments.Contracts/UPBazaar.Modules.Payments.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Payments/UPBazaar.Modules.Payments.csproj" />
+    <Project Path="src/UPBazaar.Modules.Promotions.Contracts/UPBazaar.Modules.Promotions.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Promotions/UPBazaar.Modules.Promotions.csproj" />
+    <Project Path="src/UPBazaar.Modules.Reporting.Contracts/UPBazaar.Modules.Reporting.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Reporting/UPBazaar.Modules.Reporting.csproj" />
+    <Project Path="src/UPBazaar.Modules.Reviews.Contracts/UPBazaar.Modules.Reviews.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Reviews/UPBazaar.Modules.Reviews.csproj" />
+    <Project Path="src/UPBazaar.Modules.Sellers.Contracts/UPBazaar.Modules.Sellers.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Sellers/UPBazaar.Modules.Sellers.csproj" />
+    <Project Path="src/UPBazaar.Modules.Settlements.Contracts/UPBazaar.Modules.Settlements.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Settlements/UPBazaar.Modules.Settlements.csproj" />
+    <Project Path="src/UPBazaar.Modules.Shipping.Contracts/UPBazaar.Modules.Shipping.Contracts.csproj" />
+    <Project Path="src/UPBazaar.Modules.Shipping/UPBazaar.Modules.Shipping.csproj" />
+    <Project Path="src/UPBazaar.SharedKernel/UPBazaar.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UPBazaar.IntegrationTests/UPBazaar.IntegrationTests.csproj" />
+    <Project Path="tests/UPBazaar.UnitTests/UPBazaar.UnitTests.csproj" />
+  </Folder>
+</Solution>
