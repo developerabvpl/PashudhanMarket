@@ -13,7 +13,7 @@ if "%NG_ALLOWED_HOSTS%"=="" (
 if "%PORT%"=="" set PORT=4000
 if "%STUB_API_PORT%"=="" set STUB_API_PORT=5200
 
-start "upbazaar-catalogue" /b node tools/scripts/stub-api.mjs --port %STUB_API_PORT%
+start "upbazaar-catalogue" /b node api/catalog/stub-api.mjs --port %STUB_API_PORT%
 
 set SSR_API_ORIGIN=http://127.0.0.1:%STUB_API_PORT%
 node server/server.mjs

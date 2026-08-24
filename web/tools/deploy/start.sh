@@ -7,7 +7,7 @@ set -euo pipefail
 : "${PORT:=4000}"
 : "${STUB_API_PORT:=5200}"
 
-node tools/scripts/stub-api.mjs --port "$STUB_API_PORT" &
+node api/catalog/stub-api.mjs --port "$STUB_API_PORT" &
 STUB=$!
 trap 'kill $STUB 2>/dev/null || true' EXIT
 

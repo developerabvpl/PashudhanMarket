@@ -7,10 +7,10 @@ copy the whole folder to the server and run it.
 
     browser/              static assets, including the product photographs
     server/               the Angular SSR server (Node, Express)
-    tools/scripts/        the catalogue stub
+    api/catalog/          the catalogue stub, laid out to match the URL it answers on
     tools/data/           catalog.json, the 70 products it serves
     web.config            IIS site root
-    tools/web.config      IIS application for the catalogue
+    api/catalog/web.config  IIS application for the catalogue
     nginx.conf.example    the same routing for nginx
     start.sh              run both by hand (Linux, macOS)
     start.cmd             run both by hand (Windows)
@@ -30,15 +30,25 @@ it, restarting it if it dies. No Windows service to register, no ARR.
 
 **3. Create the site** with that folder as its physical path, bound to your hostname.
 
-**4. Add one application under it**
+**4. Turn the catalogue folder into an application**
 
-| Setting | Value |
-| --- | --- |
-| Alias | `api/catalog` |
-| Physical path | `C:\inetpub\upbazaar\tools` |
+In IIS Manager, expand the site, right-click the `catalog` folder inside `api`, and choose
+**Convert to Application**. Accept the alias it offers — `catalog` — and press OK.
 
-Both `web.config` files are already in place: the site root runs the storefront, that application
-runs the catalogue.
+That lands the catalogue at `/api/catalog`, which is the URL the storefront calls. The folders
+are laid out to match the URL for exactly this reason: IIS Manager only accepts a single path
+segment as an alias, so typing `api/catalog` into the Add Application dialog is rejected. Let
+the folder structure carry the nesting and the alias stays one word.
+
+From a command prompt instead, if you prefer:
+
+```
+appcmd add app /site.name:"upbazaar" /path:/api/catalog ^
+               /physicalPath:"C:\inetpub\upbazaar\api\catalog"
+```
+
+Both `web.config` files are already in place: the site root runs the storefront, this
+application runs the catalogue.
 
 **5. Put your hostnames in `NG_ALLOWED_HOSTS`** in the root `web.config`. This is not optional.
 Angular refuses any request whose `Host` header is not listed, and what ships here is an example —
@@ -75,6 +85,8 @@ to the stub, `/api` to the .NET API, everything else to the SSR server.
     NG_ALLOWED_HOSTS=upbazaar.example ./start.sh          # Linux, macOS
     set NG_ALLOWED_HOSTS=upbazaar.example && start.cmd    # Windows
 
+Run them **from this folder** — the paths inside are relative to it, and starting them from
+anywhere else fails to find `api/catalog/stub-api.mjs`.
 `PORT` defaults to 4000 and `STUB_API_PORT` to 5200. A reverse proxy still has to sit in front:
 the SSR server does not proxy `/api`, and the browser calls the API on its own origin.
 
@@ -86,7 +98,11 @@ all. Only sign-in needs the API, and the API does not start without its database
 migrations and initialises Hangfire's SQL storage before it listens. Leave `/api/**` unrouted and
 the storefront still runs; the sign-in panel reports a failure instead of breaking the page.
 
-Add it as a third application at alias `api` when you want sign-in.
+Add it as an application at alias `api`, with its own publish folder as the physical path.
+The `catalog` application underneath it keeps working: IIS matches the longest application
+path, so `/api/catalog` still reaches the stub while everything else under `/api` goes to the
+API. The empty `api` folder in this bundle exists only so that the alias in step 4 could be a
+single word.
 
 ## Prices are indicative
 
