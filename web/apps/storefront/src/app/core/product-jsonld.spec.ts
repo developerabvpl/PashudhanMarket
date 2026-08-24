@@ -93,3 +93,20 @@ describe('productJsonLd for a listing with no price', () => {
     expect(schema['brand']).toBeUndefined();
   });
 });
+
+describe('productJsonLd images', () => {
+  it('publishes the image when one was supplied', () => {
+    const schema = productJsonLd(
+      baseProduct,
+      url,
+      'https://upbazaar.example/products/agb.jpg'
+    ) as Record<string, any>;
+
+    expect(schema['image']).toBe('https://upbazaar.example/products/agb.jpg');
+  });
+
+  it('omits it rather than pointing a crawler at a drawn placeholder', () => {
+    expect((productJsonLd(baseProduct, url) as Record<string, any>)['image']).toBeUndefined();
+    expect((productJsonLd(baseProduct, url, null) as Record<string, any>)['image']).toBeUndefined();
+  });
+});

@@ -6,7 +6,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
 import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
-import { ProductThumb } from './product-thumb';
+import { ProductThumb, categoryPhotoUrl } from './product-thumb';
 
 const ORIGIN = 'https://upbazaar.example';
 
@@ -40,9 +40,11 @@ const ORIGIN = 'https://upbazaar.example';
             [name]="item.name"
             [sku]="item.sku"
           />
+          @if (!photoUrl()) {
           <p class="mt-3 text-center text-xs text-ink-muted">
             {{ 'catalog.noPhotoYet' | transloco }}
           </p>
+          }
         </div>
 
         <div>
@@ -159,6 +161,9 @@ export class ProductDetail {
     return item === null ? 0 : item.onHandQuantity - item.reservedQuantity;
   });
 
+  /** The category photograph, when the category has one. */
+  readonly photoUrl = computed(() => categoryPhotoUrl(this.product()?.sku ?? ''));
+
   /** Pack size and weight, read out of the listing title. See core/product-facts. */
   readonly facts = computed(() => {
     const item = this.product();
@@ -193,7 +198,7 @@ export class ProductDetail {
       this.seo.setJsonLd({
         '@context': 'https://schema.org',
         '@graph': [
-          productJsonLd(item, canonicalUrl),
+          productJsonLd(item, canonicalUrl, this.photoUrl() && `${ORIGIN}${this.photoUrl()}`),
           breadcrumbJsonLd(item, ORIGIN, canonicalUrl),
         ],
       });

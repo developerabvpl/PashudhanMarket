@@ -9,7 +9,11 @@ import { ProductDto } from '@upbazaar/data-access';
  * free in the search result, and there is no way to say "ask us" in an Offer — the absence of
  * an offer is exactly how schema.org expresses a listing that cannot be bought yet.
  */
-export function productJsonLd(product: ProductDto, canonicalUrl: string): Record<string, unknown> {
+export function productJsonLd(
+  product: ProductDto,
+  canonicalUrl: string,
+  imageUrl?: string | null
+): Record<string, unknown> {
   const available = (product.onHandQuantity ?? 0) - (product.reservedQuantity ?? 0) > 0;
 
   const node: Record<string, unknown> = {
@@ -24,6 +28,12 @@ export function productJsonLd(product: ProductDto, canonicalUrl: string): Record
 
   if (product.brand) {
     node['brand'] = { '@type': 'Brand', name: product.brand };
+  }
+
+  // Absolute, because a crawler resolves this against nothing. Omitted rather than pointed at a
+  // placeholder: a drawn tile in an image result would help nobody.
+  if (imageUrl) {
+    node['image'] = imageUrl;
   }
 
   if (product.price > 0) {

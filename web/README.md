@@ -129,6 +129,18 @@ A price of `0` is not free — it means "not for sale yet", and the storefront r
 on request* with the cart button disabled and **no `Offer` node in the JSON-LD**, because
 publishing `price: 0` would advertise the product as free in a search result.
 
+### Product photographs
+
+They live in `apps/storefront/public/media/products`, one per category, named for the middle
+segment of the SKU — `UPB-AGB-001` looks for `agb.jpg`. **Not** under `public/products`: that
+folder shadows the `/products` route, and the static middleware answers it with a redirect
+before the router sees it.
+
+`CATEGORY_PHOTOS` in `product-thumb.ts` lists which categories have a file. Adding photography
+is two steps — drop the file in, add its code to that set — and skipping the second step just
+means the drawn tile keeps showing. A category with no file, or a file that fails to load, falls
+back to that tile rather than a broken-image icon, and its JSON-LD carries no `image`.
+
 ## Layout
 
 ```
@@ -203,10 +215,15 @@ that is what puts the content in the served HTML.
 custom properties; components use utilities such as `bg-surface` and `text-ink` and never an
 inline hex.
 
-The dark palette is a plain `:root` override inside `@media (prefers-color-scheme: dark)`, not a
-nested `@theme`. Tailwind hoists every `@theme` block to the top level and emits its variables
-unconditionally, so a `@theme` inside a media query is not scoped by it — it simply overwrites
-the light values for everyone. That is worth knowing before adding a second theme.
+**The storefront is light-themed and does not follow the operating system.** The dark palette
+still exists, behind `:root[data-theme="dark"]`, but nothing sets that attribute; `color-scheme`
+is pinned to `light` so scrollbars and form controls match. Wire the attribute to a user setting
+to bring dark back.
+
+Whatever you do, do not put those overrides in a nested `@theme`. Tailwind hoists every `@theme`
+block to the top level and emits its variables unconditionally, so a `@theme` inside a media
+query or a selector is not scoped by it — it overwrites the light values for everyone. That bug
+is why the storefront rendered dark for every visitor for as long as it did.
 
 ## Known gaps
 
@@ -215,8 +232,9 @@ the light values for everyone. That is worth knowing before adding a second them
   `LanguageSwitcher`.
 - **No cart or checkout in the storefront.** The Add to cart button is inert; the API's checkout
   endpoint is generated and ready to call.
-- **No product photographs.** Tiles are a generated wash and monogram; the API has no image
-  field and the import had no images. See `ProductThumb`.
+- **Photography is per category, not per product.** All eight agarbatti listings share
+  `agb.jpg`. Categories with no file, and any file that fails to load, fall back to a drawn tile.
+  See `apps/storefront/public/media/products/README.md`.
 - **Prices and stock are estimates, not supplier figures.** Every imported listing is priced by
   `tools/scripts/pricing.mjs`. Replace them through `tools/data/prices.csv` before anyone treats
   the storefront as a price list. See *The catalogue* above.
