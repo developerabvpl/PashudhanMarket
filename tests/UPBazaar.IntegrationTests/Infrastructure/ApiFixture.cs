@@ -1,26 +1,46 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using UPBazaar.Api.Configuration;
 using Testcontainers.MsSql;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Modules.Notifications.Contracts;
+using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// One SQL Server and one API host, shared by every integration test and migrated once from
-/// an empty database. Migrating rather than calling EnsureCreated is deliberate: it means
-/// these tests also prove the migration applies to a fresh database.
+/// One SQL Server and one API host, shared by every integration test and migrated once from an
+/// empty database. Migrating rather than calling EnsureCreated is deliberate: it means these
+/// tests also prove the migrations apply to a fresh database.
 /// </summary>
 public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
     /// <summary>Pinned so the suite does not depend on whichever tag was pulled last.</summary>
     private const string MsSqlImage = "mcr.microsoft.com/mssql/server:2022-latest";
 
+    /// <summary>Seeded administrator, used by tests that need full permissions.</summary>
+    public const string SuperAdminEmail = "superadmin@upbazaar.test";
+
+    /// <summary>Password for <see cref="SuperAdminEmail"/>.</summary>
+    public const string SuperAdminPassword = "seed-super-admin-password";
+
     private MsSqlContainer? _container;
     private string _connectionString = string.Empty;
     private string? _createdDatabase;
+
+    /// <summary>Intercepts SMS so tests can read the one-time code that was issued.</summary>
+    public CapturingSmsSender Sms { get; } = new();
+
+    /// <summary>Intercepts email so tests can read the password-reset token.</summary>
+    public CapturingEmailSender Email { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -33,10 +53,13 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             ? await CreateDatabaseOnAsync(configured)
             : await StartContainerAsync();
 
-        using var scope = Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>();
+        // Migrated through a standalone context rather than the host's, because touching
+        // Services starts the host, and startup seeding needs the schema to already exist.
+        await MigrateAsync();
 
-        await dbContext.Database.MigrateAsync();
+        // Touching Services now boots the host, which seeds permissions, roles and the
+        // SuperAdmin configured below.
+        _ = Services;
     }
 
     public new async Task DisposeAsync()
@@ -54,6 +77,16 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     }
 
     public IServiceScope CreateScope() => Services.CreateScope();
+
+    /// <summary>A client carrying a bearer token.</summary>
+    public HttpClient CreateAuthenticatedClient(string accessToken)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        return client;
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -82,6 +115,66 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:SigningKey", "integration-test-signing-key-integration-test-signing-key");
         builder.UseSetting("Jwt:Issuer", "https://upbazaar.test");
         builder.UseSetting("Jwt:Audience", "upbazaar-api");
+
+        builder.UseSetting("Identity:SuperAdmin:Email", SuperAdminEmail);
+        builder.UseSetting("Identity:SuperAdmin:Password", SuperAdminPassword);
+        builder.UseSetting("Identity:SuperAdmin:DisplayName", "Seeded Super Admin");
+
+        builder.ConfigureTestServices(services =>
+        {
+            // Swap delivery for capture at the same boundary a carrier would occupy.
+            services.RemoveAll<ISmsSender>();
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<ISmsSender>(Sms);
+            services.AddSingleton<IEmailSender>(Email);
+        });
+    }
+
+    private async Task MigrateAsync()
+    {
+        var options = new DbContextOptionsBuilder<UPBazaarDbContext>()
+            .UseSqlServer(_connectionString, sql =>
+            {
+                // Must match the host exactly. With the default history table this writes to
+                // dbo.__EFMigrationsHistory while the application reads shared, and every
+                // migration then looks pending on startup.
+                sql.MigrationsAssembly(typeof(UPBazaarDbContext).Assembly.GetName().Name);
+                sql.MigrationsHistoryTable("__EFMigrationsHistory", UPBazaarDbContext.SharedSchema);
+            })
+            .Options;
+
+        // The full module set, not an empty one: before migrating, EF compares the current
+        // model against the migration snapshot, and a context missing the module entities
+        // would look like a pile of pending changes.
+        await using var dbContext = new UPBazaarDbContext(options, ResolveModules());
+
+        await dbContext.Database.MigrateAsync();
+    }
+
+    /// <summary>
+    /// Runs the application's own module registration against a throwaway container and reads
+    /// the modules back, so the migration model is by construction the one the host composes.
+    /// </summary>
+    private static IEnumerable<IModule> ResolveModules()
+    {
+        var services = new ServiceCollection();
+        services.AddModules(new ConfigurationBuilder().Build(), new MigrationHostEnvironment());
+
+        using var provider = services.BuildServiceProvider();
+
+        return [.. provider.GetServices<IModule>()];
+    }
+
+    /// <summary>Minimal environment for module registration during migration.</summary>
+    private sealed class MigrationHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Migration";
+
+        public string ApplicationName { get; set; } = "UPBazaar.IntegrationTests";
+
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     private async Task<string> StartContainerAsync()

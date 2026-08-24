@@ -1,6 +1,9 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Notifications.Contracts;
+using UPBazaar.Modules.Notifications.Delivery;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Notifications;
@@ -27,11 +30,35 @@ public sealed class NotificationsModule : IModule
 public static class NotificationsModuleExtensions
 {
     /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
+    /// Registers the module. Delivery is stubbed: Development gets senders that log the
+    /// message, and every other environment gets senders that throw, so a host without a real
+    /// provider fails at the first send rather than silently dropping a one-time code.
     /// </summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="environment">Host environment.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddNotificationsModule(this IServiceCollection services) =>
+    public static IServiceCollection AddNotificationsModule(
+        this IServiceCollection services,
+        IHostEnvironment environment)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(environment);
+
         services.AddModule<NotificationsModule>();
+
+        // Testing counts as development here: the integration suite asserts on the code it
+        // sends, and a throwing sender would make the OTP tests untestable.
+        if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
+        {
+            services.AddSingleton<ISmsSender, DevSmsSender>();
+            services.AddSingleton<IEmailSender, DevEmailSender>();
+        }
+        else
+        {
+            services.AddSingleton<ISmsSender, UnconfiguredSmsSender>();
+            services.AddSingleton<IEmailSender, UnconfiguredEmailSender>();
+        }
+
+        return services;
+    }
 }

@@ -28,13 +28,18 @@ public static class ModuleRegistration
 {
     /// <summary>Registers every module with the host.</summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration, for modules that bind options.</param>
+    /// <param name="environment">Host environment, for modules that stub differently in Development.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddModules(this IServiceCollection services)
+    public static IServiceCollection AddModules(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(services);
 
         return services
-            .AddIdentityModule()
+            .AddIdentityModule(configuration)
             .AddSellersModule()
             .AddCatalogModule()
             .AddInventoryModule()
@@ -48,7 +53,7 @@ public static class ModuleRegistration
             .AddCrmModule()
             .AddAcademyModule()
             .AddCmsModule()
-            .AddNotificationsModule()
+            .AddNotificationsModule(environment)
             .AddReportingModule();
     }
 }

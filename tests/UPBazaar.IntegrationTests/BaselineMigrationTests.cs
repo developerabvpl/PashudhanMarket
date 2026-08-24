@@ -44,7 +44,7 @@ public sealed class BaselineMigrationTests(ApiFixture fixture)
     }
 
     [DatabaseFact]
-    public async Task Baseline_creates_only_the_shared_schema()
+    public async Task Only_modules_with_entities_own_tables()
     {
         using var scope = fixture.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>();
@@ -57,8 +57,10 @@ public sealed class BaselineMigrationTests(ApiFixture fixture)
             WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA <> 'dbo'
             """);
 
-        // The modules own schemas but declare no entities yet, so nothing else should appear.
-        schemas.ShouldBe(["shared"]);
+        // Every module declares a schema, but a schema only materialises once the module has
+        // an entity. Identity does; the other fifteen are still skeletons. This assertion is
+        // the tripwire for a module accidentally creating tables outside its own schema.
+        schemas.Order(StringComparer.Ordinal).ShouldBe(["identity", "shared"]);
     }
 
     [DatabaseFact]

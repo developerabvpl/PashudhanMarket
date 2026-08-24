@@ -8,12 +8,15 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Asp.Versioning.Abstractions" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
     <ProjectReference Include="..\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Identity.Contracts\UPBazaar.Modules.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Notifications.Contracts\UPBazaar.Modules.Notifications.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

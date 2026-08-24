@@ -1,23 +1,20 @@
-using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using UPBazaar.Infrastructure.Identity;
 
 namespace UPBazaar.Api.Configuration;
 
 /// <summary>
 /// Bearer token validation.
 ///
-/// The Identity module does not issue tokens yet, so this validates against a symmetric key.
-/// When issuance lands, only the key material changes: permissions already arrive as claims,
-/// and the authorization policies read them from there.
+/// The Identity module issues the tokens; this side only validates them. Both read the same
+/// singleton <see cref="JwtSettings"/>, so the key used to sign and the key used to verify are
+/// the same object rather than two independent reads of configuration.
 /// </summary>
 public static class AuthenticationSetup
 {
-    /// <summary>
-    /// Adds JWT bearer authentication. The signing key comes from user-secrets or the
-    /// environment; Development falls back to an ephemeral key so a fresh clone still runs.
-    /// </summary>
+    /// <summary>Adds JWT bearer authentication.</summary>
     /// <param name="services">Service collection.</param>
     /// <param name="configuration">Application configuration.</param>
     /// <param name="environment">Host environment.</param>
@@ -31,22 +28,8 @@ public static class AuthenticationSetup
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(environment);
 
-        var jwt = configuration.GetSection("Jwt");
-        var signingKey = jwt["SigningKey"];
-
-        if (string.IsNullOrWhiteSpace(signingKey))
-        {
-            if (!environment.IsDevelopment())
-            {
-                throw new InvalidOperationException(
-                    "Jwt:SigningKey is not configured. Set it through user-secrets or the "
-                    + "UPBAZAAR_Jwt__SigningKey environment variable.");
-            }
-
-            // Ephemeral: every restart invalidates previously issued dev tokens, which is the
-            // correct trade for never shipping a checked-in key.
-            signingKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
-        }
+        var settings = JwtSettings.Resolve(configuration, environment);
+        services.AddSingleton(settings);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
@@ -55,9 +38,9 @@ public static class AuthenticationSetup
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = jwt["Issuer"],
-                ValidAudience = jwt["Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                ValidIssuer = settings.Issuer,
+                ValidAudience = settings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.SigningKey)),
                 ClockSkew = TimeSpan.FromSeconds(30),
             });
 

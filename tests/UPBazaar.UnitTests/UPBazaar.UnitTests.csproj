@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\UPBazaar.Modules.Identity\UPBazaar.Modules.Identity.csproj" />
   </ItemGroup>
 
   <ItemGroup>

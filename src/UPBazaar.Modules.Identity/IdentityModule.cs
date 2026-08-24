@@ -1,6 +1,11 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Identity.Contracts;
+using UPBazaar.Modules.Identity.Domain;
+using UPBazaar.Modules.Identity.Services;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Identity;
@@ -27,11 +32,36 @@ public sealed class IdentityModule : IModule
 public static class IdentityModuleExtensions
 {
     /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
+    /// Registers the module's schema, handlers, validators and services.
     /// </summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddIdentityModule(this IServiceCollection services) =>
+    public static IServiceCollection AddIdentityModule(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         services.AddModule<IdentityModule>();
+
+        services.AddOptions<IdentityModuleOptions>()
+            .Bind(configuration.GetSection(IdentityModuleOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // ASP.NET Identity's hasher, without the rest of the Identity stack: PBKDF2 with a
+        // versioned format, so raising the work factor later re-hashes on next sign-in rather
+        // than invalidating every password.
+        services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+
+        services.AddSingleton<TotpService>();
+        services.AddScoped<TokenService>();
+        services.AddScoped<LoginAuditWriter>();
+        services.AddScoped<IdentitySeeder>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
+
+        return services;
+    }
 }

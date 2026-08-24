@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Api.Configuration;
 using UPBazaar.Infrastructure.Persistence;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Api.Persistence;
@@ -45,10 +48,28 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPB
     private static IEnumerable<IModule> ResolveModules()
     {
         var services = new ServiceCollection();
-        services.AddModules();
+        services.AddModules(
+            new ConfigurationBuilder().Build(),
+            new DesignTimeHostEnvironment());
 
         using var provider = services.BuildServiceProvider();
 
         return [.. provider.GetServices<IModule>()];
     }
+}
+
+/// <summary>
+/// Minimal environment for design-time module registration. Named "DesignTime" rather than
+/// "Development" so modules that stub themselves for development do not do so here.
+/// </summary>
+internal sealed class DesignTimeHostEnvironment : IHostEnvironment
+{
+    public string EnvironmentName { get; set; } = "DesignTime";
+
+    public string ApplicationName { get; set; } = "UPBazaar.Api";
+
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+    public IFileProvider ContentRootFileProvider { get; set; } =
+        new NullFileProvider();
 }

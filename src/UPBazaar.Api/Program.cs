@@ -48,17 +48,13 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddModules();
+builder.Services.AddModules(builder.Configuration, builder.Environment);
 
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
 
-// Deny by default: an endpoint that forgets to state its policy is unreachable rather than
-// accidentally public.
-builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
-    .AddPolicy(HangfireSetup.DashboardPolicy, policy => policy
-        .RequireAuthenticatedUser()
-        .RequireClaim(CurrentUser.PermissionClaimType, HangfireSetup.DashboardPermission));
+// One policy per catalogued permission, plus a deny-by-default fallback so an endpoint that
+// forgets to state its policy is unreachable rather than accidentally public.
+builder.Services.AddPermissionPolicies();
 
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy())
@@ -109,6 +105,9 @@ app.MapFallback(() => Results.Problem(
     .ExcludeFromDescription();
 
 app.ScheduleRecurringJobs();
+
+// Permissions, roles and the first administrator, reconciled before the first request.
+await app.SeedIdentityAsync();
 
 await app.RunAsync();
 

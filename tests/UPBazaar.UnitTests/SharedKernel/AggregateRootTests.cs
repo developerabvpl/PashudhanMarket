@@ -13,16 +13,41 @@ internal sealed class TestAggregate : AggregateRoot
 public sealed class AggregateRootTests
 {
     [Fact]
-    public void A_new_aggregate_has_a_sortable_public_id()
+    public void A_new_aggregate_has_a_time_ordered_public_id()
     {
         var first = new TestAggregate();
         var second = new TestAggregate();
 
         first.PublicId.ShouldNotBe(Guid.Empty);
+        first.PublicId.ShouldNotBe(second.PublicId);
 
-        // Version 7 ids embed a timestamp, so later ids sort after earlier ones. That is what
-        // keeps them from fragmenting an index the way random GUIDs do.
-        first.PublicId.CompareTo(second.PublicId).ShouldBeLessThan(0);
+        // Version 7 puts a 48-bit big-endian timestamp in the leading bytes, which is what
+        // gives an index on this column locality. Note this is a property of the byte layout,
+        // not of Guid.CompareTo, which compares structurally and does not preserve the order.
+        TimestampOf(second.PublicId).ShouldBeGreaterThanOrEqualTo(TimestampOf(first.PublicId));
+    }
+
+    [Fact]
+    public void The_public_id_declares_itself_as_version_7()
+    {
+        var bytes = new TestAggregate().PublicId.ToByteArray(bigEndian: true);
+
+        // Byte 6, high nibble, is the version field.
+        var version = bytes[6] >> 4;
+
+        version.ShouldBe(7);
+    }
+
+    private static long TimestampOf(Guid id)
+    {
+        var bytes = id.ToByteArray(bigEndian: true);
+
+        return ((long)bytes[0] << 40)
+            | ((long)bytes[1] << 32)
+            | ((long)bytes[2] << 24)
+            | ((long)bytes[3] << 16)
+            | ((long)bytes[4] << 8)
+            | bytes[5];
     }
 
     [Fact]
