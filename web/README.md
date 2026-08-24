@@ -51,6 +51,14 @@ set in `project.json` for local runs; add the real domain at run time:
 NG_ALLOWED_HOSTS=upbazaar.example,www.upbazaar.example SSR_API_ORIGIN=http://127.0.0.1:5200 PORT=4000 node dist/apps/storefront/server/server.mjs
 ```
 
+Or let `package-storefront` assemble the whole thing, stub and data included, into one directory
+that can be copied to the server as it stands:
+
+```bash
+npx nx build storefront
+node tools/scripts/package-storefront.mjs      # -> dist/deploy
+```
+
 Never set it to `*` unless a proxy in front is already validating the header.
 
 **A reverse proxy.** The SSR server does not proxy `/api`, and the browser calls the API on its
