@@ -100,7 +100,7 @@ import { ProductThumb } from './product-thumb';
             [routerLink]="['/products', product.id]"
           >
             <upb-product-thumb
-              class="aspect-[4/3] w-full"
+              class="aspect-square w-full"
               [name]="product.name"
               [sku]="product.sku"
             />

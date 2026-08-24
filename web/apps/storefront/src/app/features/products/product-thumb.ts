@@ -17,17 +17,39 @@ const CATEGORY_HUES: Record<string, number> = {
 };
 
 /**
- * Categories with a photograph in apps/storefront/public/media/products.
+ * The photograph for each category, by the middle segment of the SKU.
  *
- * Listed rather than probed per product: asking for a per-SKU file on every card would 404
- * seventy times over, since the photography is per category for now.
- *
- * A code here is a promise that the file exists. Ghanvati is absent because no photograph was
- * supplied for it, and it should stay absent until one is. If a listed file is missing the card
- * still renders — the (error) handler drops it to the drawn tile — but the browser pays for the
- * failed request first, so keep this set and the folder in step.
+ * Filenames are listed rather than derived, so the files can keep the names they were supplied
+ * with — spaces, mixed case, one .webp among the .jpgs — and so a missing entry is a visible
+ * decision rather than a silent 404. Ghanvati has no photograph and is absent on purpose; its
+ * cards fall through to the drawn tile.
  */
-const CATEGORY_PHOTOS = new Set(['AGB', 'ARK', 'DIY', 'KAN', 'KHD', 'PHN', 'SAB', 'SAM']);
+const CATEGORY_PHOTOS: Record<string, string> = {
+  AGB: 'Dhoop.webp',
+  ARK: 'gomutra.jpg',
+  DIY: 'Cow Dung Diya.jpg',
+  KAN: 'Cow dung cake.jpg',
+  KHD: 'Khad.jpg',
+  PHN: 'Floor cleaner.jpg',
+  SAB: 'Soap.jpg',
+  SAM: 'haven cup.jpg',
+};
+
+/**
+ * Product types that have their own picture, checked before the category falls back to its own.
+ *
+ * A dhoop stick and a bamboo-cored agarbatti are different things on the shelf, and the
+ * catalogue has a photograph of each, so the eight listings in that category do not all show
+ * the same picture.
+ *
+ * Order is the whole rule. Half these titles say both words — "Cow Dung Dhoop Agarbatti" — and
+ * the product is a dhoop, so dhoop is tested first and the first match wins. Swap the two
+ * entries and every listing in the category becomes an agarbatti.
+ */
+const TYPE_PHOTOS: readonly { readonly code: string; readonly pattern: RegExp; readonly file: string }[] = [
+  { code: 'AGB', pattern: /(?:dhoop|dhup|sambrani)/i, file: 'Dhoop.webp' },
+  { code: 'AGB', pattern: /(?:agarbatti|incense)/i, file: 'agarbatti.jpg' },
+];
 
 /**
  * Where the files live, relative to the served root.
@@ -38,11 +60,20 @@ const CATEGORY_PHOTOS = new Set(['AGB', 'ARK', 'DIY', 'KAN', 'KHD', 'PHN', 'SAB'
  */
 export const PRODUCT_PHOTO_DIR = '/media/products';
 
-/** The photograph for a SKU's category, or null when that category has none yet. */
-export function categoryPhotoUrl(sku: string): string | null {
+/**
+ * The photograph for a product, or null when nothing has been supplied for its category.
+ *
+ * The filename is percent-encoded because the supplied names contain spaces, and a raw space in
+ * an `src` is only forgiven by browsers — it is not forgiven by the crawlers that read the same
+ * URL out of the JSON-LD.
+ */
+export function productPhotoUrl(sku: string, name = ''): string | null {
   const code = sku.split('-')[1] ?? '';
 
-  return CATEGORY_PHOTOS.has(code) ? `${PRODUCT_PHOTO_DIR}/${code.toLowerCase()}.jpg` : null;
+  const byType = TYPE_PHOTOS.find((rule) => rule.code === code && rule.pattern.test(name));
+  const file = byType?.file ?? CATEGORY_PHOTOS[code];
+
+  return file ? `${PRODUCT_PHOTO_DIR}/${encodeURIComponent(file)}` : null;
 }
 
 /**
@@ -60,11 +91,11 @@ export function categoryPhotoUrl(sku: string): string | null {
 @Component({
   selector: 'upb-product-thumb',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block' },
+  host: { class: 'relative block overflow-hidden rounded-card' },
   template: `
     @if (photoUrl(); as url) {
     <img
-      class="h-full w-full rounded-card bg-surface-sunken object-cover"
+      class="absolute inset-0 h-full w-full bg-surface object-contain p-2"
       [src]="url"
       alt=""
       aria-hidden="true"
@@ -75,7 +106,7 @@ export function categoryPhotoUrl(sku: string): string | null {
     />
     } @else {
     <div
-      class="relative grid h-full w-full place-items-center overflow-hidden rounded-card"
+      class="absolute inset-0 grid place-items-center"
       [style.background]="wash()"
       aria-hidden="true"
     >
@@ -109,7 +140,7 @@ export class ProductThumb {
   protected readonly photoFailed = signal(false);
 
   protected readonly photoUrl = computed(() =>
-    this.photoFailed() ? null : categoryPhotoUrl(this.sku())
+    this.photoFailed() ? null : productPhotoUrl(this.sku(), this.name())
   );
 
   /**

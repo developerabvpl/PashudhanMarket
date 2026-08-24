@@ -6,7 +6,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
 import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
-import { ProductThumb, categoryPhotoUrl } from './product-thumb';
+import { ProductThumb, productPhotoUrl } from './product-thumb';
 
 const ORIGIN = 'https://upbazaar.example';
 
@@ -162,7 +162,11 @@ export class ProductDetail {
   });
 
   /** The category photograph, when the category has one. */
-  readonly photoUrl = computed(() => categoryPhotoUrl(this.product()?.sku ?? ''));
+  readonly photoUrl = computed(() => {
+    const item = this.product();
+
+    return item === null ? null : productPhotoUrl(item.sku, item.name);
+  });
 
   /** Pack size and weight, read out of the listing title. See core/product-facts. */
   readonly facts = computed(() => {

@@ -131,15 +131,24 @@ publishing `price: 0` would advertise the product as free in a search result.
 
 ### Product photographs
 
-They live in `apps/storefront/public/media/products`, one per category, named for the middle
-segment of the SKU — `UPB-AGB-001` looks for `agb.jpg`. **Not** under `public/products`: that
+They live in `apps/storefront/public/media/products`. **Not** under `public/products`: that
 folder shadows the `/products` route, and the static middleware answers it with a redirect
-before the router sees it.
+before the router ever sees it.
 
-`CATEGORY_PHOTOS` in `product-thumb.ts` lists which categories have a file. Adding photography
-is two steps — drop the file in, add its code to that set — and skipping the second step just
-means the drawn tile keeps showing. A category with no file, or a file that fails to load, falls
-back to that tile rather than a broken-image icon, and its JSON-LD carries no `image`.
+Photography is per category, not per product: all ten gomutra ark listings show the same bottle.
+`CATEGORY_PHOTOS` in `product-thumb.ts` maps the SKU's middle segment to a filename, and
+`TYPE_PHOTOS` overrides it for product types within a category that have their own picture —
+dhoop sticks and bamboo-cored agarbatti are different products and the catalogue has a photograph
+of each. Filenames are listed rather than derived, so a supplied file keeps its own name.
+
+A category with no entry, or an entry whose file fails to load, falls back to a drawn tile rather
+than a broken-image icon, and its JSON-LD carries no `image`. Gomutra Ghanvati has no photograph
+and does exactly that.
+
+Tiles are square and use `object-contain`, so a portrait source letterboxes rather than losing
+its subject to a crop. The thumbnail is positioned absolutely inside that square on purpose: an
+in-flow `<img>` contributes its intrinsic height and overrides the box's `aspect-ratio`, which
+is how one 182x500 bottle stretched its cards to two and a half times the height of the rest.
 
 ## Layout
 
