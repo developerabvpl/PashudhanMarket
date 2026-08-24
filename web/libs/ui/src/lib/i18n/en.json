@@ -16,7 +16,8 @@
     "staffUsers": "Staff users",
     "account": "My account",
     "signIn": "Sign in",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "primary": "Main"
   },
   "state": {
     "loading": "Loading",
@@ -145,9 +146,9 @@
   },
   "catalog": {
     "title": "Products",
-    "metaDescription": "Shop handloom, handicraft and home goods from sellers across Uttar Pradesh.",
+    "metaDescription": "Cow dung and gomutra products from Uttar Pradesh gaushalas: agarbatti, havan cups, diyas, panchgavya soap, floor cleaner and organic manure.",
     "searchLabel": "Search products",
-    "searchPlaceholder": "Search sarees, brassware, dari...",
+    "searchPlaceholder": "Search agarbatti, gomutra ark, diya...",
     "resultCount": "{{count}} products",
     "inStock": "In stock",
     "outOfStock": "Out of stock",
@@ -156,7 +157,25 @@
     "productMetaDescription": "{{name}} — {{price}} on UP Bazaar. {{availability}}.",
     "availabilityInStock": "Available now",
     "availabilityOutOfStock": "Currently unavailable",
-    "backToProducts": "Back to products"
+    "backToProducts": "Back to products",
+    "heroEyebrow": "Gaushala products",
+    "heroTitle": "Cow-derived goods, direct from Uttar Pradesh gaushalas",
+    "heroSubtitle": "Dhoop and agarbatti, havan samagri, panchgavya soaps, gomutra ark and organic manure — made by gaushalas and small producers across the state.",
+    "categories": "Categories",
+    "allCategories": "All",
+    "category": "Category",
+    "currency": "Currency",
+    "atAGlance": "At a glance",
+    "priceOnRequest": "Price on request",
+    "notYetPriced": "Not yet priced",
+    "notYetPricedBody": "This listing was imported without a price. It becomes orderable once the seller sets one.",
+    "noPhotoYet": "Photo coming soon",
+    "pagination": "Pagination",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{page}} of {{totalPages}}",
+    "brand": "Brand",
+    "byBrand": "by {{brand}}"
   },
   "seller": {
     "newProduct": "Add a product",
@@ -232,5 +251,14 @@
     "body": "This page needs a permission your account does not have.",
     "required": "Required: {{permissions}}",
     "back": "Go back"
+  },
+  "footer": {
+    "tagline": "A state marketplace for gaushala and rural producers of Uttar Pradesh.",
+    "shop": "Shop",
+    "sell": "Sell with us",
+    "sellBody": "Gaushalas and registered producers can list their products and reach buyers across India.",
+    "help": "Help",
+    "helpBody": "Questions about an order or a listing? Reach the support desk from your account page.",
+    "copyright": "© 2026 UP Bazaar. A Government of Uttar Pradesh initiative."
   }
 }

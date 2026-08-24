@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { productDetailResolver, productListResolver } from './products.resolvers';
+import { categoriesResolver, productDetailResolver, productListResolver } from './products.resolvers';
 
 export const productRoutes: Route[] = [
   {
@@ -8,7 +8,7 @@ export const productRoutes: Route[] = [
     // The listing is filtered through the query string, so the resolver has to re-run when
     // only the query string changes.
     runGuardsAndResolvers: 'paramsOrQueryParamsChange',
-    resolve: { page: productListResolver },
+    resolve: { page: productListResolver, categories: categoriesResolver },
   },
   {
     path: ':productId',

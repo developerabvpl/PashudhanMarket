@@ -196,7 +196,7 @@
           "204": {
             "description": "No Content",
             "content": {
-              "application/json": { }
+              "application/json": {}
             }
           },
           "404": {
@@ -264,7 +264,7 @@
           "204": {
             "description": "No Content",
             "content": {
-              "application/json": { }
+              "application/json": {}
             }
           },
           "404": {
@@ -445,7 +445,7 @@
           "204": {
             "description": "No Content",
             "content": {
-              "application/json": { }
+              "application/json": {}
             }
           },
           "404": {
@@ -721,6 +721,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/categories": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Lists the catalogue taxonomy.",
+        "operationId": "catalogListCategories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryDto"
+                  }
                 }
               }
             }
@@ -1151,6 +1175,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "brand": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Maker or seller brand as given on the listing."
           }
         }
       },
@@ -1306,7 +1337,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ],
   "tags": [

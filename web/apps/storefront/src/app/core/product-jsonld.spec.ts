@@ -60,3 +60,36 @@ describe('breadcrumbJsonLd', () => {
     expect(items[1]['item']).toBe(url);
   });
 });
+
+describe('productJsonLd for a listing with no price', () => {
+  const unpriced: ProductDto = {
+    ...baseProduct,
+    sku: 'UPB-AGB-001',
+    name: 'Gurushraddha Cow Dung Dhoop Agarbatti',
+    brand: 'Gurushraddha',
+    description: null,
+    price: 0,
+    onHandQuantity: 0,
+    reservedQuantity: 0,
+  };
+
+  it('omits the offer rather than advertising the product as free', () => {
+    const schema = productJsonLd(unpriced, url) as Record<string, any>;
+
+    expect(schema['offers']).toBeUndefined();
+    expect(schema['@type']).toBe('Product');
+    expect(schema['name']).toBe('Gurushraddha Cow Dung Dhoop Agarbatti');
+  });
+
+  it('still publishes the brand, which is the part a crawler can use', () => {
+    const schema = productJsonLd(unpriced, url) as Record<string, any>;
+
+    expect(schema['brand']).toEqual({ '@type': 'Brand', name: 'Gurushraddha' });
+  });
+
+  it('leaves the brand out when the listing does not name one', () => {
+    const schema = productJsonLd({ ...unpriced, brand: null }, url) as Record<string, any>;
+
+    expect(schema['brand']).toBeUndefined();
+  });
+});

@@ -4,11 +4,15 @@ import { ProductDto } from '@upbazaar/data-access';
  * schema.org Product markup, the shape Google needs to show price and availability in a rich
  * result. Availability is derived from real stock rather than hardcoded, because publishing
  * "InStock" for something that is not is the kind of thing that gets rich results revoked.
+ *
+ * A product with no price gets no Offer node at all. Emitting `price: 0` would advertise it as
+ * free in the search result, and there is no way to say "ask us" in an Offer — the absence of
+ * an offer is exactly how schema.org expresses a listing that cannot be bought yet.
  */
 export function productJsonLd(product: ProductDto, canonicalUrl: string): Record<string, unknown> {
   const available = (product.onHandQuantity ?? 0) - (product.reservedQuantity ?? 0) > 0;
 
-  return {
+  const node: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
@@ -16,7 +20,14 @@ export function productJsonLd(product: ProductDto, canonicalUrl: string): Record
     sku: product.sku,
     category: product.category?.name,
     url: canonicalUrl,
-    offers: {
+  };
+
+  if (product.brand) {
+    node['brand'] = { '@type': 'Brand', name: product.brand };
+  }
+
+  if (product.price > 0) {
+    node['offers'] = {
       '@type': 'Offer',
       url: canonicalUrl,
       priceCurrency: product.currency,
@@ -25,8 +36,10 @@ export function productJsonLd(product: ProductDto, canonicalUrl: string): Record
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
-    },
-  };
+    };
+  }
+
+  return node;
 }
 
 /** Breadcrumb markup so search results show Products > <name> instead of a bare URL. */

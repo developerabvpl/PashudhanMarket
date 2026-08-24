@@ -1,65 +1,145 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
-import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ProductDto } from '@upbazaar/data-access';
 import { InrCurrencyPipe } from '@upbazaar/util';
+import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
+import { ProductThumb } from './product-thumb';
 
 const ORIGIN = 'https://upbazaar.example';
 
 /** Public product page: server-rendered, canonicalised, and marked up with JSON-LD. */
 @Component({
   selector: 'upb-product-detail',
-  imports: [RouterLink, NgOptimizedImage, TranslocoPipe, InrCurrencyPipe],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, ProductThumb],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (product(); as item) {
-    <article class="mx-auto max-w-4xl px-4 py-8">
-      <nav aria-label="Breadcrumb" class="text-sm">
-        <a class="text-accent-600 hover:underline" routerLink="/products">
-          {{ 'catalog.backToProducts' | transloco }}
+    <article class="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+      <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-2 text-sm">
+        <a class="text-ink-muted transition-colors hover:text-ink" routerLink="/products">
+          {{ 'catalog.title' | transloco }}
+        </a>
+        <span class="text-ink-muted" aria-hidden="true">/</span>
+        <a
+          class="text-ink-muted transition-colors hover:text-ink"
+          [routerLink]="['/products']"
+          [queryParams]="{ category: item.category.id }"
+        >
+          {{ item.category.name }}
         </a>
       </nav>
 
-      <div class="mt-6 grid gap-8 md:grid-cols-2">
-        <img
-          class="w-full rounded-card bg-surface-sunken object-cover"
-          [ngSrc]="imageUrl()"
-          [alt]="item.name"
-          width="640"
-          height="640"
-          priority
-        />
+      <div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-12">
+        <div>
+          <upb-product-thumb
+            class="aspect-square w-full"
+            size="detail"
+            [name]="item.name"
+            [sku]="item.sku"
+          />
+          <p class="mt-3 text-center text-xs text-ink-muted">
+            {{ 'catalog.noPhotoYet' | transloco }}
+          </p>
+        </div>
 
         <div>
-          <h1 class="text-3xl font-semibold text-ink">{{ item.name }}</h1>
+          <p class="text-sm font-medium uppercase tracking-wider text-brand-700">
+            {{ item.category.name }}
+          </p>
+
+          <h1 class="mt-2 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">
+            {{ item.name }}
+          </h1>
+
+          @if (item.brand) {
+          <p class="mt-2 text-sm text-ink-muted">
+            {{ 'catalog.byBrand' | transloco: { brand: item.brand } }}
+          </p>
+          }
+
           <p class="mt-1 text-sm text-ink-muted">
             {{ 'catalog.sku' | transloco }}: {{ item.sku }}
           </p>
 
-          <p class="mt-4 text-3xl font-bold text-ink">{{ item.price | inr }}</p>
+          @if (facts().size || facts().pack || facts().dimension) {
+          <ul class="mt-5 flex flex-wrap gap-2" [attr.aria-label]="'catalog.atAGlance' | transloco">
+            @if (facts().size; as size) {
+            <li class="rounded-full bg-surface-sunken px-3 py-1.5 text-sm font-medium text-ink">
+              {{ size }}
+            </li>
+            } @if (facts().pack; as pack) {
+            <li class="rounded-full bg-surface-sunken px-3 py-1.5 text-sm font-medium text-ink">
+              {{ pack }}
+            </li>
+            } @if (facts().dimension; as dimension) {
+            <li class="rounded-full bg-surface-sunken px-3 py-1.5 text-sm font-medium text-ink">
+              {{ dimension }}
+            </li>
+            }
+          </ul>
+          }
 
-          <p
-            class="mt-2 font-medium"
-            [class.text-success]="available() > 0"
-            [class.text-ink-muted]="available() === 0"
-          >
-            {{ (available() > 0 ? 'catalog.inStock' : 'catalog.outOfStock') | transloco }}
-          </p>
+          <div class="mt-6 rounded-card border border-border bg-surface p-5">
+            @if (item.price > 0) {
+            <p class="text-3xl font-bold text-ink">{{ item.price | inr }}</p>
+            <p
+              class="mt-1 font-medium"
+              [class.text-success]="available() > 0"
+              [class.text-ink-muted]="available() === 0"
+            >
+              {{ (available() > 0 ? 'catalog.inStock' : 'catalog.outOfStock') | transloco }}
+            </p>
+
+            <button
+              type="button"
+              class="mt-5 w-full rounded-control bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              [disabled]="available() === 0"
+            >
+              {{ 'catalog.addToCart' | transloco }}
+            </button>
+            } @else {
+            <p class="text-2xl font-bold text-ink">{{ 'catalog.priceOnRequest' | transloco }}</p>
+            <p class="mt-1 text-sm leading-relaxed text-ink-muted">
+              {{ 'catalog.notYetPricedBody' | transloco }}
+            </p>
+
+            <button
+              type="button"
+              class="mt-5 w-full cursor-not-allowed rounded-control bg-brand-600 px-6 py-3 font-semibold text-white opacity-50"
+              disabled
+            >
+              {{ 'catalog.addToCart' | transloco }}
+            </button>
+            }
+          </div>
 
           @if (item.description) {
           <p class="mt-6 leading-relaxed text-ink">{{ item.description }}</p>
           }
 
-          <button
-            type="button"
-            class="mt-8 w-full rounded-control bg-brand-600 px-6 py-3 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-            [disabled]="available() === 0"
-          >
-            {{ 'catalog.addToCart' | transloco }}
-          </button>
+          <dl class="mt-8 divide-y divide-border border-t border-border text-sm">
+            @if (item.brand) {
+            <div class="flex justify-between gap-4 py-3">
+              <dt class="text-ink-muted">{{ 'catalog.brand' | transloco }}</dt>
+              <dd class="text-right font-medium text-ink">{{ item.brand }}</dd>
+            </div>
+            }
+            <div class="flex justify-between gap-4 py-3">
+              <dt class="text-ink-muted">{{ 'catalog.category' | transloco }}</dt>
+              <dd class="text-right font-medium text-ink">{{ item.category.name }}</dd>
+            </div>
+            <div class="flex justify-between gap-4 py-3">
+              <dt class="text-ink-muted">{{ 'catalog.sku' | transloco }}</dt>
+              <dd class="text-right font-medium text-ink">{{ item.sku }}</dd>
+            </div>
+            <div class="flex justify-between gap-4 py-3">
+              <dt class="text-ink-muted">{{ 'catalog.currency' | transloco }}</dt>
+              <dd class="text-right font-medium text-ink">{{ item.currency }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </article>
@@ -79,14 +159,11 @@ export class ProductDetail {
     return item === null ? 0 : item.onHandQuantity - item.reservedQuantity;
   });
 
-  /**
-   * The API has no image field yet, so this is a deterministic placeholder keyed on the SKU.
-   * Swap for the real asset URL once catalog images land.
-   */
-  readonly imageUrl = computed(() => {
+  /** Pack size and weight, read out of the listing title. See core/product-facts. */
+  readonly facts = computed(() => {
     const item = this.product();
 
-    return item === null ? '' : `/assets/products/${item.sku.toLowerCase()}.jpg`;
+    return productFacts(item?.name ?? '');
   });
 
   constructor() {

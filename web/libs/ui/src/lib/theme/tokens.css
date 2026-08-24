@@ -52,15 +52,33 @@
 /**
  * Dark surfaces. Only the neutrals flip: the brand hue stays put so the marigold reads the
  * same in both themes.
+ *
+ * These are plain custom properties on :root, NOT a nested @theme. Tailwind hoists every
+ * @theme block to the top level and emits its variables unconditionally, so wrapping one in a
+ * media query does not scope it — it just makes the dark values overwrite the light ones for
+ * everybody. Overriding the variables that @theme already declared is the supported way to
+ * theme, and it is what makes the light palette reachable at all.
  */
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-ink: oklch(0.95 0.005 80);
-    --color-ink-muted: oklch(0.72 0.01 80);
-    --color-surface: oklch(0.21 0.008 70);
-    --color-surface-sunken: oklch(0.17 0.008 70);
-    --color-surface-raised: oklch(0.26 0.009 70);
-    --color-border: oklch(0.33 0.01 70);
+    --color-ink-muted: oklch(0.72 0.012 80);
+    --color-surface: oklch(0.23 0.008 70);
+    --color-surface-sunken: oklch(0.18 0.008 70);
+    --color-surface-raised: oklch(0.27 0.009 70);
+    --color-border: oklch(0.34 0.01 70);
+
+    /* The mid-brand ramp is too dark to read on a dark surface; lift the two that carry text. */
+    --color-brand-600: oklch(0.72 0.17 62);
+    --color-brand-700: oklch(0.64 0.18 56);
+
+    --color-accent-600: oklch(0.72 0.14 265);
+
+    --color-success: oklch(0.72 0.15 152);
+    --color-danger: oklch(0.68 0.18 27);
+
+    --shadow-card: 0 1px 2px oklch(0 0 0 / 0.4), 0 4px 12px oklch(0 0 0 / 0.3);
+    --shadow-raised: 0 8px 24px oklch(0 0 0 / 0.5);
   }
 }
 

@@ -24,6 +24,10 @@ The storefront additionally proxies `/api/catalog` to `http://localhost:5200`, w
 `tools/scripts/stub-api.mjs` stands in for the Catalog module until it ships. Two origins is a
 transitional arrangement, not a design — see *The API client* below.
 
+```bash
+node tools/scripts/stub-api.mjs
+```
+
 To sign in as an administrator the API needs a seeded account, which it creates on first run
 from environment variables and never writes to a settings file:
 
@@ -78,6 +82,27 @@ Calls go through the generated `Api` helper:
 const api = inject(Api);
 const product = await api.invoke(catalogGetProduct, { productId });
 ```
+
+## The catalogue
+
+The storefront's products come from `tools/data/catalog.json`, generated from the supplied
+workbook and served by the stub:
+
+```bash
+node tools/scripts/import-catalog.mjs                 # tools/data/*.xlsx -> catalog.json
+node tools/scripts/import-catalog.mjs --source other.xlsx
+```
+
+Ids are UUIDv5 over a fixed namespace, so re-importing updates the catalogue in place instead of
+duplicating it and existing product URLs keep resolving. SKUs are `UPB-<category>-<n>`, and the
+category segment is what `ProductThumb` keys its colour on.
+
+**The workbook has no prices, no stock and no photographs**, and the importer invents none. An
+imported product carries `price: 0`, which the storefront renders as *Price on request* with the
+Add to cart button disabled, and no `Offer` node reaches the JSON-LD — publishing `price: 0`
+would advertise the product as free in a search result. Product tiles are a generated wash and
+monogram rather than an `<img>` at a path that does not exist. Fill in prices and stock, and the
+existing priced path takes over with no code change.
 
 ## Layout
 
@@ -150,8 +175,13 @@ route resolver rather than in the component, because the router awaits resolvers
 that is what puts the content in the served HTML.
 
 **Styling.** Tailwind 4 with tokens in `libs/ui/src/lib/theme/tokens.css`. Colours are OKLCH
-custom properties with a dark-scheme block; components use utilities such as `bg-surface` and
-`text-ink` and never an inline hex.
+custom properties; components use utilities such as `bg-surface` and `text-ink` and never an
+inline hex.
+
+The dark palette is a plain `:root` override inside `@media (prefers-color-scheme: dark)`, not a
+nested `@theme`. Tailwind hoists every `@theme` block to the top level and emits its variables
+unconditionally, so a `@theme` inside a media query is not scoped by it — it simply overwrites
+the light values for everyone. That is worth knowing before adding a second theme.
 
 ## Known gaps
 
@@ -160,7 +190,10 @@ custom properties with a dark-scheme block; components use utilities such as `bg
   `LanguageSwitcher`.
 - **No cart or checkout in the storefront.** The Add to cart button is inert; the API's checkout
   endpoint is generated and ready to call.
-- **Product images** are placeholder paths keyed on SKU. The API has no image field yet.
+- **No product photographs.** Tiles are a generated wash and monogram; the API has no image
+  field and the import had no images. See `ProductThumb`.
+- **No prices or stock on the imported catalogue.** Everything reads *Price on request* until a
+  seller fills them in. See *The catalogue* above.
 - **Catalog, Orders and Payments are stubbed.** Those endpoints come from the archived contract
   merged into the generated client, and the storefront's server render reads them from
   `tools/scripts/stub-api.mjs` on port 5200 (override with `SSR_API_ORIGIN`). Identity is real.

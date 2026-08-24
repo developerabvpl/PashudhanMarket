@@ -53,6 +53,8 @@ export type { ApiCatalogProductsProductIdPublishPost$Params as ApiCatalogProduct
 export { apiCatalogProductsProductIdPublishPost as apiCatalogProductsProductIdPublishPost } from './fn/products/api-catalog-products-product-id-publish-post';
 export type { ApiCatalogProductsProductIdStockPut$Params as ApiCatalogProductsProductIdStockPut$Params } from './fn/products/api-catalog-products-product-id-stock-put';
 export { apiCatalogProductsProductIdStockPut as apiCatalogProductsProductIdStockPut } from './fn/products/api-catalog-products-product-id-stock-put';
+export type { CatalogListCategories$Params as CatalogListCategories$Params } from './fn/products/catalog-list-categories';
+export { catalogListCategories as catalogListCategories } from './fn/products/catalog-list-categories';
 export type { OrderingGetOrder$Params as OrderingGetOrder$Params } from './fn/orders/ordering-get-order';
 export { orderingGetOrder as orderingGetOrder } from './fn/orders/ordering-get-order';
 export type { ApiOrderingOrdersCheckoutPost$Params as ApiOrderingOrdersCheckoutPost$Params } from './fn/orders/api-ordering-orders-checkout-post';
