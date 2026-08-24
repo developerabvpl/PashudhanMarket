@@ -38,6 +38,48 @@ UPBAZAAR_Identity__SuperAdmin__Email=admin@upbazaar.test UPBAZAAR_Identity__Supe
 Buyer OTP codes are not sent anywhere in development: the fake `ISmsSender` writes them to the
 API log at `src/UPBazaar.Api/logs/`.
 
+## Deploying
+
+`nx build storefront` produces a Node SSR server under `dist/apps/storefront`. Three things it
+needs that the dev server hides:
+
+**A host allowlist.** Angular rejects any request whose `Host` header is not listed, and the
+default list is empty — a fresh production build answers 400 to every request. `localhost` is
+set in `project.json` for local runs; add the real domain at run time:
+
+```bash
+NG_ALLOWED_HOSTS=upbazaar.example,www.upbazaar.example SSR_API_ORIGIN=http://127.0.0.1:5200 PORT=4000 node dist/apps/storefront/server/server.mjs
+```
+
+Never set it to `*` unless a proxy in front is already validating the header.
+
+**A reverse proxy.** The SSR server does not proxy `/api`, and the browser calls the API on its
+own origin. Without something in front routing `/api/**` to the API, the first paint is correct
+and then the page empties as soon as it hydrates and refetches. One origin, three upstreams:
+
+| Path | Upstream |
+| --- | --- |
+| `/api/catalog/**` | the catalogue stub on 5200 |
+| `/api/**` | the .NET API on 5199 |
+| everything else | the SSR server |
+
+`SSR_API_ORIGIN` is separate and internal: it is how Node reaches the catalogue during the server
+render, where there is no page to be relative to.
+
+**The stub's data.** `tools/scripts/stub-api.mjs` reads `tools/data/catalog.json` relative to the
+workspace root, and neither is part of `dist`. Copy `tools/` alongside the build, or the stub
+will not start.
+
+### What runs without a database
+
+The storefront does, completely: browsing, search, category filters, product pages and the
+basket all come from the catalogue stub and localStorage. Verified with the API stopped.
+
+The .NET API does not. It applies EF migrations and initialises Hangfire's SQL storage at
+startup, and with an unreachable database it never reaches `app.Run()` — so sign-in, OTP, the
+account page and the two portals are gone with it. The storefront degrades rather than breaks:
+the sign-in sheet reports a failure instead of crashing the page.
+
 ## Verifying
 
 ```bash
