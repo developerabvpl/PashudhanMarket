@@ -17,8 +17,6 @@ export type { ApiV1AdminCatalogProductsProductIdDelete$Params as ApiV1AdminCatal
 export { apiV1AdminCatalogProductsProductIdDelete as apiV1AdminCatalogProductsProductIdDelete } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-delete';
 export type { ApiV1AdminCatalogProductsProductIdPublishPost$Params as ApiV1AdminCatalogProductsProductIdPublishPost$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-publish-post';
 export { apiV1AdminCatalogProductsProductIdPublishPost as apiV1AdminCatalogProductsProductIdPublishPost } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-publish-post';
-export type { ApiV1AdminCatalogProductsProductIdStockPut$Params as ApiV1AdminCatalogProductsProductIdStockPut$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-stock-put';
-export { apiV1AdminCatalogProductsProductIdStockPut as apiV1AdminCatalogProductsProductIdStockPut } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-stock-put';
 export type { ApiV1AdminCatalogCategoriesPost$Params as ApiV1AdminCatalogCategoriesPost$Params } from './fn/admin-catalog/api-v-1-admin-catalog-categories-post';
 export { apiV1AdminCatalogCategoriesPost as apiV1AdminCatalogCategoriesPost } from './fn/admin-catalog/api-v-1-admin-catalog-categories-post';
 export type { ApiV1AdminCatalogCategoriesCategoryIdPut$Params as ApiV1AdminCatalogCategoriesCategoryIdPut$Params } from './fn/admin-catalog/api-v-1-admin-catalog-categories-category-id-put';
@@ -63,6 +61,16 @@ export type { ApiV1AdminUsersUserIdRolesPut$Params as ApiV1AdminUsersUserIdRoles
 export { apiV1AdminUsersUserIdRolesPut as apiV1AdminUsersUserIdRolesPut } from './fn/admin-users/api-v-1-admin-users-user-id-roles-put';
 export type { ApiV1AdminRolesGet$Params as ApiV1AdminRolesGet$Params } from './fn/admin-users/api-v-1-admin-roles-get';
 export { apiV1AdminRolesGet as apiV1AdminRolesGet } from './fn/admin-users/api-v-1-admin-roles-get';
+export type { ApiV1AdminInventoryStockGet$Params as ApiV1AdminInventoryStockGet$Params } from './fn/inventory/api-v-1-admin-inventory-stock-get';
+export { apiV1AdminInventoryStockGet as apiV1AdminInventoryStockGet } from './fn/inventory/api-v-1-admin-inventory-stock-get';
+export type { ApiV1AdminInventoryStockProductIdGet$Params as ApiV1AdminInventoryStockProductIdGet$Params } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-get';
+export { apiV1AdminInventoryStockProductIdGet as apiV1AdminInventoryStockProductIdGet } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-get';
+export type { ApiV1AdminInventoryStockProductIdPut$Params as ApiV1AdminInventoryStockProductIdPut$Params } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-put';
+export { apiV1AdminInventoryStockProductIdPut as apiV1AdminInventoryStockProductIdPut } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-put';
+export type { ApiV1AdminInventoryStockProductIdReceiptsPost$Params as ApiV1AdminInventoryStockProductIdReceiptsPost$Params } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-receipts-post';
+export { apiV1AdminInventoryStockProductIdReceiptsPost as apiV1AdminInventoryStockProductIdReceiptsPost } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-receipts-post';
+export type { ApiV1AdminInventoryStockProductIdWriteOffsPost$Params as ApiV1AdminInventoryStockProductIdWriteOffsPost$Params } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-write-offs-post';
+export { apiV1AdminInventoryStockProductIdWriteOffsPost as apiV1AdminInventoryStockProductIdWriteOffsPost } from './fn/inventory/api-v-1-admin-inventory-stock-product-id-write-offs-post';
 export type { ApiCatalogProductsGet$Params as ApiCatalogProductsGet$Params } from './fn/products/api-catalog-products-get';
 export { apiCatalogProductsGet as apiCatalogProductsGet } from './fn/products/api-catalog-products-get';
 export type { ApiCatalogProductsPost$Params as ApiCatalogProductsPost$Params } from './fn/products/api-catalog-products-post';

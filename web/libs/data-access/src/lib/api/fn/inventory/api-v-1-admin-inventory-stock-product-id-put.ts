@@ -7,16 +7,16 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { ProductDto } from '../../models/product-dto';
-import { SetStockRequest } from '../../models/set-stock-request';
+import { CountStockRequest } from '../../models/count-stock-request';
+import { StockLevelDto } from '../../models/stock-level-dto';
 
-export interface ApiV1AdminCatalogProductsProductIdStockPut$Params {
+export interface ApiV1AdminInventoryStockProductIdPut$Params {
   productId: string;
-      body: SetStockRequest
+      body: CountStockRequest
 }
 
-export function apiV1AdminCatalogProductsProductIdStockPut(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogProductsProductIdStockPut$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogProductsProductIdStockPut.PATH, 'put');
+export function apiV1AdminInventoryStockProductIdPut(http: HttpClient, rootUrl: string, params: ApiV1AdminInventoryStockProductIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<StockLevelDto>> {
+  const rb = new RequestBuilder(rootUrl, apiV1AdminInventoryStockProductIdPut.PATH, 'put');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -27,9 +27,9 @@ export function apiV1AdminCatalogProductsProductIdStockPut(http: HttpClient, roo
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<ProductDto>;
+      return r as StrictHttpResponse<StockLevelDto>;
     })
   );
 }
 
-apiV1AdminCatalogProductsProductIdStockPut.PATH = '/api/v1/admin/catalog/products/{productId}/stock';
+apiV1AdminInventoryStockProductIdPut.PATH = '/api/v1/admin/inventory/stock/{productId}';

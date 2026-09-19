@@ -4,6 +4,7 @@ using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Catalog.Application.Categories;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Domain;
+using UPBazaar.Modules.Inventory.Contracts;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
 
@@ -63,8 +64,11 @@ internal sealed class CreateProductCommandValidator : AbstractValidator<CreatePr
 /// <summary>
 /// Creates a listing in Draft. Publishing is a separate step so a seller can get the listing
 /// right before a shopper sees it.
+///
+/// The opening stock is staged with Inventory and saved in the same transaction as the product,
+/// so a listing never exists without its stock row.
 /// </summary>
-internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext)
+internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
     : ICommandHandler<CreateProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -92,13 +96,20 @@ internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext)
             Normalize(command.Description),
             command.Price,
             command.SellerId,
-            category,
-            command.OnHandQuantity);
+            category);
 
         dbContext.Set<Product>().Add(product);
+
+        var stock = await inventory.StageOpeningStockAsync(product.PublicId, command.OnHandQuantity, cancellationToken);
+
+        if (stock.IsFailure)
+        {
+            return Result.Failure<ProductDto>(stock.Error);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return product.ToDto();
+        return await product.ToDtoAsync(inventory, cancellationToken);
     }
 
     internal static string? Normalize(string? value) =>
@@ -124,7 +135,7 @@ internal sealed class UpdateProductCommandValidator : AbstractValidator<UpdatePr
     }
 }
 
-internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext)
+internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
     : ICommandHandler<UpdateProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -160,14 +171,14 @@ internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext)
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return product.ToDto();
+        return await product.ToDtoAsync(inventory, cancellationToken);
     }
 }
 
 /// <summary>Makes a draft visible to shoppers.</summary>
 public sealed record PublishProductCommand(Guid ProductId) : ICommand<ProductDto>;
 
-internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext)
+internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
     : ICommandHandler<PublishProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -191,7 +202,7 @@ internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext)
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return product.ToDto();
+        return await product.ToDtoAsync(inventory, cancellationToken);
     }
 }
 
@@ -219,45 +230,5 @@ internal sealed class ArchiveProductCommandHandler(UPBazaarDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
-    }
-}
-
-/// <summary>Sets the physical stock count.</summary>
-public sealed record SetProductStockCommand(Guid ProductId, int OnHandQuantity) : ICommand<ProductDto>;
-
-internal sealed class SetProductStockCommandValidator : AbstractValidator<SetProductStockCommand>
-{
-    public SetProductStockCommandValidator()
-    {
-        RuleFor(x => x.ProductId).NotEmpty();
-        RuleFor(x => x.OnHandQuantity).InclusiveBetween(0, 1_000_000);
-    }
-}
-
-internal sealed class SetProductStockCommandHandler(UPBazaarDbContext dbContext)
-    : ICommandHandler<SetProductStockCommand, ProductDto>
-{
-    public async Task<Result<ProductDto>> HandleAsync(
-        SetProductStockCommand command,
-        CancellationToken cancellationToken)
-    {
-        var product = await ProductLoader.Query(dbContext)
-            .FirstOrDefaultAsync(p => p.PublicId == command.ProductId, cancellationToken);
-
-        if (product is null)
-        {
-            return Result.Failure<ProductDto>(CatalogErrors.ProductNotFound);
-        }
-
-        var result = product.SetStock(command.OnHandQuantity);
-
-        if (result.IsFailure)
-        {
-            return Result.Failure<ProductDto>(result.Error);
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return product.ToDto();
     }
 }

@@ -171,14 +171,24 @@ fails at the first send rather than silently dropping a login code.
 
 ## Current state
 
-The platform is wired and tested. Identity and Catalog are implemented; the other fourteen
-modules are skeletons with a registration, a schema declaration and their permission names.
+The platform is wired and tested. Identity, Catalog and Inventory are implemented; the other
+thirteen modules are skeletons with a registration, a schema declaration and their permission
+names.
 
 Catalog serves the published catalogue anonymously under `/api/v1/catalog` and takes changes
 under `/api/v1/admin/catalog`. Products start as drafts, are published, and are archived rather
 than deleted. In Development, `Catalog:SeedFile` imports `web/tools/data/catalog.json` into an
 empty catalogue with its ids intact, so the storefront's product URLs survive the switch from
-the bundled file to the API. Stock sits on the product until the Inventory module takes it over.
+the bundled file to the API.
+
+Inventory owns stock. Staff record deliveries, stock-takes and write-offs under
+`/api/v1/admin/inventory`, and every change lands in a per-product ledger saying what, who and
+why. Writing stock off needs `inventory.adjustments.approve`, which only Admin holds. Other
+modules go through `IInventoryService`: Catalog reads stock levels to fill in its product
+responses, and Cart and Orders will reserve stock through it. A reservation is all-or-nothing,
+expires on its own (a Hangfire job sweeps every minute), and is then committed or released.
+Concurrent reservations for the last unit are settled by a row version on the stock row, so
+stock cannot be oversold.
 
 Deliberately not built yet:
 

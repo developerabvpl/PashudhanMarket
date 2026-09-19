@@ -28,8 +28,4 @@ public static class CatalogErrors
     public static readonly Error ProductArchived = Error.Conflict(
         "catalog.product.archived",
         "An archived product cannot be changed. Create a new listing instead.");
-
-    public static readonly Error StockBelowReserved = Error.Conflict(
-        "catalog.product.stock_below_reserved",
-        "Stock on hand cannot fall below what is already reserved for orders.");
 }

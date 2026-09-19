@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Catalog.Contracts;
 using UPBazaar.Modules.Catalog.Services;
 using UPBazaar.SharedKernel.Modules;
 
@@ -45,6 +46,7 @@ public static class CatalogModuleExtensions
             .Bind(configuration.GetSection(CatalogModuleOptions.SectionName));
 
         services.AddScoped<CatalogSeeder>();
+        services.AddScoped<IProductCatalog, ProductCatalog>();
 
         return services;
     }

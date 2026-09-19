@@ -18,11 +18,8 @@ public enum ProductStatus
 }
 
 /// <summary>
-/// One listing: what it is, what it costs and who sells it.
-///
-/// TRANSITIONAL: stock lives here because the storefront shows availability and the Inventory
-/// module has no tables yet. When Inventory ships it takes over <see cref="OnHandQuantity"/> and
-/// <see cref="ReservedQuantity"/>, and this class keeps only what describes the product.
+/// One listing: what it is, what it costs and who sells it. How many exist is Inventory's
+/// business; the API fills stock into product responses from there.
 /// </summary>
 public sealed class Product : AggregateRoot, IAuditable
 {
@@ -61,13 +58,6 @@ public sealed class Product : AggregateRoot, IAuditable
 
     public Category Category { get; private set; } = null!;
 
-    public int OnHandQuantity { get; private set; }
-
-    public int ReservedQuantity { get; private set; }
-
-    /// <summary>What a shopper can still buy.</summary>
-    public int AvailableQuantity => Math.Max(0, OnHandQuantity - ReservedQuantity);
-
     public DateTime CreatedAtUtc { get; set; }
 
     public string? CreatedBy { get; set; }
@@ -84,7 +74,6 @@ public sealed class Product : AggregateRoot, IAuditable
     /// <param name="price">Price in <see cref="DefaultCurrency"/>.</param>
     /// <param name="sellerId">Public id of the selling account.</param>
     /// <param name="category">Category to list under.</param>
-    /// <param name="onHandQuantity">Opening stock.</param>
     /// <param name="publicId">
     /// Fixed public id, used only when importing a catalogue whose ids are already published.
     /// </param>
@@ -96,7 +85,6 @@ public sealed class Product : AggregateRoot, IAuditable
         decimal price,
         Guid sellerId,
         Category category,
-        int onHandQuantity,
         Guid? publicId = null)
     {
         ArgumentNullException.ThrowIfNull(category);
@@ -111,7 +99,6 @@ public sealed class Product : AggregateRoot, IAuditable
             Price = price,
             SellerId = sellerId,
             Category = category,
-            OnHandQuantity = onHandQuantity,
             Status = ProductStatus.Draft,
         };
 
@@ -186,23 +173,5 @@ public sealed class Product : AggregateRoot, IAuditable
 
         Status = ProductStatus.Archived;
         Raise(new ProductArchivedDomainEvent(PublicId, SellerId, Sku));
-    }
-
-    /// <summary>Sets the physical count after a stock-take or a delivery.</summary>
-    public Result SetStock(int onHandQuantity)
-    {
-        if (Status == ProductStatus.Archived)
-        {
-            return Result.Failure(CatalogErrors.ProductArchived);
-        }
-
-        if (onHandQuantity < ReservedQuantity)
-        {
-            return Result.Failure(CatalogErrors.StockBelowReserved);
-        }
-
-        OnHandQuantity = onHandQuantity;
-
-        return Result.Success();
     }
 }

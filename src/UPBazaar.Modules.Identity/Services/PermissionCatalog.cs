@@ -1,5 +1,6 @@
 using UPBazaar.Modules.Catalog.Contracts.Permissions;
 using UPBazaar.Modules.Identity.Contracts.Permissions;
+using UPBazaar.Modules.Inventory.Contracts.Permissions;
 
 namespace UPBazaar.Modules.Identity.Services;
 
@@ -24,6 +25,7 @@ public static class PermissionCatalog
     [
         .. IdentityPermissions.All,
         .. CatalogPermissions.All,
+        .. InventoryPermissions.All,
         PlatformJobsView,
     ];
 
@@ -51,6 +53,9 @@ public static class PermissionCatalog
                 CatalogPermissions.ProductsRead,
                 CatalogPermissions.ProductsWrite,
                 CatalogPermissions.CategoriesWrite,
+                InventoryPermissions.StockRead,
+                InventoryPermissions.StockWrite,
+                InventoryPermissions.AdjustmentsApprove,
                 PlatformJobsView,
             ]),
 
@@ -62,6 +67,11 @@ public static class PermissionCatalog
                 CatalogPermissions.ProductsRead,
                 CatalogPermissions.ProductsWrite,
                 CatalogPermissions.CategoriesWrite,
+
+                // Moderators correct listings, including their stock figures, but writing stock
+                // off stays with Admin: that is a loss to account for, not a listing fix.
+                InventoryPermissions.StockRead,
+                InventoryPermissions.StockWrite,
             ]),
 
         new(

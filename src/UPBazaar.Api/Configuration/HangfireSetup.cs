@@ -3,6 +3,7 @@ using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using UPBazaar.Infrastructure;
 using UPBazaar.Infrastructure.Outbox;
+using UPBazaar.Modules.Inventory.Services;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -104,6 +105,13 @@ public static class HangfireSetup
         recurringJobs?.AddOrUpdate<OutboxProcessor>(
             OutboxProcessor.RecurringJobId,
             processor => processor.ProcessAsync(CancellationToken.None),
+            "*/1 * * * *");
+
+        // Every minute, so an abandoned checkout keeps stock off sale for at most a minute past
+        // its hold time.
+        recurringJobs?.AddOrUpdate<ReservationExpiryJob>(
+            ReservationExpiryJob.RecurringJobId,
+            job => job.ExpireAsync(CancellationToken.None),
             "*/1 * * * *");
 
         return app;

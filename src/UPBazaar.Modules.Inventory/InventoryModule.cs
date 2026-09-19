@@ -1,6 +1,9 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Inventory.Application;
+using UPBazaar.Modules.Inventory.Contracts;
+using UPBazaar.Modules.Inventory.Services;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Inventory;
@@ -26,12 +29,19 @@ public sealed class InventoryModule : IModule
 /// <summary>Registration entry point for the Inventory module.</summary>
 public static class InventoryModuleExtensions
 {
-    /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
-    /// </summary>
+    /// <summary>Registers the module's schema, handlers, validators and services.</summary>
     /// <param name="services">Service collection.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddInventoryModule(this IServiceCollection services) =>
+    public static IServiceCollection AddInventoryModule(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddModule<InventoryModule>();
+
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<StockWriter>();
+        services.AddScoped<ReservationExpiryJob>();
+
+        return services;
+    }
 }

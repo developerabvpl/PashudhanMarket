@@ -1,5 +1,7 @@
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Domain;
+using UPBazaar.Modules.Inventory.Contracts;
+using UPBazaar.Modules.Inventory.Contracts.Dtos;
 
 namespace UPBazaar.Modules.Catalog.Application;
 
@@ -13,8 +15,11 @@ internal static class CatalogMappings
         category.Slug,
         category.Parent?.PublicId);
 
-    /// <summary>Requires <see cref="Product.Category"/> and its parent to be loaded.</summary>
-    public static ProductDto ToDto(this Product product) => new(
+    /// <summary>
+    /// Requires <see cref="Product.Category"/> and its parent to be loaded. Stock comes from
+    /// Inventory, which owns it; the DTO keeps the fields so callers did not have to change.
+    /// </summary>
+    public static ProductDto ToDto(this Product product, StockLevelDto stock) => new(
         product.PublicId,
         product.Sku,
         product.Name,
@@ -26,8 +31,19 @@ internal static class CatalogMappings
         product.Status.ToString(),
         product.SellerId,
         product.Category.ToDto(),
-        product.OnHandQuantity,
-        product.ReservedQuantity,
+        stock.OnHandQuantity,
+        stock.ReservedQuantity,
         product.CreatedAtUtc,
         product.ModifiedAtUtc);
+
+    /// <summary>One product with its stock, asked of Inventory.</summary>
+    public static async Task<ProductDto> ToDtoAsync(
+        this Product product,
+        IInventoryService inventory,
+        CancellationToken cancellationToken)
+    {
+        var levels = await inventory.GetStockLevelsAsync([product.PublicId], cancellationToken);
+
+        return product.ToDto(levels[product.PublicId]);
+    }
 }

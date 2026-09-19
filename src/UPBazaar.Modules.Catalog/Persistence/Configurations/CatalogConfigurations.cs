@@ -30,10 +30,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     public void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products", CatalogModule.SchemaName, table =>
-        {
-            table.HasCheckConstraint("CK_Products_Price", "[Price] >= 0");
-            table.HasCheckConstraint("CK_Products_Stock", "[ReservedQuantity] >= 0 AND [OnHandQuantity] >= [ReservedQuantity]");
-        });
+            table.HasCheckConstraint("CK_Products_Price", "[Price] >= 0"));
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
@@ -57,7 +54,6 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasForeignKey(x => x.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Ignore(x => x.AvailableQuantity);
         builder.Ignore(x => x.DomainEvents);
     }
 }

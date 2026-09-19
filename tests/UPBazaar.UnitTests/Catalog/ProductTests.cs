@@ -52,13 +52,6 @@ public sealed class ProductTests
 
         product.Publish().Error.ShouldBe(CatalogErrors.ProductArchived);
         product.UpdateDetails("New", null, null, 1m, Diyas).Error.ShouldBe(CatalogErrors.ProductArchived);
-        product.SetStock(5).Error.ShouldBe(CatalogErrors.ProductArchived);
-    }
-
-    [Fact]
-    public void Stock_cannot_go_negative()
-    {
-        NewProduct().SetStock(-1).Error.ShouldBe(CatalogErrors.StockBelowReserved);
     }
 
     [Theory]
@@ -66,11 +59,11 @@ public sealed class ProductTests
     [InlineData("गोबर दीया", "upb-diy-001")]
     public void The_slug_is_readable_ascii_and_never_empty(string name, string expected)
     {
-        var product = Product.CreateDraft("UPB-DIY-001", name, null, null, 10m, Guid.NewGuid(), Diyas, 0);
+        var product = Product.CreateDraft("UPB-DIY-001", name, null, null, 10m, Guid.NewGuid(), Diyas);
 
         product.Slug.ShouldBe(expected);
     }
 
     private static Product NewProduct() =>
-        Product.CreateDraft("UPB-DIY-001", "Cow Dung Diya, pack of 12", null, null, 120m, Guid.NewGuid(), Diyas, 10);
+        Product.CreateDraft("UPB-DIY-001", "Cow Dung Diya, pack of 12", null, null, 120m, Guid.NewGuid(), Diyas);
 }

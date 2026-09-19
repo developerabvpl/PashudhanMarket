@@ -177,26 +177,6 @@ public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerB
     public async Task<ActionResult> ArchiveProduct(Guid productId, CancellationToken cancellationToken) =>
         (await dispatcher.SendAsync(new ArchiveProductCommand(productId), cancellationToken)).ToActionResult();
 
-    /// <summary>Sets stock on hand.</summary>
-    [HttpPut("products/{productId:guid}/stock")]
-    [Authorize(CatalogPermissions.ProductsWrite)]
-    [EndpointSummary("Set stock")]
-    [EndpointDescription("Sets the physical count on hand. It may not fall below what is reserved.")]
-    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ProductDto>> SetStock(
-        Guid productId,
-        SetStockRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        return (await dispatcher.SendAsync(
-                new SetProductStockCommand(productId, request.OnHandQuantity), cancellationToken))
-            .ToActionResult();
-    }
-
     /// <summary>Creates a category.</summary>
     [HttpPost("categories")]
     [Authorize(CatalogPermissions.CategoriesWrite)]
@@ -244,7 +224,10 @@ public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerB
 /// <param name="Price">Price in rupees, at most two decimal places.</param>
 /// <param name="SellerId">Public id of the selling account.</param>
 /// <param name="CategoryId">Category to list under.</param>
-/// <param name="OnHandQuantity">Opening stock. Defaults to 0.</param>
+/// <param name="OnHandQuantity">
+/// Opening stock, recorded with Inventory. Defaults to 0. Later changes go through
+/// /api/v1/admin/inventory.
+/// </param>
 public sealed record CreateProductRequest(
     string Sku,
     string Name,
@@ -267,8 +250,6 @@ public sealed record UpdateProductRequest(
     decimal Price,
     Guid CategoryId);
 
-/// <param name="OnHandQuantity">Physical count on hand.</param>
-public sealed record SetStockRequest(int OnHandQuantity);
 
 /// <param name="Name">Display name. The slug is derived from it.</param>
 /// <param name="ParentId">Parent category, or null for the top level.</param>

@@ -9,9 +9,23 @@ namespace UPBazaar.Modules.Inventory.Contracts.Permissions;
 /// </summary>
 public static class InventoryPermissions
 {
+    /// <summary>See stock levels, the movement ledger and reservations.</summary>
     public const string StockRead = "inventory.stock.read";
 
+    /// <summary>Record deliveries and stock-takes.</summary>
     public const string StockWrite = "inventory.stock.write";
 
+    /// <summary>
+    /// Write stock off: damage, loss, expiry. Separate from <see cref="StockWrite"/> because a
+    /// write-off is the one movement that can hide theft, so it is granted more narrowly.
+    /// </summary>
     public const string AdjustmentsApprove = "inventory.adjustments.approve";
+
+    /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
+    public static IReadOnlyList<string> All { get; } =
+    [
+        StockRead,
+        StockWrite,
+        AdjustmentsApprove,
+    ];
 }

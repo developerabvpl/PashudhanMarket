@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Catalog.Domain;
+using UPBazaar.Modules.Inventory.Contracts;
 
 namespace UPBazaar.Modules.Catalog.Services;
 
@@ -32,6 +33,7 @@ public sealed class CatalogModuleOptions
 public sealed partial class CatalogSeeder(
     UPBazaarDbContext dbContext,
     IOptions<CatalogModuleOptions> options,
+    IInventoryService inventory,
     ILogger<CatalogSeeder> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -93,7 +95,6 @@ public sealed partial class CatalogSeeder(
                 raw.Price,
                 raw.SellerId,
                 category,
-                raw.OnHandQuantity,
                 raw.Id);
 
             if (string.Equals(raw.Status, nameof(ProductStatus.Active), StringComparison.OrdinalIgnoreCase))
@@ -106,8 +107,16 @@ public sealed partial class CatalogSeeder(
             product.ClearDomainEvents();
 
             dbContext.Set<Product>().Add(product);
+
+            var stock = await inventory.StageOpeningStockAsync(raw.Id, raw.OnHandQuantity, cancellationToken);
+
+            if (stock.IsFailure)
+            {
+                throw new InvalidOperationException($"Product {raw.Sku}: {stock.Error.Message}");
+            }
         }
 
+        // Products and their stock in one save, so a failed import leaves neither behind.
         await dbContext.SaveChangesAsync(cancellationToken);
 
         LogSeeded(logger, file.Products.Count, file.Categories.Count, path);
