@@ -11,7 +11,7 @@ resolving.
 
 | File | Shown for |
 | --- | --- |
-| `Dhoop.webp` | `AGB` — Gobar Agarbatti / Dhoop Batti, default for the category |
+| `Dhoop.jpg` | `AGB` — Gobar Agarbatti / Dhoop Batti, default for the category |
 | `agarbatti.jpg` | `AGB` listings that say *agarbatti* or *incense* without saying *dhoop* |
 | `Cow dung cake.jpg` | `KAN` — Gobar Kande / Upale |
 | `gomutra.jpg` | `ARK` — Gomutra Ark |

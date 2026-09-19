@@ -1,111 +1,83 @@
 # UP Bazaar storefront — deployment bundle
 
 Built from the UP Bazaar workspace by `tools/scripts/package-storefront.mjs`. Self-contained:
-copy the whole folder to the server and run it.
+copy the whole folder to the server. Nothing in it runs — it is a folder of static files.
 
 ## What is in here
 
-    browser/              static assets, including the product photographs
-    server/               the Angular SSR server (Node, Express)
-    api/catalog/          the catalogue stub, laid out to match the URL it answers on
-    tools/data/           catalog.json, the 70 products it serves
-    web.config            IIS site root
-    api/catalog/web.config  IIS application for the catalogue
+    index.html            the application shell
+    products/             one prerendered folder per product, plus the listing
+    *.js, *.css           the application, filenames content-hashed
+    media/                product photographs and other assets
+    web.config            IIS site root: default document, two rewrite rules, cache headers
     nginx.conf.example    the same routing for nginx
-    start.sh              run both by hand (Linux, macOS)
-    start.cmd             run both by hand (Windows)
+    README.md             this file
+
+There is no `server/` folder and no catalogue service. The seventy products are compiled into
+the bundle and prerendered into HTML at build time, so the server has nothing to execute.
 
 ## Hosting on IIS
 
-IIS does not run JavaScript, so it has to start Node for you. The **HttpPlatformHandler** module
-does exactly that: it launches the process, hands it a private port and forwards every request to
-it, restarting it if it dies. No Windows service to register, no ARR.
-
 **1. Install once on the server**
 
-- [Node.js LTS](https://nodejs.org) — confirm with `node --version` in a fresh shell
-- [HttpPlatformHandler](https://www.iis.net/downloads/microsoft/httpplatformhandler) (MSI, ~1 MB)
+[URL Rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) (MSI, ~1 MB) — usually already
+present. In IIS Manager, select the site: if you see a **URL Rewrite** icon, you have it.
+
+Node is not required on the server. Neither is HttpPlatformHandler.
 
 **2. Copy this folder** to somewhere like `C:\inetpub\upbazaar`.
 
 **3. Create the site** with that folder as its physical path, bound to your hostname.
 
-**4. Turn the catalogue folder into an application**
+That is the whole deployment. `web.config` supplies the rest.
 
-In IIS Manager, expand the site, right-click the `catalog` folder inside `api`, and choose
-**Convert to Application**. Accept the alias it offers — `catalog` — and press OK.
+### What the rewrite rules do
 
-That lands the catalogue at `/api/catalog`, which is the URL the storefront calls. The folders
-are laid out to match the URL for exactly this reason: IIS Manager only accepts a single path
-segment as an alias, so typing `api/catalog` into the Add Application dialog is rejected. Let
-the folder structure carry the nesting and the alias stays one word.
+**Prerendered pages.** `/products/<id>` is a folder holding `index.html`. Asked for without a
+trailing slash, IIS would answer with a redirect to add one — visible to crawlers, and two
+requests where one would do. The first rule serves the file directly instead.
 
-From a command prompt instead, if you prefer:
+**Client-rendered pages.** `/sign-in`, `/account` and `/cart` have no file on disk because they
+are rendered in the browser by design. The second rule hands them the shell so that a refresh, a
+bookmark or a shared link works. Requests that look like an asset are excluded, so a file that
+failed to deploy answers an honest 404 instead of HTML that the browser cannot parse.
 
-```
-appcmd add app /site.name:"upbazaar" /path:/api/catalog ^
-               /physicalPath:"C:\inetpub\upbazaar\api\catalog"
-```
+## Verifying a deployment
 
-Both `web.config` files are already in place: the site root runs the storefront, this
-application runs the catalogue.
+    curl -s -o /dev/null -w "%{http_code}\n" https://<host>/products
 
-**5. Put your hostnames in `NG_ALLOWED_HOSTS`** in the root `web.config`. This is not optional.
-Angular refuses any request whose `Host` header is not listed, and what ships here is an example —
-leave it and the site answers 400 to everyone. Do not use `*`.
+Then open `view-source:https://<host>/products` and look for product names in the HTML. If they
+are there, the prerendered pages are being served and crawlers can read the catalogue. Check a
+product page the same way — its `<title>` should be the product's own name, not "storefront".
 
-**6. Grant the application pool identity** (`IIS AppPool\<pool name>`) read access to the folder,
-and **write** access to `logs\`, which is where Node's output lands when a process fails to start.
+Deep links matter as much as the home page: load `/products/<some id>` directly in a fresh tab
+rather than clicking through to it, since clicking is client-side routing and proves nothing
+about the server.
 
-### When it does not come up
+## Updating the catalogue
+
+The products live in `tools/data/catalog.json` in the workspace, not on the server. Changing a
+price or adding a product means editing that file, rebuilding and redeploying:
+
+    npx nx build storefront
+    node tools/scripts/package-storefront.mjs
+
+This is the trade the static build makes. It is the right one while the catalogue is a file that
+only changes when someone edits it, and the wrong one the moment stock and prices move on their
+own. When the Catalog module ships in the API, the two product routes in `app.routes.server.ts`
+go back to `RenderMode.Server`, `catalog.source.ts` starts calling the API instead of importing
+the JSON, and the host needs a Node process again.
+
+## Hosting behind nginx instead
+
+`nginx.conf.example` carries the same two routing rules. The site is static there too — `root`
+at this folder and a `try_files` fallback is the whole configuration.
+
+## If something looks wrong
 
 | Symptom | Cause |
 | --- | --- |
-| 400, `Header "host" ... is not allowed` | `NG_ALLOWED_HOSTS` still holds the example hostnames |
-| 502.5 | Node is not on PATH for the pool identity — put the full path to `node.exe` in `processPath` |
-| Page paints, then goes empty | The `api/catalog` application is missing, so the browser gets HTML where it expects JSON |
-| Catalogue empty from the first paint | `SSR_API_ORIGIN` cannot reach the site; if it is not on port 80, set the real origin |
-| 403 on every path | Only `browser\` was published, as a static site — see below |
-
-### Why publishing browser\ on its own gives a 403
-
-There is no `index.html` in it, only `index.csr.html`, so IIS finds no default document and
-directory browsing is off. That is not a bug to work around. This is a server-rendered
-application: `index.csr.html` is the shell the Node server uses for client-rendered routes, not a
-page to publish. Renaming it clears the 403 and leaves an empty catalogue, because the products
-come from the stub, which is a Node process.
-
-## Hosting behind nginx
-
-`nginx.conf.example` carries the same routing. One public origin, three upstreams: `/api/catalog`
-to the stub, `/api` to the .NET API, everything else to the SSR server.
-
-## Running it by hand
-
-    NG_ALLOWED_HOSTS=upbazaar.example ./start.sh          # Linux, macOS
-    set NG_ALLOWED_HOSTS=upbazaar.example && start.cmd    # Windows
-
-Run them **from this folder** — the paths inside are relative to it, and starting them from
-anywhere else fails to find `api/catalog/stub-api.mjs`.
-`PORT` defaults to 4000 and `STUB_API_PORT` to 5200. A reverse proxy still has to sit in front:
-the SSR server does not proxy `/api`, and the browser calls the API on its own origin.
-
-## The .NET API is optional, and it needs SQL Server
-
-Everything a shopper does — browsing, search, category filters, product pages, the basket — comes
-from the catalogue stub and the browser's own storage, and works with no API and no database at
-all. Only sign-in needs the API, and the API does not start without its database: it applies
-migrations and initialises Hangfire's SQL storage before it listens. Leave `/api/**` unrouted and
-the storefront still runs; the sign-in panel reports a failure instead of breaking the page.
-
-Add it as an application at alias `api`, with its own publish folder as the physical path.
-The `catalog` application underneath it keeps working: IIS matches the longest application
-path, so `/api/catalog` still reaches the stub while everything else under `/api` goes to the
-API. The empty `api` folder in this bundle exists only so that the alias in step 4 could be a
-single word.
-
-## Prices are indicative
-
-The catalogue was imported from a listing survey with no price column. Every price in
-`tools/data/catalog.json` is an estimate derived from the pack size in the listing title, not a
-supplier price. Replace them before anyone treats this as a price list.
+| Home page loads, every other URL 404s | URL Rewrite is missing, or the site's physical path is a subfolder |
+| Page renders in a browser but `view-source` is empty | The shell is being served instead of the prerendered file — check the first rewrite rule |
+| A product added to `catalog.json` is not on the site | The bundle was not rebuilt; prerendering happens at build time |
+| Styles missing, console shows a parse error | An asset did not deploy and the fallback rule is answering it with HTML |

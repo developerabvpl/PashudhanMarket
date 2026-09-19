@@ -32,7 +32,7 @@
         "ssr": {
           "entry": "apps/storefront/src/server.ts"
         },
-        "outputMode": "server",
+        "outputMode": "static",
         "security": {
           "allowedHosts": [
             "localhost"

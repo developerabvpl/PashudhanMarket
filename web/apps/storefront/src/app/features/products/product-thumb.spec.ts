@@ -29,9 +29,9 @@ describe('productPhotoUrl', () => {
   it('treats a listing that says both as a dhoop, which is the category default', () => {
     expect(
       productPhotoUrl('UPB-AGB-001', 'Gurushraddha Cow Dung Dhoop Agarbatti, Gau Guggal')
-    ).toBe('/media/products/Dhoop.webp');
+    ).toBe('/media/products/Dhoop.jpg');
     expect(productPhotoUrl('UPB-AGB-007', 'Maa Agarbatti Gulab Cow Dung Dhup Stick 1kg')).toBe(
-      '/media/products/Dhoop.webp'
+      '/media/products/Dhoop.jpg'
     );
   });
 

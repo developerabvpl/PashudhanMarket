@@ -19,7 +19,7 @@
  * up on the server.
  */
 
-import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,14 +39,9 @@ const DEPLOY = resolve(workspaceRoot, 'tools/deploy');
  * api/catalog is the same depth as the tools/scripts it used to sit in.
  */
 const FILES = [
-  { from: 'tools/scripts/stub-api.mjs', to: 'api/catalog/stub-api.mjs' },
-  { from: 'tools/deploy/catalog.web.config', to: 'api/catalog/web.config' },
-  { from: 'tools/data/catalog.json', to: 'tools/data/catalog.json' },
   { from: 'tools/deploy/README.md', to: 'README.md' },
-  { from: 'tools/deploy/start.sh', to: 'start.sh', executable: true },
-  { from: 'tools/deploy/start.cmd', to: 'start.cmd', crlf: true },
-  { from: 'tools/deploy/nginx.conf.example', to: 'nginx.conf.example' },
   { from: 'tools/deploy/web.config', to: 'web.config' },
+  { from: 'tools/deploy/nginx.conf.example', to: 'nginx.conf.example' },
 ];
 
 function parseOut(argv) {
@@ -58,7 +53,7 @@ function parseOut(argv) {
 function main() {
   const out = parseOut(process.argv);
 
-  if (!existsSync(join(BUILD, 'server/server.mjs'))) {
+  if (!existsSync(join(BUILD, 'browser/index.html'))) {
     throw new Error(`No build at ${BUILD}. Run "npx nx build storefront" first.`);
   }
 
@@ -69,8 +64,7 @@ function main() {
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
 
-  cpSync(join(BUILD, 'browser'), join(out, 'browser'), { recursive: true });
-  cpSync(join(BUILD, 'server'), join(out, 'server'), { recursive: true });
+  cpSync(join(BUILD, 'browser'), out, { recursive: true });
 
   for (const file of FILES) {
     const target = join(out, file.to);
@@ -95,13 +89,18 @@ function main() {
     }
   }
 
-  const catalog = JSON.parse(readFileSync(join(out, 'tools/data/catalog.json'), 'utf8'));
+  const catalog = JSON.parse(
+    readFileSync(resolve(workspaceRoot, 'tools/data/catalog.json'), 'utf8')
+  );
+  const pages = readdirSync(join(out, 'products'), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory()).length;
 
   process.stdout.write(
     `Packaged the storefront into ${out}\n` +
-      `  ${catalog.products.length} products, ${catalog.categories.length} categories\n` +
-      '  IIS: point a site at this folder, then right-click api\\catalog and Convert to Application\n' +
-      '  Set NG_ALLOWED_HOSTS in web.config first: until you do, every request answers 400\n' +
+      `  ${catalog.products.length} products, ${catalog.categories.length} categories, ` +
+      `${pages} prerendered product pages\n` +
+      '  IIS: point a site at this folder. Nothing to run, nothing to convert to an application.\n' +
+      '  The only module required is URL Rewrite; web.config does the rest.\n' +
       "  Full instructions are in the bundle's README.md\n"
   );
 }

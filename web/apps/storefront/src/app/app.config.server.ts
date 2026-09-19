@@ -1,30 +1,20 @@
 import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
-import {
-  normalizeRootUrl,
-  provideApiConfiguration,
-} from '@upbazaar/data-access';
 import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
 
 /**
- * In the browser an empty base is right: the dev-server proxy or the reverse proxy in
- * front of production puts the API on the same origin. Node has no page to be relative to, so
- * the server render needs an absolute origin or every fetch fails with ENOTFOUND.
+ * Nothing rendered off the browser makes an HTTP call any more.
  *
- * TRANSITIONAL: the only thing rendered on the server is the catalogue, and the Catalog module
- * does not exist in the real API yet, so this points at tools/scripts/stub-api.mjs. Everything
- * tied to a signed-in user is client-rendered and reaches the real API through the proxy,
- * which is why a single origin suffices here. Point this back at the API and delete the stub
- * the day Catalog ships.
+ * The catalogue is imported from the bundle, and every page that talks to the API is
+ * client-rendered by app.routes.server.ts. That removes the absolute API origin this file used
+ * to need: prerendering happens on a build machine where no server is listening, so an origin
+ * would have been a value that could only ever be wrong.
+ *
+ * Restore provideApiConfiguration here if a route ever needs data at prerender time again.
  */
-const apiOrigin = process.env['SSR_API_ORIGIN'] ?? 'http://localhost:5200';
-
 const serverConfig: ApplicationConfig = {
-  providers: [
-    provideServerRendering(withRoutes(serverRoutes)),
-    provideApiConfiguration(normalizeRootUrl(apiOrigin)),
-  ],
+  providers: [provideServerRendering(withRoutes(serverRoutes))],
 };
 
 export const config = mergeApplicationConfig(appConfig, serverConfig);

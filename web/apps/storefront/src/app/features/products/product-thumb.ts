@@ -20,12 +20,12 @@ const CATEGORY_HUES: Record<string, number> = {
  * The photograph for each category, by the middle segment of the SKU.
  *
  * Filenames are listed rather than derived, so the files can keep the names they were supplied
- * with — spaces, mixed case, one .webp among the .jpgs — and so a missing entry is a visible
- * decision rather than a silent 404. Ghanvati has no photograph and is absent on purpose; its
- * cards fall through to the drawn tile.
+ * with — spaces and mixed case included — and so a missing entry is a visible decision rather
+ * than a silent 404. Ghanvati has no photograph and is absent on purpose; its cards fall through
+ * to the drawn tile.
  */
 const CATEGORY_PHOTOS: Record<string, string> = {
-  AGB: 'Dhoop.webp',
+  AGB: 'Dhoop.jpg',
   ARK: 'gomutra.jpg',
   DIY: 'Cow Dung Diya.jpg',
   KAN: 'Cow dung cake.jpg',
@@ -47,7 +47,7 @@ const CATEGORY_PHOTOS: Record<string, string> = {
  * entries and every listing in the category becomes an agarbatti.
  */
 const TYPE_PHOTOS: readonly { readonly code: string; readonly pattern: RegExp; readonly file: string }[] = [
-  { code: 'AGB', pattern: /(?:dhoop|dhup|sambrani)/i, file: 'Dhoop.webp' },
+  { code: 'AGB', pattern: /(?:dhoop|dhup|sambrani)/i, file: 'Dhoop.jpg' },
   { code: 'AGB', pattern: /(?:agarbatti|incense)/i, file: 'agarbatti.jpg' },
 ];
 
