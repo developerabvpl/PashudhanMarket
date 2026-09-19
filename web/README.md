@@ -20,13 +20,9 @@ dotnet run --project ../src/UPBazaar.Api --urls http://localhost:5199
 
 Same-origin is deliberate: the bearer token is only ever attached to `/api/**` on this origin.
 
-The storefront additionally proxies `/api/catalog` to `http://localhost:5200`, where
-`tools/scripts/stub-api.mjs` stands in for the Catalog module until it ships. Two origins is a
-transitional arrangement, not a design — see *The API client* below.
-
-```bash
-node tools/scripts/stub-api.mjs
-```
+The catalogue comes from the API too. In Development it imports `tools/data/catalog.json` into
+an empty database on first start (`Catalog:SeedFile`), keeping the product ids, so a fresh
+database has the seventy sample products without any extra step.
 
 To sign in as an administrator the API needs a seeded account, which it creates on first run
 from environment variables and never writes to a settings file:
@@ -40,53 +36,31 @@ API log at `src/UPBazaar.Api/logs/`.
 
 ## Deploying
 
-`nx build storefront` produces a Node SSR server under `dist/apps/storefront`. Three things it
-needs that the dev server hides:
+The storefront builds to static files: the catalogue is prerendered from the Catalog API, and
+the browser refetches live prices and stock on load. Two consequences:
 
-**A host allowlist.** Angular rejects any request whose `Host` header is not listed, and the
-default list is empty — a fresh production build answers 400 to every request. `localhost` is
-set in `project.json` for local runs; add the real domain at run time:
-
-```bash
-NG_ALLOWED_HOSTS=upbazaar.example,www.upbazaar.example SSR_API_ORIGIN=http://127.0.0.1:5200 PORT=4000 node dist/apps/storefront/server/server.mjs
-```
-
-Or let `package-storefront` assemble the whole thing, stub and data included, into one directory
-that can be copied to the server as it stands:
+**The API must be running when you build.** The prerenderer walks every published product
+through it, from `PRERENDER_API_ORIGIN` (default `http://localhost:5199`). With the API down the
+build fails rather than shipping an empty shop.
 
 ```bash
-npx nx build storefront
+PRERENDER_API_ORIGIN=http://localhost:5199 npx nx build storefront
 node tools/scripts/package-storefront.mjs      # -> dist/deploy
 ```
 
-Never set it to `*` unless a proxy in front is already validating the header.
+**The web server must forward `/api` to the API.** The prerendered pages are static, but the
+browser calls `/api/v1/catalog/...` (and everything else) on its own origin. Without that route
+the first paint is correct and then the page empties as it hydrates. `tools/deploy/README.md`
+covers IIS and nginx.
 
-**A reverse proxy.** The SSR server does not proxy `/api`, and the browser calls the API on its
-own origin. Without something in front routing `/api/**` to the API, the first paint is correct
-and then the page empties as soon as it hydrates and refetches. One origin, three upstreams:
-
-| Path | Upstream |
-| --- | --- |
-| `/api/catalog/**` | the catalogue stub on 5200 |
-| `/api/**` | the .NET API on 5199 |
-| everything else | the SSR server |
-
-`SSR_API_ORIGIN` is separate and internal: it is how Node reaches the catalogue during the server
-render, where there is no page to be relative to.
-
-**The stub's data.** `tools/scripts/stub-api.mjs` reads `tools/data/catalog.json` relative to the
-workspace root, and neither is part of `dist`. Copy `tools/` alongside the build, or the stub
-will not start.
+A product published after the build works immediately, rendered in the browser, and gains its
+prerendered page (the one crawlers read) on the next build.
 
 ### What runs without a database
 
-The storefront does, completely: browsing, search, category filters, product pages and the
-basket all come from the catalogue stub and localStorage. Verified with the API stopped.
-
-The .NET API does not. It applies EF migrations and initialises Hangfire's SQL storage at
-startup, and with an unreachable database it never reaches `app.Run()` — so sign-in, OTP, the
-account page and the two portals are gone with it. The storefront degrades rather than breaks:
-the sign-in sheet reports a failure instead of crashing the page.
+Nothing that reads data. The .NET API applies EF migrations and initialises Hangfire's SQL
+storage at startup, and with an unreachable database it never reaches `app.Run()`. The
+storefront's prerendered HTML still loads, but every live fetch fails.
 
 ## Verifying
 
@@ -96,11 +70,10 @@ npx nx run-many -t e2e               # all three Playwright smoke suites
 npx nx e2e storefront-e2e            # one suite
 ```
 
-The e2e suites start their own dev servers. The storefront suite also starts
-`tools/scripts/stub-api.mjs`, because the storefront renders on the server: its data fetch
-happens in Node where Playwright's `page.route()` cannot reach, so browser-side mocking would
-leave the server-rendered HTML — the part search engines see — untested. The two SPA suites
-mock in the browser, which is sufficient there.
+The e2e suites start their own dev servers. The storefront suite runs against the real API
+(reusing it if it is already up), because its assertions are counted from the sample catalogue
+the API imports in Development. The two SPA suites mock in the browser, which is sufficient
+there.
 
 Playwright needs its browser once per machine: `npx playwright install chromium`.
 
@@ -314,15 +287,10 @@ is why the storefront rendered dark for every visitor for as long as it did.
 - **Prices and stock are estimates, not supplier figures.** Every imported listing is priced by
   `tools/scripts/pricing.mjs`. Replace them through `tools/data/prices.csv` before anyone treats
   the storefront as a price list. See *The catalogue* above.
-- **Catalog, Orders and Payments are stubbed.** Those endpoints come from the archived contract
-  merged into the generated client, and the storefront's server render reads them from
-  `tools/scripts/stub-api.mjs` on port 5200 (override with `SSR_API_ORIGIN`). Identity is real.
-
-  **There is no product table.** The database holds Identity (`identity.*`), the shared audit
-  and outbox tables (`shared.*`) and Hangfire's own — all of them live and in use. Products are
-  `tools/data/catalog.json` and nothing else, so do not go looking for them in SQL, and do not
-  read "the catalogue is a JSON file" as "the database is unused": pulling the connection string
-  takes sign-in, OTP, staff admin, the audit log and the job dashboard down with it.
+- **Orders and Payments are not built yet.** Their endpoints come from the archived contract
+  merged into the generated client and have no server behind them. Identity and Catalog are
+  real; products live in `catalog.Products`, and `tools/data/catalog.json` is only the sample
+  the API imports into an empty Development database.
 - **Password reset stops at the request.** `/auth/forgot-password` is wired and the API emails a
   token, but there is no page yet that consumes the link.
 - **The storefront is Tailwind-only.** Material is used by the two portals; introducing it into

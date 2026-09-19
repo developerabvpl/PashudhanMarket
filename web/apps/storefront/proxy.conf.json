@@ -1,9 +1,4 @@
 {
-  "/api/catalog": {
-    "target": "http://localhost:5200",
-    "secure": false,
-    "changeOrigin": true
-  },
   "/api": {
     "target": "http://localhost:5199",
     "secure": false,

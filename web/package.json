@@ -7,8 +7,7 @@
     "start:storefront": "nx serve storefront",
     "start:seller": "nx serve seller-portal",
     "start:admin": "nx serve admin-portal",
-    "verify": "nx run-many -t lint test build",
-    "stub:api": "node tools/scripts/stub-api.mjs"
+    "verify": "nx run-many -t lint test build"
   },
   "private": true,
   "dependencies": {

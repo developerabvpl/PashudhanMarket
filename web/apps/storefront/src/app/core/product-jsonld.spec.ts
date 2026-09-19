@@ -6,6 +6,7 @@ const baseProduct: ProductDto = {
   sku: 'UPB-SAREE-001',
   name: 'Banarasi Silk Saree',
   slug: 'banarasi-silk-saree',
+  brand: null,
   description: 'Handwoven in Varanasi.',
   price: 4599,
   currency: 'INR',

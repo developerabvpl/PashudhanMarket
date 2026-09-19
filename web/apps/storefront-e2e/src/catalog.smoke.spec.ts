@@ -3,8 +3,8 @@ import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 
 /**
- * Read from the same file the stub serves, so a re-import of the workbook cannot leave the
- * suite asserting against a product that no longer exists.
+ * Read from the same file the API imports in Development, so a re-import of the workbook cannot
+ * leave the suite asserting against a product that no longer exists.
  */
 const catalog = JSON.parse(
   readFileSync(resolve(__dirname, '../../../tools/data/catalog.json'), 'utf8')
@@ -32,7 +32,7 @@ const soldOut = catalog.products.find((p) => p.price > 0 && p.onHandQuantity ===
 /** A term that matches some but not all of the catalogue. */
 const TERM = 'agarbatti';
 
-/** Counted the way tools/scripts/stub-api.mjs counts: name, sku, brand and category name. */
+/** Counted the way the Catalog API searches: name, sku, brand and category name. */
 const termCount = catalog.products.filter((p) =>
   [p.name, p.sku, p.brand ?? '', catalog.categories.find((c) => c.id === p.categoryId)?.name ?? '']
     .join(' ')

@@ -3,17 +3,13 @@
 
 import { CategoryDto } from '../models/category-dto';
 export interface ProductDto {
-
-  /**
-   * Maker or seller brand as given on the listing.
-   */
-  brand?: (string | null);
+  brand: (string | null);
   category: CategoryDto;
   createdAtUtc: string;
   currency: string;
-  description: string | null;
+  description: (string | null);
   id: string;
-  modifiedAtUtc: string | null;
+  modifiedAtUtc: (string | null);
   name: string;
   onHandQuantity: number;
   price: number;

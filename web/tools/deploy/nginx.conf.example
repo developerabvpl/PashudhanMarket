@@ -1,8 +1,8 @@
 # One public origin in front of the storefront. Copy into sites-available and adjust
 # server_name, the root path and the certificate paths.
 #
-# The site is static: nginx serves files off disk and nothing is proxied. The only routing that
-# matters is the fallback order in try_files.
+# The site is static: nginx serves files off disk. The only thing proxied is /api, which the
+# browser calls for live prices, stock and sign-in.
 
 server {
   listen 80;
@@ -11,13 +11,12 @@ server {
   root /var/www/upbazaar;
   index index.html;
 
-  # The .NET API, for sign-in. Optional: leave it out and the storefront still works, it just
-  # cannot sign anyone in. The API needs SQL Server to start at all.
-  #
-  # location /api/ {
-  #   proxy_pass http://127.0.0.1:5199;
-  #   proxy_set_header Host $host;
-  # }
+  # The .NET API. Required: the prerendered product pages refetch live prices and stock from it
+  # as they load, and empty without it. The API needs SQL Server to start at all.
+  location /api/ {
+    proxy_pass http://127.0.0.1:5199;
+    proxy_set_header Host $host;
+  }
 
   # Three attempts, in order:
   #   the file itself          - assets, and anything else that really is on disk

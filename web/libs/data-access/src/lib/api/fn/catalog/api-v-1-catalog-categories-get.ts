@@ -7,16 +7,14 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { ProductDto } from '../../models/product-dto';
+import { CategoryDto } from '../../models/category-dto';
 
-export interface CatalogGetProduct$Params {
-  productId: string;
+export interface ApiV1CatalogCategoriesGet$Params {
 }
 
-export function catalogGetProduct(http: HttpClient, rootUrl: string, params: CatalogGetProduct$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, catalogGetProduct.PATH, 'get');
+export function apiV1CatalogCategoriesGet(http: HttpClient, rootUrl: string, params?: ApiV1CatalogCategoriesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<CategoryDto>>> {
+  const rb = new RequestBuilder(rootUrl, apiV1CatalogCategoriesGet.PATH, 'get');
   if (params) {
-    rb.path('productId', params.productId, {});
   }
 
   return http.request(
@@ -24,9 +22,9 @@ export function catalogGetProduct(http: HttpClient, rootUrl: string, params: Cat
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<ProductDto>;
+      return r as StrictHttpResponse<Array<CategoryDto>>;
     })
   );
 }
 
-catalogGetProduct.PATH = '/api/catalog/products/{productId}';
+apiV1CatalogCategoriesGet.PATH = '/api/v1/catalog/categories';

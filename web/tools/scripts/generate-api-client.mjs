@@ -8,13 +8,12 @@
 //
 // Nothing under libs/data-access/src/lib/api is hand-edited: this script owns that folder.
 //
-// TRANSITIONAL: the live API currently exposes Identity only. The storefront's product pages
-// and the portals' order and product screens were written against the previous design, whose
-// contract is committed at ../openapi.json and is served in development by
-// tools/scripts/stub-api.mjs. Until those modules are rebuilt, this script merges the two
-// documents so every screen keeps a typed client. Live definitions always win; the archived
-// ones only fill gaps. Delete `mergeArchivedContract` and the archived file the day Catalog,
-// Orders, Payments and Shipping exist for real.
+// TRANSITIONAL: the live API exposes Identity and Catalog. The portals' order and product screens
+// were written against the previous design, whose contract is committed at ../openapi.json.
+// Until those modules are rebuilt, this script merges the two documents so every screen keeps a
+// typed client. Live definitions always win; the archived ones only fill gaps. Delete
+// `mergeArchivedContract` and the archived file the day Orders, Payments and Shipping exist for
+// real.
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

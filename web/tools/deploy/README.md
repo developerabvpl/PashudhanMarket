@@ -13,25 +13,36 @@ copy the whole folder to the server. Nothing in it runs — it is a folder of st
     nginx.conf.example    the same routing for nginx
     README.md             this file
 
-There is no `server/` folder and no catalogue service. The seventy products are compiled into
-the bundle and prerendered into HTML at build time, so the server has nothing to execute.
+There is no `server/` folder. Every published product was prerendered into HTML from the
+Catalog API when this bundle was built, so crawlers read real product pages. Shoppers then get
+live prices and stock: the page fetches them from `/api` as it loads.
 
 ## Hosting on IIS
 
 **1. Install once on the server**
 
-[URL Rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) (MSI, ~1 MB) — usually already
-present. In IIS Manager, select the site: if you see a **URL Rewrite** icon, you have it.
+- [URL Rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) (MSI, ~1 MB) — usually
+  already present. In IIS Manager, select the site: if you see a **URL Rewrite** icon, you have it.
+- [Application Request Routing](https://www.iis.net/downloads/microsoft/application-request-routing)
+  (MSI). Then, at the **server** node in IIS Manager: *Application Request Routing Cache* →
+  *Server Proxy Settings* → tick **Enable proxy** → Apply.
 
 Node is not required on the server. Neither is HttpPlatformHandler.
 
-**2. Copy this folder** to somewhere like `C:\inetpub\upbazaar`.
+**2. Run the .NET API** somewhere this server can reach. `web.config` assumes
+`http://localhost:5199`; if it is elsewhere, change the URL in the rule named `API`.
 
-**3. Create the site** with that folder as its physical path, bound to your hostname.
+**3. Copy this folder** to somewhere like `C:\inetpub\upbazaar`.
 
-That is the whole deployment. `web.config` supplies the rest.
+**4. Create the site** with that folder as its physical path, bound to your hostname.
+
+`web.config` supplies the rest.
 
 ### What the rewrite rules do
+
+**The API.** Anything under `/api` is forwarded to the .NET API unchanged. The browser calls the
+API on this origin for live prices, stock, sign-in and the account pages, so without this rule the
+product pages paint correctly and then empty as they load.
 
 **Prerendered pages.** `/products/<id>` is a folder holding `index.html`. Asked for without a
 trailing slash, IIS would answer with a redirect to add one — visible to crawlers, and two
@@ -54,19 +65,21 @@ Deep links matter as much as the home page: load `/products/<some id>` directly 
 rather than clicking through to it, since clicking is client-side routing and proves nothing
 about the server.
 
+Then check the live half: `https://<host>/api/v1/catalog/categories` should return JSON, not
+the storefront's HTML.
+
 ## Updating the catalogue
 
-The products live in `tools/data/catalog.json` in the workspace, not on the server. Changing a
-price or adding a product means editing that file, rebuilding and redeploying:
+Products are changed through the API (`/api/v1/admin/catalog`), and shoppers see a new price or
+stock level at once, without a redeploy. What does lag is the HTML crawlers read: it carries
+prices as of the last build, and a newly published product has no prerendered page until the
+next one. Rebuild on a schedule, or after a batch of changes, with the API reachable:
 
-    npx nx build storefront
+    PRERENDER_API_ORIGIN=http://<api host>:5199 npx nx build storefront
     node tools/scripts/package-storefront.mjs
 
-This is the trade the static build makes. It is the right one while the catalogue is a file that
-only changes when someone edits it, and the wrong one the moment stock and prices move on their
-own. When the Catalog module ships in the API, the two product routes in `app.routes.server.ts`
-go back to `RenderMode.Server`, `catalog.source.ts` starts calling the API instead of importing
-the JSON, and the host needs a Node process again.
+If crawler-visible prices ever have to be exact, the two product routes in
+`app.routes.server.ts` go to `RenderMode.Server` and the host needs a Node process again.
 
 ## Hosting behind nginx instead
 
@@ -78,6 +91,8 @@ at this folder and a `try_files` fallback is the whole configuration.
 | Symptom | Cause |
 | --- | --- |
 | Home page loads, every other URL 404s | URL Rewrite is missing, or the site's physical path is a subfolder |
-| Page renders in a browser but `view-source` is empty | The shell is being served instead of the prerendered file — check the first rewrite rule |
-| A product added to `catalog.json` is not on the site | The bundle was not rebuilt; prerendering happens at build time |
+| Page renders in a browser but `view-source` is empty | The shell is being served instead of the prerendered file — check the prerendered-page rule |
+| Product page paints, then empties or jumps to the listing | `/api` is not reaching the API: ARR missing, proxy not enabled, or the API is down |
+| `/api/...` answers 404 or HTML | ARR is not installed or its proxy is not enabled at server level |
+| New product works in a browser but `view-source` is empty | Expected until the next build; it is rendered in the browser meanwhile |
 | Styles missing, console shows a parse error | An asset did not deploy and the fallback rule is answering it with HTML |

@@ -28,9 +28,6 @@
       ],
       "@upbazaar/util": [
         "./libs/util/src/index.ts"
-      ],
-      "@upbazaar/catalog-data": [
-        "./tools/data/catalog.json"
       ]
     },
     "resolveJsonModule": true,

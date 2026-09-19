@@ -30,16 +30,17 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   /*
-   * Two servers: the storefront, and a stub API it can render against.
-   * The storefront renders on the server, so its data fetch happens in Node where
-   * page.route() cannot intercept - the stub is what makes the SSR output testable.
+   * Two servers: the storefront, and the real API it renders against. The API must have the
+   * sample catalogue imported (Catalog:SeedFile in Development), because the assertions count
+   * products from tools/data/catalog.json. It needs a migrated database, so it is reused when
+   * already running rather than being something this config can always start cold.
    */
   webServer: [
     {
-      command: 'npm run stub:api',
-      url: "http://localhost:5200/api/catalog/products",
+      command: 'dotnet run --project ../src/UPBazaar.Api --urls http://localhost:5199',
+      url: 'http://localhost:5199/api/v1/catalog/categories',
       reuseExistingServer: true,
-      timeout: 30_000,
+      timeout: 180_000,
       cwd: workspaceRoot,
     },
     {
