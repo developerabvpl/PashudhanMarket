@@ -171,8 +171,14 @@ fails at the first send rather than silently dropping a login code.
 
 ## Current state
 
-The platform is wired and tested. Identity is implemented; the other fifteen modules are
-skeletons with a registration, a schema declaration and their permission names.
+The platform is wired and tested. Identity and Catalog are implemented; the other fourteen
+modules are skeletons with a registration, a schema declaration and their permission names.
+
+Catalog serves the published catalogue anonymously under `/api/v1/catalog` and takes changes
+under `/api/v1/admin/catalog`. Products start as drafts, are published, and are archived rather
+than deleted. In Development, `Catalog:SeedFile` imports `web/tools/data/catalog.json` into an
+empty catalogue with its ids intact, so the storefront's product URLs survive the switch from
+the bundled file to the API. Stock sits on the product until the Inventory module takes it over.
 
 Deliberately not built yet:
 

@@ -1,0 +1,35 @@
+using UPBazaar.SharedKernel.Results;
+
+namespace UPBazaar.Modules.Catalog.Domain;
+
+/// <summary>Every failure this module can return.</summary>
+public static class CatalogErrors
+{
+    public static readonly Error ProductNotFound = Error.NotFound(
+        "catalog.product.not_found",
+        "The product does not exist.");
+
+    public static readonly Error CategoryNotFound = Error.NotFound(
+        "catalog.category.not_found",
+        "The category does not exist.");
+
+    public static readonly Error SkuTaken = Error.Conflict(
+        "catalog.product.sku_taken",
+        "Another product already uses this SKU.");
+
+    public static readonly Error CategorySlugTaken = Error.Conflict(
+        "catalog.category.slug_taken",
+        "Another category already uses this name.");
+
+    public static readonly Error CategoryCycle = Error.Conflict(
+        "catalog.category.cycle",
+        "A category cannot sit underneath itself.");
+
+    public static readonly Error ProductArchived = Error.Conflict(
+        "catalog.product.archived",
+        "An archived product cannot be changed. Create a new listing instead.");
+
+    public static readonly Error StockBelowReserved = Error.Conflict(
+        "catalog.product.stock_below_reserved",
+        "Stock on hand cannot fall below what is already reserved for orders.");
+}

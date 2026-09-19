@@ -120,6 +120,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Identity:SuperAdmin:Password", SuperAdminPassword);
         builder.UseSetting("Identity:SuperAdmin:DisplayName", "Seeded Super Admin");
 
+        // Tests build their own catalogue; the sample import would make counts depend on a file.
+        builder.UseSetting("Catalog:SeedFile", string.Empty);
+
         builder.ConfigureTestServices(services =>
         {
             // Swap delivery for capture at the same boundary a carrier would occupy.

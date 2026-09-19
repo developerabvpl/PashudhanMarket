@@ -109,6 +109,9 @@ app.ScheduleRecurringJobs();
 // Permissions, roles and the first administrator, reconciled before the first request.
 await app.SeedIdentityAsync();
 
+// The sample catalogue, in environments that configure one and only while it is empty.
+await app.SeedCatalogAsync();
+
 await app.RunAsync();
 
 /// <summary>Exposed so the integration test host can reference this entry point.</summary>

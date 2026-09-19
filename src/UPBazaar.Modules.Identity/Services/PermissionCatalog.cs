@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Catalog.Contracts.Permissions;
 using UPBazaar.Modules.Identity.Contracts.Permissions;
 
 namespace UPBazaar.Modules.Identity.Services;
@@ -22,6 +23,7 @@ public static class PermissionCatalog
     public static IReadOnlyList<string> All { get; } =
     [
         .. IdentityPermissions.All,
+        .. CatalogPermissions.All,
         PlatformJobsView,
     ];
 
@@ -46,13 +48,21 @@ public static class PermissionCatalog
                 IdentityPermissions.UsersRead,
                 IdentityPermissions.UsersManage,
                 IdentityPermissions.RolesRead,
+                CatalogPermissions.ProductsRead,
+                CatalogPermissions.ProductsWrite,
+                CatalogPermissions.CategoriesWrite,
                 PlatformJobsView,
             ]),
 
         new(
             RoleNames.CatalogModerator,
             "Reviews and corrects seller listings.",
-            [IdentityPermissions.UsersRead]),
+            [
+                IdentityPermissions.UsersRead,
+                CatalogPermissions.ProductsRead,
+                CatalogPermissions.ProductsWrite,
+                CatalogPermissions.CategoriesWrite,
+            ]),
 
         new(
             RoleNames.FinanceOfficer,

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Modules.Catalog.Services;
 using UPBazaar.Modules.Identity.Services;
 
 namespace UPBazaar.Api.Configuration;
@@ -39,5 +40,21 @@ public static class SeedSetup
         }
 
         await scope.ServiceProvider.GetRequiredService<IdentitySeeder>().SeedAsync();
+    }
+
+    /// <summary>
+    /// Imports the configured sample catalogue into an empty database. Does nothing when
+    /// <c>Catalog:SeedFile</c> is unset, which is the production default.
+    /// </summary>
+    /// <param name="app">Web application.</param>
+    /// <returns>A task that completes when seeding is done.</returns>
+    public static async Task SeedCatalogAsync(this WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+
+        using var scope = app.Services.CreateScope();
+
+        await scope.ServiceProvider.GetRequiredService<CatalogSeeder>()
+            .SeedAsync(app.Environment.ContentRootPath);
     }
 }
