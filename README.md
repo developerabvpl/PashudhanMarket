@@ -171,9 +171,9 @@ fails at the first send rather than silently dropping a login code.
 
 ## Current state
 
-The platform is wired and tested. Identity, Catalog and Inventory are implemented; the other
-thirteen modules are skeletons with a registration, a schema declaration and their permission
-names.
+The platform is wired and tested. Identity, Catalog, Inventory and Cart are implemented; the
+other twelve modules are skeletons with a registration, a schema declaration and their
+permission names.
 
 Catalog serves the published catalogue anonymously under `/api/v1/catalog` and takes changes
 under `/api/v1/admin/catalog`. Products start as drafts, are published, and are archived rather
@@ -189,6 +189,15 @@ responses, and Cart and Orders will reserve stock through it. A reservation is a
 expires on its own (a Hangfire job sweeps every minute), and is then committed or released.
 Concurrent reservations for the last unit are settled by a row version on the stock row, so
 stock cannot be oversold.
+
+Cart keeps one cart per signed-in buyer under `/api/v1/cart`; the Buyer role holds
+`cart.read` and `cart.write`, and no route takes a cart id, so a buyer can only ever reach their
+own. A cart stores products, quantities and the price each had when chosen - nothing else.
+Names, current prices and stock are read from Catalog and Inventory on every request, and each
+line is flagged `Unavailable`, `InsufficientStock` or `PriceChanged` when it cannot be bought as
+shown. Guests keep the storefront's in-browser basket, which `POST /api/v1/cart/merge` folds in
+at sign-in. Adding to a cart reserves nothing: stock is held at checkout, through
+`ICartService` and Inventory's reservations, once Orders exists.
 
 Deliberately not built yet:
 

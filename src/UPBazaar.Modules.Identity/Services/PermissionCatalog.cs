@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Cart.Contracts.Permissions;
 using UPBazaar.Modules.Catalog.Contracts.Permissions;
 using UPBazaar.Modules.Identity.Contracts.Permissions;
 using UPBazaar.Modules.Inventory.Contracts.Permissions;
@@ -26,6 +27,7 @@ public static class PermissionCatalog
         .. IdentityPermissions.All,
         .. CatalogPermissions.All,
         .. InventoryPermissions.All,
+        .. CartPermissions.All,
         PlatformJobsView,
     ];
 
@@ -105,7 +107,10 @@ public static class PermissionCatalog
         new(
             RoleNames.Buyer,
             "Default role for a shopper. Carries no administrative permission.",
-            []),
+            [
+                CartPermissions.Read,
+                CartPermissions.Write,
+            ]),
     ];
 
     /// <summary>Roles that exist in every environment.</summary>

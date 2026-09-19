@@ -3,6 +3,18 @@
 
 export type { ApiV1SystemInfoGet$Params as ApiV1SystemInfoGet$Params } from './fn/system/api-v-1-system-info-get';
 export { apiV1SystemInfoGet as apiV1SystemInfoGet } from './fn/system/api-v-1-system-info-get';
+export type { ApiV1CartGet$Params as ApiV1CartGet$Params } from './fn/cart/api-v-1-cart-get';
+export { apiV1CartGet as apiV1CartGet } from './fn/cart/api-v-1-cart-get';
+export type { ApiV1CartDelete$Params as ApiV1CartDelete$Params } from './fn/cart/api-v-1-cart-delete';
+export { apiV1CartDelete as apiV1CartDelete } from './fn/cart/api-v-1-cart-delete';
+export type { ApiV1CartItemsProductIdPut$Params as ApiV1CartItemsProductIdPut$Params } from './fn/cart/api-v-1-cart-items-product-id-put';
+export { apiV1CartItemsProductIdPut as apiV1CartItemsProductIdPut } from './fn/cart/api-v-1-cart-items-product-id-put';
+export type { ApiV1CartItemsProductIdDelete$Params as ApiV1CartItemsProductIdDelete$Params } from './fn/cart/api-v-1-cart-items-product-id-delete';
+export { apiV1CartItemsProductIdDelete as apiV1CartItemsProductIdDelete } from './fn/cart/api-v-1-cart-items-product-id-delete';
+export type { ApiV1CartAcknowledgePricesPost$Params as ApiV1CartAcknowledgePricesPost$Params } from './fn/cart/api-v-1-cart-acknowledge-prices-post';
+export { apiV1CartAcknowledgePricesPost as apiV1CartAcknowledgePricesPost } from './fn/cart/api-v-1-cart-acknowledge-prices-post';
+export type { ApiV1CartMergePost$Params as ApiV1CartMergePost$Params } from './fn/cart/api-v-1-cart-merge-post';
+export { apiV1CartMergePost as apiV1CartMergePost } from './fn/cart/api-v-1-cart-merge-post';
 export type { ApiV1CatalogProductsGet$Params as ApiV1CatalogProductsGet$Params } from './fn/catalog/api-v-1-catalog-products-get';
 export { apiV1CatalogProductsGet as apiV1CatalogProductsGet } from './fn/catalog/api-v-1-catalog-products-get';
 export type { CatalogGetProduct$Params as CatalogGetProduct$Params } from './fn/catalog/catalog-get-product';

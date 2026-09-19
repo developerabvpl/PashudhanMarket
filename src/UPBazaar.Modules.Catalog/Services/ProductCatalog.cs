@@ -10,4 +10,24 @@ internal sealed class ProductCatalog(UPBazaarDbContext dbContext) : IProductCata
 {
     public Task<bool> ProductExistsAsync(Guid productId, CancellationToken cancellationToken) =>
         dbContext.Set<Product>().AnyAsync(p => p.PublicId == productId, cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, CatalogProductDto>> GetProductsAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(productIds);
+
+        return await dbContext.Set<Product>()
+            .AsNoTracking()
+            .Where(p => productIds.Contains(p.PublicId))
+            .Select(p => new CatalogProductDto(
+                p.PublicId,
+                p.Sku,
+                p.Name,
+                p.Price,
+                p.Currency,
+                p.SellerId,
+                p.Status == ProductStatus.Active && p.Price > 0))
+            .ToDictionaryAsync(p => p.Id, cancellationToken);
+    }
 }

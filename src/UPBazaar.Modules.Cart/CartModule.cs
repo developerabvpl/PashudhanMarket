@@ -1,12 +1,15 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Cart.Application;
+using UPBazaar.Modules.Cart.Contracts;
+using UPBazaar.Modules.Cart.Services;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Cart;
 
 /// <summary>
-/// Buyer carts and saved items, including guest carts that later merge into an account.
+/// Signed-in buyers' carts. A guest's basket lives in the browser and is merged in at sign-in.
 /// </summary>
 public sealed class CartModule : IModule
 {
@@ -26,12 +29,19 @@ public sealed class CartModule : IModule
 /// <summary>Registration entry point for the Cart module.</summary>
 public static class CartModuleExtensions
 {
-    /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
-    /// </summary>
+    /// <summary>Registers the module's schema, handlers, validators and services.</summary>
     /// <param name="services">Service collection.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddCartModule(this IServiceCollection services) =>
+    public static IServiceCollection AddCartModule(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddModule<CartModule>();
+
+        services.AddScoped<CartReader>();
+        services.AddScoped<CartWriter>();
+        services.AddScoped<ICartService, CartService>();
+
+        return services;
+    }
 }
