@@ -21,7 +21,7 @@ namespace UPBazaar.Api.Persistence;
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPBazaarDbContext>
 {
     private const string FallbackConnectionString =
-        @"Server=.\SQLEXPRESS;Database=UPBazaar;Trusted_Connection=True;TrustServerCertificate=True";
+        @"Server=.;Database=UPBazaar;Trusted_Connection=True;TrustServerCertificate=True";
 
     public UPBazaarDbContext CreateDbContext(string[] args)
     {

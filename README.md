@@ -23,7 +23,7 @@ dotnet run --project src/UPBazaar.Api
 | API | `/api/v1/...` | version is a URL segment |
 | Auth | `/api/v1/auth/...` | register, login, OTP, refresh, logout, password reset, 2FA |
 
-The development connection string in `appsettings.Development.json` points at `.\SQLEXPRESS`.
+The development connection string in `appsettings.Development.json` points at the default local SQL Server instance (`Server=.`).
 Override it without editing the file:
 
 ```bash
@@ -55,7 +55,7 @@ Unit tests need nothing. Integration tests need SQL Server and resolve it in thi
 
 ```bash
 # reuse a local SQL Server Express instead of Docker
-UPBAZAAR_TEST_SQL="Server=.\SQLEXPRESS;Trusted_Connection=True;TrustServerCertificate=True" dotnet test
+UPBAZAAR_TEST_SQL="Server=.;Trusted_Connection=True;TrustServerCertificate=True" dotnet test
 ```
 
 The integration host turns on container scope validation, so a singleton that captures a
