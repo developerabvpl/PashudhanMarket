@@ -7,7 +7,7 @@ import { SeoService } from '../../core/seo.service';
 import { ProductThumb } from '../products/product-thumb';
 import { CartStore, MAX_QUANTITY } from './cart.store';
 
-/** The basket. Client-side only until the Cart and Ordering modules exist. */
+/** The basket: the guest one in this browser, or a signed-in buyer's account cart. */
 @Component({
   selector: 'upb-cart-page',
   imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, ProductThumb],
@@ -54,9 +54,19 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
             </div>
 
             <p class="text-xs text-ink-muted">
-              {{ line.sku }} · {{ line.price | inr: 'symbol' : 'auto' }}
+              {{ line.sku }} ·
+              @if (line.problem === 'PriceChanged') {
+              <s>{{ line.priceWhenAdded | inr: 'symbol' : 'auto' }}</s>
+              }
+              {{ line.price | inr: 'symbol' : 'auto' }}
               {{ 'cart.each' | transloco }}
             </p>
+
+            @if (line.problem) {
+            <p class="text-sm font-medium text-danger" role="status">
+              {{ 'cart.problem.' + line.problem | transloco }}
+            </p>
+            }
 
             <div class="mt-auto flex items-center gap-3">
               <div
@@ -99,6 +109,21 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
         </li>
         }
       </ul>
+
+      @if (cart.hasPriceChanges()) {
+      <div
+        class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface-sunken p-4"
+      >
+        <p class="text-sm text-ink">{{ 'cart.pricesChanged' | transloco }}</p>
+        <button
+          type="button"
+          class="rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+          (click)="cart.acknowledgePrices()"
+        >
+          {{ 'cart.acceptPrices' | transloco }}
+        </button>
+      </div>
+      }
 
       <div class="mt-6 rounded-card border border-border bg-surface p-5">
         <div class="flex items-baseline justify-between">
@@ -160,13 +185,19 @@ export class CartPage {
     });
   }
 
-  protected removeLine(productId: string): void {
-    this.cart.remove(productId);
-    this.toast.info('cart.removed');
+  protected async removeLine(productId: string): Promise<void> {
+    await this.cart.remove(productId);
+
+    if (this.cart.quantityOf(productId) === 0) {
+      this.toast.info('cart.removed');
+    }
   }
 
-  protected clear(): void {
-    this.cart.clear();
-    this.toast.info('cart.cleared');
+  protected async clear(): Promise<void> {
+    await this.cart.clear();
+
+    if (this.cart.isEmpty()) {
+      this.toast.info('cart.cleared');
+    }
   }
 }

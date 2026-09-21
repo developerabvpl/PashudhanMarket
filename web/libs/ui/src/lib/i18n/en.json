@@ -284,6 +284,14 @@
     "alreadyInCart": "{{count}} already in your basket.",
     "viewCart": "View basket",
     "openEmpty": "Basket, empty",
-    "openWithCount": "Basket, {{count}} items"
+    "openWithCount": "Basket, {{count}} items",
+    "mergeSkipped": "Some items from before you signed in could not be added to your basket.",
+    "pricesChanged": "Some prices have changed since you added these items.",
+    "acceptPrices": "Accept new prices",
+    "problem": {
+      "Unavailable": "No longer available. Remove it to continue.",
+      "InsufficientStock": "Not enough in stock. Lower the quantity to continue.",
+      "PriceChanged": "The price has changed."
+    }
   }
 }

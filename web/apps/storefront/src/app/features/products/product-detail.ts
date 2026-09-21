@@ -196,8 +196,8 @@ export class ProductDetail {
     return productFacts(item?.name ?? '');
   });
 
-  protected addToCart(item: ProductDto): void {
-    if (this.cart.add(item)) {
+  protected async addToCart(item: ProductDto): Promise<void> {
+    if (await this.cart.add(item)) {
       this.toast.success('cart.added');
     }
   }
