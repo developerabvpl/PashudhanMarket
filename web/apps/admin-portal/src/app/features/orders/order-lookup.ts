@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Api, OrderDto, orderingGetOrder, toApiProblem } from '@upbazaar/data-access';
+import { Api, OrderDto, apiV1AdminOrdersOrderIdGet, toApiProblem } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 
@@ -46,7 +46,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
       } @case ('loaded') { @if (order(); as found) {
       <article class="upb-card mt-6 p-6">
         <header class="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 class="font-mono text-lg font-semibold text-ink">{{ found.orderNumber }}</h2>
+          <h2 class="font-mono text-lg font-semibold text-ink">{{ found.number }}</h2>
           <span class="rounded-control bg-surface-sunken px-2 py-1 text-sm text-ink-muted">
             {{ 'admin.status' | transloco }}: {{ found.status }}
           </span>
@@ -60,7 +60,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
           <dd class="font-semibold text-ink">{{ found.total | inr }}</dd>
 
           <dt class="text-ink-muted">{{ 'admin.payment' | transloco }}</dt>
-          <dd class="font-mono text-xs text-ink">{{ found.paymentId ?? '-' }}</dd>
+          <dd class="font-mono text-xs text-ink">{{ found.paymentReference ?? '-' }}</dd>
         </dl>
 
         <h3 class="mt-6 font-medium text-ink">{{ 'admin.lines' | transloco }}</h3>
@@ -75,7 +75,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
             </tr>
           </thead>
           <tbody>
-            @for (line of found.lines; track line.productId) {
+            @for (line of lines(); track line.productId) {
             <tr class="border-b border-border/60">
               <td class="py-2">
                 <span class="font-mono text-xs">{{ line.sku }}</span>
@@ -101,6 +101,9 @@ export class OrderLookup {
   protected readonly order = signal<OrderDto | null>(null);
 
   protected readonly hasResult = computed(() => this.order() !== null);
+
+  /** Every line across the sellers' parts: support reads an order as one list, not per parcel. */
+  protected readonly lines = computed(() => this.order()?.parts.flatMap((part) => part.lines) ?? []);
 
   find(event: Event): void {
     event.preventDefault();
@@ -128,7 +131,7 @@ export class OrderLookup {
     this.state.set('loading');
 
     try {
-      this.order.set(await this.api.invoke(orderingGetOrder, { orderId }));
+      this.order.set(await this.api.invoke(apiV1AdminOrdersOrderIdGet, { orderId }));
       this.state.set('loaded');
     } catch (error) {
       this.order.set(null);

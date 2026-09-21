@@ -17,7 +17,7 @@ public sealed record StockLevelDto(
 
 /// <summary>One entry in a product's stock ledger.</summary>
 /// <param name="Id">Public id of the movement.</param>
-/// <param name="Type">Received, WrittenOff, Counted, Reserved, Released or Committed.</param>
+/// <param name="Type">Received, WrittenOff, Counted, Reserved, Released, Committed or Returned.</param>
 /// <param name="OnHandChange">Change to stock on hand; zero for reservations.</param>
 /// <param name="ReservedChange">Change to reserved stock; zero for deliveries and counts.</param>
 /// <param name="OnHandAfter">Stock on hand once this movement applied.</param>

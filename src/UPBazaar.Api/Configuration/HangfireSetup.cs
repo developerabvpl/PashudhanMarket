@@ -4,6 +4,7 @@ using Hangfire.SqlServer;
 using UPBazaar.Infrastructure;
 using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Modules.Inventory.Services;
+using UPBazaar.Modules.Orders.Services;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -112,6 +113,13 @@ public static class HangfireSetup
         recurringJobs?.AddOrUpdate<ReservationExpiryJob>(
             ReservationExpiryJob.RecurringJobId,
             job => job.ExpireAsync(CancellationToken.None),
+            "*/1 * * * *");
+
+        // Every minute too. An unpaid order's stock hold outlasts its payment deadline by five
+        // minutes, so this cancels the order, with a reason, before Inventory lets the hold go.
+        recurringJobs?.AddOrUpdate<UnpaidOrderExpiryJob>(
+            UnpaidOrderExpiryJob.RecurringJobId,
+            job => job.CancelUnpaidAsync(CancellationToken.None),
             "*/1 * * * *");
 
         return app;

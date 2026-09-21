@@ -24,6 +24,9 @@ public enum StockMovementType
 
     /// <summary>A held quantity left the building.</summary>
     Committed = 5,
+
+    /// <summary>Committed stock came back because the order it went to was cancelled before dispatch.</summary>
+    Returned = 6,
 }
 
 /// <summary>
@@ -107,6 +110,17 @@ public sealed class StockItem : AggregateRoot, IAuditable
     /// <summary>A held quantity has gone: it leaves both stock on hand and the reserved pile.</summary>
     public Result Commit(int quantity, string reference, DateTime now) =>
         Apply(StockMovementType.Committed, -quantity, -quantity, null, reference, now, actor: null);
+
+    /// <summary>
+    /// Puts committed stock back on hand. Separate from <see cref="Receive"/> so the ledger tells a
+    /// cancelled order apart from a delivery from the seller.
+    /// </summary>
+    public Result Return(int quantity, string reference, DateTime now)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
+
+        return Apply(StockMovementType.Returned, quantity, 0, null, reference, now, actor: null);
+    }
 
     private Result Apply(
         StockMovementType type,

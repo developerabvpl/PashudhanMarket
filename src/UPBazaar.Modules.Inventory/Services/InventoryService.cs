@@ -124,6 +124,50 @@ internal sealed class InventoryService(UPBazaarDbContext dbContext, IClock clock
     public async Task<Result> CommitAsync(Guid reservationId, CancellationToken cancellationToken) =>
         await CloseAsync(reservationId, ReservationStatus.Committed, cancellationToken);
 
+    public async Task<Result> ReturnAsync(
+        string reference,
+        IReadOnlyList<ReservationLineDto> lines,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reference);
+        ArgumentNullException.ThrowIfNull(lines);
+
+        if (lines.Count == 0 || lines.Any(l => l.Quantity <= 0))
+        {
+            return Result.Failure(Error.Validation(
+                "inventory.return.invalid",
+                "A return needs at least one line and positive quantities."));
+        }
+
+        if (lines.Select(l => l.ProductId).Distinct().Count() != lines.Count)
+        {
+            return Result.Failure(InventoryErrors.DuplicateLine);
+        }
+
+        var result = await WithRetryAsync(async () =>
+        {
+            var items = await LoadAsync(lines.Select(l => l.ProductId), cancellationToken);
+
+            if (lines.Any(l => !items.ContainsKey(l.ProductId)))
+            {
+                return Result.Failure<bool>(InventoryErrors.ProductNotFound);
+            }
+
+            var now = clock.UtcNow;
+
+            foreach (var line in lines)
+            {
+                items[line.ProductId].Return(line.Quantity, reference, now);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Result.Success(true);
+        });
+
+        return result.IsSuccess ? Result.Success() : Result.Failure(result.Error);
+    }
+
     /// <summary>
     /// Ends a hold. Released and Expired put the stock back on sale; Committed removes it.
     /// Ending an already-ended hold is a no-op, except that committing one that ended any other

@@ -59,7 +59,15 @@ export class CartStore {
    */
   private generation = 0;
 
+  private readonly loadingSignal = signal(false);
+
   readonly lines = this.state.asReadonly();
+
+  /**
+   * True while the account cart is first fetched or merged after sign-in. Checkout reads it so
+   * an account cart still on its way is not mistaken for an empty one.
+   */
+  readonly isLoading = this.loadingSignal.asReadonly();
 
   /** True while the basket is held by the Cart API rather than this browser. */
   readonly isAccountCart = computed(() => this.mode() === 'account');
@@ -204,6 +212,16 @@ export class CartStore {
     }
 
     this.mode.set('account');
+    this.loadingSignal.set(true);
+
+    try {
+      await this.loadAccountCart();
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  private async loadAccountCart(): Promise<void> {
     const pending = this.guest.read();
 
     if (pending.length === 0) {
@@ -249,6 +267,7 @@ export class CartStore {
 
     this.generation++;
     this.mode.set('guest');
+    this.loadingSignal.set(false);
     this.state.set([]);
   }
 
@@ -270,14 +289,22 @@ export class CartStore {
       return true;
     } catch {
       if (generation === this.generation && this.mode() === 'account') {
-        void this.reload();
+        void this.refresh();
       }
 
       return false;
     }
   }
 
-  private async reload(): Promise<void> {
+  /**
+   * Fetches the account cart again, for when something other than this store changed it: an
+   * order placed at checkout empties it on the server. A guest basket has nothing to fetch.
+   */
+  async refresh(): Promise<void> {
+    if (this.mode() !== 'account') {
+      return;
+    }
+
     const generation = ++this.generation;
 
     try {

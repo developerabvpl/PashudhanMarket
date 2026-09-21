@@ -134,6 +134,16 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
         </div>
         <p class="mt-1 text-sm text-ink-muted">{{ 'cart.subtotalNote' | transloco }}</p>
 
+        @if (cart.canCheckOut()) {
+        <a
+          class="mt-5 block w-full rounded-control bg-brand-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-brand-700"
+          routerLink="/checkout"
+        >
+          {{ 'cart.checkout' | transloco }}
+        </a>
+        @if (!cart.isAccountCart()) {
+        <p class="mt-2 text-center text-sm text-ink-muted">{{ 'cart.signInToCheckOut' | transloco }}</p>
+        } } @else {
         <button
           type="button"
           class="mt-5 w-full cursor-not-allowed rounded-control bg-brand-600 px-6 py-3 font-semibold text-white opacity-50"
@@ -141,9 +151,8 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
         >
           {{ 'cart.checkout' | transloco }}
         </button>
-        <p class="mt-2 text-center text-sm text-ink-muted">
-          {{ 'cart.checkoutUnavailable' | transloco }}
-        </p>
+        <p class="mt-2 text-center text-sm text-danger">{{ 'cart.fixToCheckOut' | transloco }}</p>
+        }
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-between gap-3">

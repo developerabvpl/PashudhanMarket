@@ -342,6 +342,43 @@ describe('CartStore with an account cart', () => {
     expect(cart.canCheckOut()).toBe(true);
   });
 
+  it('says it is loading until the account cart arrives, so checkout does not see it as empty', async () => {
+    const { cart, server, user } = fresh();
+    let answer: (cart: CartDto) => void = () => undefined;
+    server.set(apiV1CartGet, () => new Promise<CartDto>((resolve) => (answer = resolve)));
+
+    user.signIn();
+    TestBed.tick();
+
+    expect(cart.isLoading()).toBe(true);
+
+    answer(cartDto([cartLine()]));
+    await settle();
+
+    expect(cart.isLoading()).toBe(false);
+    expect(cart.count()).toBe(1);
+  });
+
+  it('refetches the account cart on request, which is how checkout shows the emptied cart', async () => {
+    const { cart, server, user } = fresh();
+    server.set(apiV1CartGet, () => cartDto([cartLine()]));
+    user.signIn();
+    await settle();
+
+    server.set(apiV1CartGet, () => cartDto([]));
+    await cart.refresh();
+
+    expect(cart.isEmpty()).toBe(true);
+  });
+
+  it('has nothing to refetch for a guest', async () => {
+    const { cart, api } = fresh();
+
+    await cart.refresh();
+
+    expect(api.invoke).not.toHaveBeenCalled();
+  });
+
   it('clears the lines at sign-out and ignores a response that lands afterwards', async () => {
     const { cart, server, user } = fresh();
     let answer: (cart: CartDto) => void = () => undefined;

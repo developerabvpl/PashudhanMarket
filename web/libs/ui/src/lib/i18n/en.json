@@ -17,7 +17,8 @@
     "account": "My account",
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "primary": "Main"
+    "primary": "Main",
+    "myOrders": "My orders"
   },
   "state": {
     "loading": "Loading",
@@ -275,7 +276,6 @@
     "subtotal": "Subtotal",
     "subtotalNote": "Delivery and taxes are worked out at checkout.",
     "checkout": "Proceed to checkout",
-    "checkoutUnavailable": "Checkout opens once ordering goes live.",
     "keepShopping": "Keep shopping",
     "clear": "Empty the basket",
     "added": "Added to your basket.",
@@ -292,6 +292,71 @@
       "Unavailable": "No longer available. Remove it to continue.",
       "InsufficientStock": "Not enough in stock. Lower the quantity to continue.",
       "PriceChanged": "The price has changed."
+    },
+    "signInToCheckOut": "You'll be asked to sign in first.",
+    "fixToCheckOut": "Fix the items marked above to check out."
+  },
+  "checkout": {
+    "title": "Checkout",
+    "address": "Delivery address",
+    "fullName": "Full name",
+    "mobile": "Mobile number",
+    "pincode": "PIN code",
+    "line1": "House, building, street",
+    "line2": "Area or locality",
+    "landmark": "Landmark",
+    "city": "City, town or village",
+    "district": "District",
+    "state": "State",
+    "chooseState": "Choose a state",
+    "payment": "Payment",
+    "cod": "Cash on delivery",
+    "codNote": "Pay in cash or UPI when your order arrives.",
+    "online": "Pay online",
+    "onlineSoon": "UPI, cards and net banking are coming soon.",
+    "summary": "Order summary",
+    "delivery": "Delivery",
+    "free": "Free",
+    "total": "Total",
+    "fixCart": "Something in your basket has changed.",
+    "place": "Place order",
+    "placing": "Placing your order..."
+  },
+  "orders": {
+    "title": "My orders",
+    "none": "You haven't placed any orders yet.",
+    "showMore": "Show more",
+    "backToList": "My orders",
+    "placedTitle": "Thank you, your order is placed.",
+    "placedBody": "Your order number is {{number}}. We will let you know as it ships.",
+    "orderNumber": "Order {{number}}",
+    "placedOn": "Placed on {{date}}",
+    "cancelledBecause": "Cancelled: {{reason}}",
+    "parcel": "Parcel {{index}} of {{count}}",
+    "deliverTo": "Delivering to",
+    "payment": "Payment",
+    "cancel": "Cancel this order",
+    "cancelQuestion": "Cancel the whole order? This cannot be undone.",
+    "cancelConfirm": "Yes, cancel it",
+    "keep": "Keep my order",
+    "cancelled": "Your order has been cancelled.",
+    "status": {
+      "PendingPayment": "Awaiting payment",
+      "Confirmed": "Confirmed",
+      "Completed": "Delivered",
+      "Cancelled": "Cancelled"
+    },
+    "partStatus": {
+      "AwaitingPayment": "Awaiting payment",
+      "Confirmed": "Confirmed",
+      "Packed": "Packed",
+      "Shipped": "Shipped",
+      "Delivered": "Delivered",
+      "Cancelled": "Cancelled"
+    },
+    "paymentMethod": {
+      "CashOnDelivery": "Cash on delivery",
+      "Online": "Paid online"
     }
   }
 }

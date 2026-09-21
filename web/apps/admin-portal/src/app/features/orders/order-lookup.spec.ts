@@ -7,26 +7,51 @@ import { OrderLookup } from './order-lookup';
 
 const order: OrderDto = {
   id: 'o1',
-  orderNumber: 'UPB-20260314-ABCD1234',
-  customerId: 'c1',
-  status: 'AwaitingPayment',
+  number: 'UPB-260314-ABCD12',
+  buyerId: 'b1',
+  status: 'Confirmed',
+  paymentMethod: 'Online',
+  paymentStatus: 'Paid',
   subtotal: 2000,
-  shippingFee: 49,
-  total: 2049,
+  shippingFee: 0,
+  total: 2000,
   currency: 'INR',
-  placedAtUtc: '2026-03-14T10:00:00Z',
-  lines: [
+  deliveryAddress: {
+    fullName: 'Asha Devi',
+    mobile: '9876543210',
+    line1: '12 Gaushala Road',
+    line2: null,
+    landmark: null,
+    city: 'Lucknow',
+    district: null,
+    state: 'Uttar Pradesh',
+    pincode: '226001',
+  },
+  parts: [
     {
-      productId: 'p1',
-      sku: 'UPB-SAREE-001',
-      name: 'Banarasi Silk Saree',
-      unitPrice: 1000,
-      quantity: 2,
-      lineTotal: 2000,
+      id: 'part1',
+      sellerId: 's1',
+      status: 'Confirmed',
+      subtotal: 2000,
+      cancellationReason: null,
+      lines: [
+        {
+          productId: 'p1',
+          sku: 'UPB-DIYA-001',
+          name: 'Gobar Diya, pack of 12',
+          unitPrice: 1000,
+          quantity: 2,
+          lineTotal: 2000,
+        },
+      ],
     },
   ],
-  paymentId: 'pay-1',
-  gatewayOrderId: 'order_test',
+  placedAtUtc: '2026-03-14T10:00:00Z',
+  paymentDueAtUtc: null,
+  paymentReference: 'pay-1',
+  cancelledAtUtc: null,
+  cancellationReason: null,
+  canCancel: true,
 };
 
 /** Submits the lookup form the way a user would, so the component's own handler runs. */
@@ -74,8 +99,8 @@ describe('OrderLookup', () => {
     submitLookup(fixture.nativeElement, 'o1');
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.textContent).toContain('UPB-20260314-ABCD1234');
-    expect(fixture.nativeElement.textContent).toContain('UPB-SAREE-001');
+    expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
+    expect(fixture.nativeElement.textContent).toContain('UPB-DIYA-001');
   });
 
   it('does not call the API for an empty id', async () => {
@@ -112,7 +137,7 @@ describe('OrderLookup', () => {
     retry.click();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.textContent).toContain('UPB-20260314-ABCD1234');
+    expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 });

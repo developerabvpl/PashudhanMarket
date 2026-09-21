@@ -2,6 +2,7 @@ using UPBazaar.Modules.Cart.Contracts.Permissions;
 using UPBazaar.Modules.Catalog.Contracts.Permissions;
 using UPBazaar.Modules.Identity.Contracts.Permissions;
 using UPBazaar.Modules.Inventory.Contracts.Permissions;
+using UPBazaar.Modules.Orders.Contracts.Permissions;
 
 namespace UPBazaar.Modules.Identity.Services;
 
@@ -28,6 +29,7 @@ public static class PermissionCatalog
         .. CatalogPermissions.All,
         .. InventoryPermissions.All,
         .. CartPermissions.All,
+        .. OrdersPermissions.All,
         PlatformJobsView,
     ];
 
@@ -58,6 +60,9 @@ public static class PermissionCatalog
                 InventoryPermissions.StockRead,
                 InventoryPermissions.StockWrite,
                 InventoryPermissions.AdjustmentsApprove,
+                OrdersPermissions.Read,
+                OrdersPermissions.Write,
+                OrdersPermissions.Cancel,
                 PlatformJobsView,
             ]),
 
@@ -79,12 +84,18 @@ public static class PermissionCatalog
         new(
             RoleNames.FinanceOfficer,
             "Settlements, payouts and refunds.",
-            [IdentityPermissions.UsersRead]),
+            [
+                IdentityPermissions.UsersRead,
+                OrdersPermissions.Read,
+            ]),
 
         new(
             RoleNames.SupportAgent,
             "Answers customer and seller queries. Can look accounts up, not change them.",
-            [IdentityPermissions.UsersRead]),
+            [
+                IdentityPermissions.UsersRead,
+                OrdersPermissions.Read,
+            ]),
 
         new(
             RoleNames.SupportSupervisor,
@@ -92,6 +103,10 @@ public static class PermissionCatalog
             [
                 IdentityPermissions.UsersRead,
                 IdentityPermissions.UsersManage,
+                OrdersPermissions.Read,
+
+                // A supervisor can cancel for a buyer who cannot, but does not run fulfilment.
+                OrdersPermissions.Cancel,
             ]),
 
         new(
@@ -110,6 +125,8 @@ public static class PermissionCatalog
             [
                 CartPermissions.Read,
                 CartPermissions.Write,
+                OrdersPermissions.OwnRead,
+                OrdersPermissions.OwnWrite,
             ]),
     ];
 

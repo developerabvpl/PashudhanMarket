@@ -111,6 +111,14 @@ import { CartStore } from './features/cart/cart.store';
               >
                 {{ 'nav.account' | transloco }}
               </a>
+              <a
+                class="block rounded-control px-3 py-2 text-ink transition-colors hover:bg-surface-sunken"
+                role="menuitem"
+                routerLink="/orders"
+                (click)="menuOpen.set(false)"
+              >
+                {{ 'nav.myOrders' | transloco }}
+              </a>
               <button
                 type="button"
                 class="block w-full rounded-control px-3 py-2 text-left text-ink transition-colors hover:bg-surface-sunken"

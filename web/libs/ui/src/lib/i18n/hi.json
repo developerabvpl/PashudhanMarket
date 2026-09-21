@@ -17,7 +17,8 @@
     "account": "मेरा खाता",
     "signIn": "साइन इन",
     "signOut": "साइन आउट",
-    "primary": "मुख्य"
+    "primary": "मुख्य",
+    "myOrders": "मेरे ऑर्डर"
   },
   "state": {
     "loading": "लोड हो रहा है",
@@ -275,7 +276,6 @@
     "subtotal": "उप-योग",
     "subtotalNote": "डिलीवरी और कर चेकआउट पर जोड़े जाएँगे।",
     "checkout": "चेकआउट करें",
-    "checkoutUnavailable": "ऑर्डरिंग शुरू होते ही चेकआउट खुल जाएगा।",
     "keepShopping": "ख़रीदारी जारी रखें",
     "clear": "टोकरी खाली करें",
     "added": "टोकरी में जोड़ दिया।",
@@ -292,6 +292,71 @@
       "Unavailable": "अब उपलब्ध नहीं है। आगे बढ़ने के लिए इसे हटाएँ।",
       "InsufficientStock": "स्टॉक में इतना नहीं है। आगे बढ़ने के लिए मात्रा घटाएँ।",
       "PriceChanged": "दाम बदल गया है।"
+    },
+    "signInToCheckOut": "पहले आपसे साइन इन करने को कहा जाएगा।",
+    "fixToCheckOut": "चेकआउट के लिए ऊपर चिह्नित वस्तुएँ ठीक करें।"
+  },
+  "checkout": {
+    "title": "चेकआउट",
+    "address": "डिलीवरी का पता",
+    "fullName": "पूरा नाम",
+    "mobile": "मोबाइल नंबर",
+    "pincode": "पिन कोड",
+    "line1": "मकान, भवन, गली",
+    "line2": "क्षेत्र या मोहल्ला",
+    "landmark": "पास का कोई निशान",
+    "city": "शहर, कस्बा या गाँव",
+    "district": "ज़िला",
+    "state": "राज्य",
+    "chooseState": "राज्य चुनें",
+    "payment": "भुगतान",
+    "cod": "कैश ऑन डिलीवरी",
+    "codNote": "ऑर्डर पहुँचने पर नकद या UPI से भुगतान करें।",
+    "online": "ऑनलाइन भुगतान",
+    "onlineSoon": "UPI, कार्ड और नेट बैंकिंग जल्द आ रहे हैं।",
+    "summary": "ऑर्डर का सारांश",
+    "delivery": "डिलीवरी",
+    "free": "मुफ़्त",
+    "total": "कुल",
+    "fixCart": "आपकी टोकरी में कुछ बदल गया है।",
+    "place": "ऑर्डर करें",
+    "placing": "आपका ऑर्डर किया जा रहा है..."
+  },
+  "orders": {
+    "title": "मेरे ऑर्डर",
+    "none": "आपने अभी तक कोई ऑर्डर नहीं किया है।",
+    "showMore": "और दिखाएँ",
+    "backToList": "मेरे ऑर्डर",
+    "placedTitle": "धन्यवाद, आपका ऑर्डर हो गया है।",
+    "placedBody": "आपका ऑर्डर नंबर {{number}} है। भेजे जाने पर हम आपको बताएँगे।",
+    "orderNumber": "ऑर्डर {{number}}",
+    "placedOn": "{{date}} को किया गया",
+    "cancelledBecause": "रद्द: {{reason}}",
+    "parcel": "पार्सल {{index}} / {{count}}",
+    "deliverTo": "डिलीवरी का पता",
+    "payment": "भुगतान",
+    "cancel": "यह ऑर्डर रद्द करें",
+    "cancelQuestion": "पूरा ऑर्डर रद्द करें? यह वापस नहीं होगा।",
+    "cancelConfirm": "हाँ, रद्द करें",
+    "keep": "ऑर्डर रखें",
+    "cancelled": "आपका ऑर्डर रद्द कर दिया गया है।",
+    "status": {
+      "PendingPayment": "भुगतान बाकी",
+      "Confirmed": "पुष्ट",
+      "Completed": "पहुँचा दिया",
+      "Cancelled": "रद्द"
+    },
+    "partStatus": {
+      "AwaitingPayment": "भुगतान बाकी",
+      "Confirmed": "पुष्ट",
+      "Packed": "पैक हो गया",
+      "Shipped": "भेज दिया",
+      "Delivered": "पहुँचा दिया",
+      "Cancelled": "रद्द"
+    },
+    "paymentMethod": {
+      "CashOnDelivery": "कैश ऑन डिलीवरी",
+      "Online": "ऑनलाइन भुगतान किया"
     }
   }
 }

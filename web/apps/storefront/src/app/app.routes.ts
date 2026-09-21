@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { ForbiddenPage, authGuard } from '@upbazaar/auth';
+import { ForbiddenPage, authGuard, permissionGuard } from '@upbazaar/auth';
 
 export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'products' },
@@ -17,6 +17,18 @@ export const appRoutes: Route[] = [
   {
     path: 'cart',
     loadComponent: () => import('./features/cart/cart.page').then((m) => m.CartPage),
+  },
+  {
+    // Placing an order needs the buyer permission, not just a session: a staff account signed
+    // in to the storefront gets the forbidden page rather than a checkout the API would refuse.
+    path: 'checkout',
+    canActivate: [permissionGuard('orders.own.write')],
+    loadComponent: () => import('./features/orders/checkout.page').then((m) => m.CheckoutPage),
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/orders/orders.routes').then((m) => m.orderRoutes),
   },
   {
     path: 'sign-in',

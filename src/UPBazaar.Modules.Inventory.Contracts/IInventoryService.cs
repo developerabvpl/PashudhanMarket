@@ -50,4 +50,16 @@ public interface IInventoryService
     /// reservation already expired or was released, because that stock may have been sold again.
     /// </summary>
     Task<Result> CommitAsync(Guid reservationId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Puts committed stock back on sale, for an order cancelled after its stock was committed
+    /// but before anything left the seller. Every line or none.
+    /// </summary>
+    /// <param name="reference">What the stock is coming back from, such as an order number.</param>
+    /// <param name="lines">Products and quantities. A product may appear only once.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<Result> ReturnAsync(
+        string reference,
+        IReadOnlyList<ReservationLineDto> lines,
+        CancellationToken cancellationToken);
 }

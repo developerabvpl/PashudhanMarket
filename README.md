@@ -185,7 +185,7 @@ Inventory owns stock. Staff record deliveries, stock-takes and write-offs under
 `/api/v1/admin/inventory`, and every change lands in a per-product ledger saying what, who and
 why. Writing stock off needs `inventory.adjustments.approve`, which only Admin holds. Other
 modules go through `IInventoryService`: Catalog reads stock levels to fill in its product
-responses, and Cart and Orders will reserve stock through it. A reservation is all-or-nothing,
+responses, and Orders reserves, commits and returns stock through it. A reservation is all-or-nothing,
 expires on its own (a Hangfire job sweeps every minute), and is then committed or released.
 Concurrent reservations for the last unit are settled by a row version on the stock row, so
 stock cannot be oversold.
@@ -196,10 +196,38 @@ own. A cart stores products, quantities and the price each had when chosen - not
 Names, current prices and stock are read from Catalog and Inventory on every request, and each
 line is flagged `Unavailable`, `InsufficientStock` or `PriceChanged` when it cannot be bought as
 shown. Guests keep the storefront's in-browser basket, which `POST /api/v1/cart/merge` folds in
-at sign-in. Adding to a cart reserves nothing: stock is held at checkout, through
-`ICartService` and Inventory's reservations, once Orders exists.
+at sign-in. Adding to a cart reserves nothing: stock is held at checkout.
+
+Orders turns a clean cart into an order under `POST /api/v1/orders`. A cart with any problem
+line is refused, so nobody is charged for something other than what the cart showed. The order
+copies in names, SKUs, prices and the delivery address, and splits itself into one part per
+seller, each packed, shipped and cancelled on its own. Checkout reserves the stock, writes the
+order and empties the cart in one transaction, and a per-buyer lock stops a double submit
+placing two orders. Two ways to pay:
+
+- **Cash on delivery** is confirmed at once and its stock committed.
+- **Online** waits in `PendingPayment` with the stock held. Payments (Razorpay, not built yet)
+  confirms it through `IOrderPaymentService`, which commits the stock. An order unpaid after
+  15 minutes is cancelled by a Hangfire job and its hold released; the hold itself lasts five
+  minutes longer, so the order always goes first.
+
+A buyer (`orders.own.read`, `orders.own.write`) sees only their own orders and may cancel until
+anything ships. Staff use `/api/v1/admin/orders`: `orders.read` to look, `orders.write` to move a
+part to Packed, Shipped or Delivered, and `orders.cancel` to cancel an order or one seller's part.
+Cancelling after confirmation puts the stock back as a `Returned` movement. Every change raises
+an event (`OrderPlaced`, `OrderConfirmed`, `OrderPartCancelled` with the refund due, and
+`OrderCancelled`) for Payments, Shipping (Shiprocket, one shipment per part) and Notifications
+to pick up once they exist.
 
 Deliberately not built yet:
+
+- **No online payment.** The storefront offers cash on delivery only. `IOrderPaymentService`
+  is ready for the Razorpay integration in Payments, and nothing in Orders changes when it lands.
+  Nothing refunds a cancelled paid order yet either: the `OrderPartCancelled` event carries the
+  amount for Payments to act on.
+- **Sellers cannot see their orders.** Parts are indexed by seller, but the Sellers module does
+  not yet link a signed-in account to a seller id, so fulfilment is staff-only for now.
+- **Delivery is free.** `ShippingFee` is always zero until Shipping prices a delivery.
 
 - **Tokens are signed with a symmetric key.** Fine for one API; a second service verifying
   these tokens would want asymmetric signing and a JWKS endpoint.

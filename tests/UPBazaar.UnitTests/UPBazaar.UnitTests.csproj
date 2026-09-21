@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Catalog\UPBazaar.Modules.Catalog.csproj" />
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Inventory\UPBazaar.Modules.Inventory.csproj" />
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Cart\UPBazaar.Modules.Cart.csproj" />
+    <ProjectReference Include="..\..\src\UPBazaar.Modules.Orders\UPBazaar.Modules.Orders.csproj" />
   </ItemGroup>
 
   <ItemGroup>

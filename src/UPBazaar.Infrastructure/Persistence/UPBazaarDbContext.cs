@@ -64,9 +64,21 @@ public sealed class UPBazaarDbContext : DbContext
         ArgumentNullException.ThrowIfNull(configurationBuilder);
 
         configurationBuilder.Properties<decimal>().HavePrecision(18, 2);
-        configurationBuilder.Properties<DateTime>().HaveColumnType("datetime2");
+        configurationBuilder.Properties<DateTime>().HaveColumnType("datetime2").HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveColumnType("datetime2").HaveConversion<UtcDateTimeConverter>();
         configurationBuilder.Properties<string>().HaveMaxLength(256);
     }
+
+    /// <summary>
+    /// Every timestamp is stored in UTC, but datetime2 does not record that, so EF reads each one
+    /// back as <see cref="DateTimeKind.Unspecified"/>. Serialised like that it leaves the API
+    /// without a trailing Z, and a browser then takes a UTC time for local time - an order placed
+    /// at 22:30 IST showed as 17:00. Marking the kind on the way out fixes it once, for every module.
+    /// </summary>
+    private sealed class UtcDateTimeConverter()
+        : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+            value => value,
+            value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
 
     /// <summary>
     /// Puts every entity declared by a module into that module's schema unless its
