@@ -206,8 +206,8 @@ order and empties the cart in one transaction, and a per-buyer lock stops a doub
 placing two orders. Two ways to pay:
 
 - **Cash on delivery** is confirmed at once and its stock committed.
-- **Online** waits in `PendingPayment` with the stock held. Payments (Razorpay, not built yet)
-  confirms it through `IOrderPaymentService`, which commits the stock. An order unpaid after
+- **Online** waits in `PendingPayment` with the stock held. Payments confirms it through
+  `IOrderPaymentService`, which commits the stock. An order unpaid after
   15 minutes is cancelled by a Hangfire job and its hold released; the hold itself lasts five
   minutes longer, so the order always goes first.
 
@@ -217,14 +217,44 @@ part to Packed, Shipped or Delivered, and `orders.cancel` to cancel an order or 
 Cancelling after confirmation puts the stock back as a `Returned` movement. Every change raises
 an event (`OrderPlaced`, `OrderConfirmed`, `OrderPartCancelled` with the refund due, and
 `OrderCancelled`) for Payments, Shipping (Shiprocket, one shipment per part) and Notifications
-to pick up once they exist.
+to pick up.
+
+Payments takes online payment through Razorpay. The buyer's order page asks
+`POST /api/v1/payments/orders/{id}/checkout` for a Razorpay order (created with automatic
+capture and reused if they come back) and opens Razorpay Checkout with it. Checkout's result goes
+to `POST /api/v1/payments/razorpay/verify`, which checks Razorpay's signature before anything
+else, records the money, then confirms the order. The same settlement path serves two safety
+nets: the webhook at `/api/v1/payments/webhooks/razorpay` (HMAC-checked over the raw body,
+de-duplicated on the event id) for a buyer who pays and then loses signal, and a Hangfire job
+that, every minute, finishes any payment captured but not yet applied to its order.
+
+A payment that lands on an order that can no longer take it - cancelled at its deadline, say - is
+recorded as owed back in full. So is each seller's part cancelled after payment, from the
+`OrderPartCancelled` event. Refunds are made by hand in the Razorpay dashboard for now, and staff
+record the Razorpay refund id against them on the admin portal's Payments page
+(`payments.read` to see, `payments.refunds.write` to record; Admin and FinanceOfficer hold both).
+
+Razorpay's keys come from configuration and never from appsettings.json:
+
+```bash
+dotnet user-secrets --project src/UPBazaar.Api set "Payments:Razorpay:KeyId" "rzp_test_..."
+dotnet user-secrets --project src/UPBazaar.Api set "Payments:Razorpay:KeySecret" "..."
+dotnet user-secrets --project src/UPBazaar.Api set "Payments:Razorpay:WebhookSecret" "..."
+```
+
+Without all three, Development and the tests use a fake gateway that signs exactly as Razorpay
+does with a known secret, and the storefront offers a "simulate payment" step instead of the
+Razorpay window. Any other environment without keys switches online payment off, and checkout
+offers cash on delivery only.
 
 Deliberately not built yet:
 
-- **No online payment.** The storefront offers cash on delivery only. `IOrderPaymentService`
-  is ready for the Razorpay integration in Payments, and nothing in Orders changes when it lands.
-  Nothing refunds a cancelled paid order yet either: the `OrderPartCancelled` event carries the
-  amount for Payments to act on.
+- **The real Razorpay client is untested against Razorpay.** It follows Razorpay's published
+  Orders API and signatures, which the tests cover, but there were no keys to run it with. Try a
+  test-mode payment and a webhook (through a tunnel such as ngrok) before going live.
+- **Refunds are manual.** Payments records what is owed; the money goes back through the
+  Razorpay dashboard. Automatic refunds through Razorpay's API can replace that step without the
+  refund record changing.
 - **Sellers cannot see their orders.** Parts are indexed by seller, but the Sellers module does
   not yet link a signed-in account to a seller id, so fulfilment is staff-only for now.
 - **Delivery is free.** `ShippingFee` is always zero until Shipping prices a delivery.

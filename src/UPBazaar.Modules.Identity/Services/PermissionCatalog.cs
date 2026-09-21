@@ -3,6 +3,7 @@ using UPBazaar.Modules.Catalog.Contracts.Permissions;
 using UPBazaar.Modules.Identity.Contracts.Permissions;
 using UPBazaar.Modules.Inventory.Contracts.Permissions;
 using UPBazaar.Modules.Orders.Contracts.Permissions;
+using UPBazaar.Modules.Payments.Contracts.Permissions;
 
 namespace UPBazaar.Modules.Identity.Services;
 
@@ -30,6 +31,7 @@ public static class PermissionCatalog
         .. InventoryPermissions.All,
         .. CartPermissions.All,
         .. OrdersPermissions.All,
+        .. PaymentsPermissions.All,
         PlatformJobsView,
     ];
 
@@ -63,6 +65,8 @@ public static class PermissionCatalog
                 OrdersPermissions.Read,
                 OrdersPermissions.Write,
                 OrdersPermissions.Cancel,
+                PaymentsPermissions.Read,
+                PaymentsPermissions.RefundsWrite,
                 PlatformJobsView,
             ]),
 
@@ -87,6 +91,8 @@ public static class PermissionCatalog
             [
                 IdentityPermissions.UsersRead,
                 OrdersPermissions.Read,
+                PaymentsPermissions.Read,
+                PaymentsPermissions.RefundsWrite,
             ]),
 
         new(
@@ -95,6 +101,7 @@ public static class PermissionCatalog
             [
                 IdentityPermissions.UsersRead,
                 OrdersPermissions.Read,
+                PaymentsPermissions.Read,
             ]),
 
         new(
@@ -107,6 +114,7 @@ public static class PermissionCatalog
 
                 // A supervisor can cancel for a buyer who cannot, but does not run fulfilment.
                 OrdersPermissions.Cancel,
+                PaymentsPermissions.Read,
             ]),
 
         new(
@@ -127,6 +135,7 @@ public static class PermissionCatalog
                 CartPermissions.Write,
                 OrdersPermissions.OwnRead,
                 OrdersPermissions.OwnWrite,
+                PaymentsPermissions.OwnWrite,
             ]),
     ];
 

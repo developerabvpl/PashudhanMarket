@@ -15,6 +15,7 @@ import { FieldErrors } from '@upbazaar/ui';
 import { InrCurrencyPipe, isMobile, isPincode, normalizeMobile } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { CartStore } from '../cart/cart.store';
+import { OrderPayment } from '../payments/order-payment';
 import { LastAddress } from './last-address';
 
 type AddressField = keyof DeliveryAddressDto;
@@ -36,10 +37,10 @@ const EMPTY: DeliveryAddressDto = {
 /**
  * Checkout: where it goes, how it is paid, and one button.
  *
- * Only cash on delivery can be chosen. The API takes online orders too, but until Payments
- * talks to Razorpay there is no way to pay one, and an order the buyer cannot pay would sit
- * holding stock for fifteen minutes and then cancel itself. The option is shown, disabled, so
- * buyers know it is coming.
+ * Online payment is offered only when the API says a gateway is configured; otherwise the option
+ * is shown disabled, since an online order nobody can pay would hold stock for fifteen minutes and
+ * then cancel itself. An online order is placed first and paid for on its own page, so a buyer
+ * whose payment fails, or who closes the window, still has the order to pay for until its deadline.
  *
  * The page works from the account cart the store already holds, and places nothing unless the
  * store says the cart can be checked out; the API checks again, against live prices and stock.
@@ -172,19 +173,46 @@ const EMPTY: DeliveryAddressDto = {
           <fieldset class="rounded-card border border-border bg-surface p-5">
             <legend class="px-1 font-semibold text-ink">{{ 'checkout.payment' | transloco }}</legend>
 
-            <label class="mt-2 flex cursor-pointer items-start gap-3 rounded-control border border-brand-600 p-3">
-              <input type="radio" name="payment" value="CashOnDelivery" class="mt-1" checked />
+            <label
+              class="mt-2 flex cursor-pointer items-start gap-3 rounded-control border p-3"
+              [class.border-brand-600]="method() === 'CashOnDelivery'"
+              [class.border-border]="method() !== 'CashOnDelivery'"
+            >
+              <input
+                type="radio"
+                name="payment"
+                value="CashOnDelivery"
+                class="mt-1"
+                [checked]="method() === 'CashOnDelivery'"
+                (change)="method.set('CashOnDelivery')"
+              />
               <span>
                 <span class="block font-medium text-ink">{{ 'checkout.cod' | transloco }}</span>
                 <span class="block text-sm text-ink-muted">{{ 'checkout.codNote' | transloco }}</span>
               </span>
             </label>
 
-            <label class="mt-3 flex items-start gap-3 rounded-control border border-border p-3 opacity-60">
-              <input type="radio" name="payment" value="Online" class="mt-1" disabled />
+            <label
+              class="mt-3 flex items-start gap-3 rounded-control border p-3"
+              [class.cursor-pointer]="onlineEnabled()"
+              [class.opacity-60]="!onlineEnabled()"
+              [class.border-brand-600]="method() === 'Online'"
+              [class.border-border]="method() !== 'Online'"
+            >
+              <input
+                type="radio"
+                name="payment"
+                value="Online"
+                class="mt-1"
+                [disabled]="!onlineEnabled()"
+                [checked]="method() === 'Online'"
+                (change)="method.set('Online')"
+              />
               <span>
                 <span class="block font-medium text-ink">{{ 'checkout.online' | transloco }}</span>
-                <span class="block text-sm text-ink-muted">{{ 'checkout.onlineSoon' | transloco }}</span>
+                <span class="block text-sm text-ink-muted">
+                  {{ (onlineEnabled() ? 'checkout.onlineNote' : 'checkout.onlineSoon') | transloco }}
+                </span>
               </span>
             </label>
           </fieldset>
@@ -234,7 +262,7 @@ const EMPTY: DeliveryAddressDto = {
             class="mt-5 w-full rounded-control bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="busy() || !cart.canCheckOut()"
           >
-            {{ (busy() ? 'checkout.placing' : 'checkout.place') | transloco }}
+            {{ (busy() ? 'checkout.placing' : method() === 'Online' ? 'checkout.placeAndPay' : 'checkout.place') | transloco }}
           </button>
         </aside>
       </form>
@@ -251,10 +279,13 @@ export class CheckoutPage {
   private readonly router = inject(Router);
   private readonly user = inject(CurrentUserStore);
   private readonly lastAddress = inject(LastAddress);
+  private readonly payment = inject(OrderPayment);
 
   protected readonly address = signal<DeliveryAddressDto>(EMPTY);
   protected readonly states = signal<readonly string[]>([]);
   protected readonly busy = signal(false);
+  protected readonly method = signal<'CashOnDelivery' | 'Online'>('CashOnDelivery');
+  protected readonly onlineEnabled = signal(false);
 
   /** Field problems found before sending, keyed like the API's, so both render the same way. */
   private readonly clientErrors = signal<Readonly<Record<string, readonly string[]>>>({});
@@ -280,6 +311,7 @@ export class CheckoutPage {
     });
 
     void this.loadStates();
+    void this.payment.isOnlineEnabled().then((enabled) => this.onlineEnabled.set(enabled));
   }
 
   protected errorsFor(field: AddressField): readonly string[] {
@@ -317,7 +349,7 @@ export class CheckoutPage {
 
     try {
       const order = await this.api.invoke(apiV1OrdersPost, {
-        body: { paymentMethod: 'CashOnDelivery', deliveryAddress: address },
+        body: { paymentMethod: this.method(), deliveryAddress: address },
       });
 
       const id = this.userId();
@@ -328,7 +360,10 @@ export class CheckoutPage {
 
       // The server emptied the cart as part of the order; show that before leaving.
       await this.cart.refresh();
-      await this.router.navigate(['/orders', order.id], { queryParams: { placed: 1 } });
+      // An online order goes straight on to payment; the order page opens it.
+      await this.router.navigate(['/orders', order.id], {
+        queryParams: order.status === 'PendingPayment' ? { pay: 1 } : { placed: 1 },
+      });
     } catch (error) {
       const problem = toApiProblem(error);
 

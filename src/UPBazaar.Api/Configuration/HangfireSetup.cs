@@ -5,6 +5,7 @@ using UPBazaar.Infrastructure;
 using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Modules.Inventory.Services;
 using UPBazaar.Modules.Orders.Services;
+using UPBazaar.Modules.Payments.Services;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -120,6 +121,13 @@ public static class HangfireSetup
         recurringJobs?.AddOrUpdate<UnpaidOrderExpiryJob>(
             UnpaidOrderExpiryJob.RecurringJobId,
             job => job.CancelUnpaidAsync(CancellationToken.None),
+            "*/1 * * * *");
+
+        // Every minute: money captured but not yet applied to its order must reach the order before
+        // the unpaid-order job above cancels it.
+        recurringJobs?.AddOrUpdate<PaymentSettlementJob>(
+            PaymentSettlementJob.RecurringJobId,
+            job => job.SettleAsync(CancellationToken.None),
             "*/1 * * * *");
 
         return app;

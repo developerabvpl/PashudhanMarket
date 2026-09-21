@@ -320,7 +320,9 @@
     "total": "Total",
     "fixCart": "Something in your basket has changed.",
     "place": "Place order",
-    "placing": "Placing your order..."
+    "placing": "Placing your order...",
+    "onlineNote": "UPI, cards, net banking and wallets, through Razorpay.",
+    "placeAndPay": "Place order and pay"
   },
   "orders": {
     "title": "My orders",
@@ -356,7 +358,49 @@
     },
     "paymentMethod": {
       "CashOnDelivery": "Cash on delivery",
-      "Online": "Paid online"
+      "Online": "Online payment"
+    }
+  },
+  "payments": {
+    "due": "{{amount}} to pay",
+    "dueBy": "Pay by {{time}} or the order will be cancelled.",
+    "payNow": "Pay now",
+    "opening": "Opening payment...",
+    "testMode": "Test mode",
+    "testModeNote": "No real payment gateway is set up here. Simulate a successful payment to try the flow.",
+    "simulate": "Simulate successful payment",
+    "paid": "Payment received. Your order is confirmed.",
+    "processing": "Payment received. Your order will be confirmed in a moment.",
+    "refundDue": "Payment received, but this order could no longer take it. The money will be refunded to you.",
+    "title": "Payments",
+    "subtitle": "Online payments and the refunds owed out of them.",
+    "refundsDue": "Refunds due",
+    "allPayments": "All payments",
+    "searchLabel": "Order number or Razorpay id",
+    "owedSince": "Owed since",
+    "order": "Order",
+    "amount": "Amount",
+    "reason": "Reason",
+    "razorpayPayment": "Razorpay payment",
+    "razorpayIds": "Razorpay order / payment",
+    "started": "Started",
+    "status": "Status",
+    "refundDueColumn": "Refund due",
+    "noRefundsDue": "No refunds are waiting.",
+    "none": "No payments found.",
+    "markRefunded": "Mark refunded",
+    "markRefundedTitle": "Record a refund",
+    "markRefundedBody": "Refund {{amount}} for order {{number}} in the Razorpay dashboard against payment {{payment}}, then enter the refund id Razorpay shows.",
+    "gatewayRefundId": "Razorpay refund id",
+    "refundRecorded": "Refund recorded.",
+    "statuses": {
+      "Created": "Awaiting buyer",
+      "Paid": "Paid"
+    },
+    "outcomes": {
+      "Pending": "Not yet applied",
+      "Confirmed": "Order confirmed",
+      "Refused": "Order refused it"
     }
   }
 }

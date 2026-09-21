@@ -45,7 +45,7 @@ public static class ModuleRegistration
             .AddInventoryModule()
             .AddCartModule()
             .AddOrdersModule()
-            .AddPaymentsModule()
+            .AddPaymentsModule(configuration, environment)
             .AddShippingModule()
             .AddSettlementsModule()
             .AddPromotionsModule()

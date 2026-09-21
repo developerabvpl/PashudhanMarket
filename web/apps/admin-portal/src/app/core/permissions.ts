@@ -16,3 +16,9 @@ export const IdentityPermissions = {
 export const OrderingPermissions = {
   Read: 'orders.read',
 } as const;
+
+/** Permission names the payments screens depend on. */
+export const PaymentsPermissions = {
+  Read: 'payments.read',
+  RefundsWrite: 'payments.refunds.write',
+} as const;

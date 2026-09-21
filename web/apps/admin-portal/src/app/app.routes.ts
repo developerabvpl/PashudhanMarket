@@ -21,6 +21,11 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/orders/orders.routes').then((m) => m.orderRoutes),
   },
   {
+    path: 'payments',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/payments/payments.routes').then((m) => m.paymentRoutes),
+  },
+  {
     path: 'change-password',
     canActivate: [authGuard],
     component: ChangePasswordPage,

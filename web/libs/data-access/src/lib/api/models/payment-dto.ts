@@ -3,12 +3,18 @@
 
 export interface PaymentDto {
   amount: number;
-  capturedAtUtc: string | null;
+  buyerId: string;
   createdAtUtc: string;
   currency: string;
+  gateway: string;
   gatewayOrderId: string;
+  gatewayPaymentId: (string | null);
   id: string;
+  lastFailure: (string | null);
   orderId: string;
-  provider: string;
+  orderNumber: string;
+  orderOutcome: string;
+  paidAtUtc: (string | null);
+  refundDue: number;
   status: string;
 }

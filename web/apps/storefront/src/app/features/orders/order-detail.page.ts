@@ -5,6 +5,7 @@ import { Api, OrderDto, apiV1OrdersOrderIdCancelPost, ordersGetMine } from '@upb
 import { PageState, ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
+import { OrderPayPanel } from '../payments/order-pay-panel';
 import { orderStatusBadge, partStatusBadge } from './order-labels';
 
 /**
@@ -17,7 +18,7 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
  */
 @Component({
   selector: 'upb-order-detail-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
@@ -46,6 +47,10 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
           {{ badge().key | transloco }}
         </span>
       </div>
+
+      @if (o.status === 'PendingPayment') {
+      <upb-order-pay-panel [order]="o" [autoStart]="pay() === '1'" (settled)="load()" />
+      }
 
       @if (o.status === 'Cancelled' && o.cancellationReason) {
       <p class="mt-4 text-sm text-ink-muted">
@@ -161,6 +166,9 @@ export class OrderDetailPage {
 
   /** "1" when checkout has just brought the buyer here. */
   readonly placed = input<string | undefined>(undefined);
+
+  /** "1" when checkout placed an online order and payment should open straight away. */
+  readonly pay = input<string | undefined>(undefined);
 
   protected readonly order = signal<OrderDto | null>(null);
   protected readonly failed = signal(false);
