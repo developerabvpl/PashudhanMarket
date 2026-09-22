@@ -22,3 +22,9 @@ export const PaymentsPermissions = {
   Read: 'payments.read',
   RefundsWrite: 'payments.refunds.write',
 } as const;
+
+/** Permission names the shipping screens depend on. */
+export const ShippingPermissions = {
+  ShipmentsRead: 'shipping.shipments.read',
+  ShipmentsWrite: 'shipping.shipments.write',
+} as const;

@@ -206,6 +206,63 @@ internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext, 
     }
 }
 
+/// <summary>
+/// Records a product's packed weight and box size, which Shipping sends to the courier. All four
+/// values, or none to clear them.
+/// </summary>
+public sealed record SetProductPackageCommand(
+    Guid ProductId,
+    int? WeightGrams,
+    decimal? LengthCm,
+    decimal? BreadthCm,
+    decimal? HeightCm) : ICommand<ProductDto>;
+
+internal sealed class SetProductPackageCommandValidator : AbstractValidator<SetProductPackageCommand>
+{
+    /// <summary>Beyond these a parcel is freight, not a courier shipment.</summary>
+    public const int MaxWeightGrams = 50_000;
+
+    public const decimal MaxSideCm = 200m;
+
+    public SetProductPackageCommandValidator()
+    {
+        RuleFor(x => x.ProductId).NotEmpty();
+
+        RuleFor(x => x)
+            .Must(x => (x.WeightGrams, x.LengthCm, x.BreadthCm, x.HeightCm) is (null, null, null, null)
+                or (not null, not null, not null, not null))
+            .WithName("Package")
+            .WithMessage("Give weight, length, breadth and height together, or none of them.");
+
+        RuleFor(x => x.WeightGrams).InclusiveBetween(1, MaxWeightGrams).When(x => x.WeightGrams is not null);
+        RuleFor(x => x.LengthCm).InclusiveBetween(0.1m, MaxSideCm).When(x => x.LengthCm is not null);
+        RuleFor(x => x.BreadthCm).InclusiveBetween(0.1m, MaxSideCm).When(x => x.BreadthCm is not null);
+        RuleFor(x => x.HeightCm).InclusiveBetween(0.1m, MaxSideCm).When(x => x.HeightCm is not null);
+    }
+}
+
+internal sealed class SetProductPackageCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+    : ICommandHandler<SetProductPackageCommand, ProductDto>
+{
+    public async Task<Result<ProductDto>> HandleAsync(
+        SetProductPackageCommand command,
+        CancellationToken cancellationToken)
+    {
+        var product = await ProductLoader.Query(dbContext)
+            .FirstOrDefaultAsync(p => p.PublicId == command.ProductId, cancellationToken);
+
+        if (product is null)
+        {
+            return Result.Failure<ProductDto>(CatalogErrors.ProductNotFound);
+        }
+
+        product.SetPackage(command.WeightGrams, command.LengthCm, command.BreadthCm, command.HeightCm);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return await product.ToDtoAsync(inventory, cancellationToken);
+    }
+}
+
 /// <summary>Withdraws a listing for good.</summary>
 public sealed record ArchiveProductCommand(Guid ProductId) : ICommand;
 

@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Api, OrderDto, apiV1OrdersOrderIdCancelPost, ordersGetMine } from '@upbazaar/data-access';
+import {
+  Api,
+  OrderDto,
+  ShipmentDto,
+  apiV1OrdersOrderIdCancelPost,
+  apiV1ShippingOrdersOrderIdShipmentsGet,
+  ordersGetMine,
+} from '@upbazaar/data-access';
 import { PageState, ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
@@ -82,6 +89,18 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
             </li>
             }
           </ul>
+          @if (shipmentFor(part.id); as shipment) { @if (shipment.awb) {
+          <div class="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm">
+            <p class="text-ink-muted">
+              {{ 'orders.shippedWith' | transloco: { courier: shipment.courierName ?? '—', awb: shipment.awb } }}
+            </p>
+            @if (shipment.trackingUrl) {
+            <a class="font-medium text-accent-600 hover:underline" [href]="shipment.trackingUrl" target="_blank" rel="noopener">
+              {{ 'orders.track' | transloco }}
+            </a>
+            }
+          </div>
+          } }
         </div>
         }
       </div>
@@ -171,6 +190,7 @@ export class OrderDetailPage {
   readonly pay = input<string | undefined>(undefined);
 
   protected readonly order = signal<OrderDto | null>(null);
+  protected readonly shipments = signal<readonly ShipmentDto[]>([]);
   protected readonly failed = signal(false);
   protected readonly busy = signal(false);
   protected readonly confirming = signal(false);
@@ -196,11 +216,29 @@ export class OrderDetailPage {
     });
   }
 
+  /** The live courier booking for a seller's part, if it has one. */
+  protected shipmentFor(partId: string): ShipmentDto | undefined {
+    return this.shipments().find((s) => s.orderPartId === partId && s.status !== 'Cancelled');
+  }
+
+  /**
+   * Tracking is a nicety on top of the order, fetched after it and allowed to fail quietly:
+   * an order whose parcels cannot be looked up right now is still an order the buyer can read.
+   */
+  private async loadShipments(): Promise<void> {
+    try {
+      this.shipments.set(await this.api.invoke(apiV1ShippingOrdersOrderIdShipmentsGet, { orderId: this.orderId() }));
+    } catch {
+      this.shipments.set([]);
+    }
+  }
+
   protected async load(): Promise<void> {
     this.failed.set(false);
 
     try {
       this.order.set(await this.api.invoke(ordersGetMine, { orderId: this.orderId() }));
+      void this.loadShipments();
     } catch {
       this.failed.set(true);
     }

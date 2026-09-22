@@ -16,6 +16,14 @@ public interface IProductCatalog
     Task<IReadOnlyDictionary<Guid, CatalogProductDto>> GetProductsAsync(
         IReadOnlyCollection<Guid> productIds,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// How each product ships, for Shipping to size a parcel. Products whose package has not been
+    /// recorded are left out, so the caller can say exactly which ones need measuring.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, Dtos.ProductPackageDto>> GetPackagesAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>A product as another module sees it: what it is called, what it costs, whether it is on sale.</summary>

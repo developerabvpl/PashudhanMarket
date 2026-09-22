@@ -359,7 +359,9 @@
     "paymentMethod": {
       "CashOnDelivery": "Cash on delivery",
       "Online": "Online payment"
-    }
+    },
+    "shippedWith": "With {{courier}}, AWB {{awb}}",
+    "track": "Track parcel"
   },
   "payments": {
     "due": "{{amount}} to pay",
@@ -402,5 +404,38 @@
       "Confirmed": "Order confirmed",
       "Refused": "Order refused it"
     }
+  },
+  "shipping": {
+    "parcels": "Parcels",
+    "packTitle": "Pack and book courier for {{number}}",
+    "pickupFrom": "Collected from: {{location}}",
+    "noPickup": "no pickup location set up",
+    "missingPackages": "No package recorded for {{skus}}. Weigh and measure the box.",
+    "suggested": "Worked out from the products. Correct it if the box you used differs.",
+    "weightGrams": "Weight (g)",
+    "lengthCm": "Length (cm)",
+    "breadthCm": "Breadth (cm)",
+    "heightCm": "Height (cm)",
+    "packAndBook": "Pack and book courier",
+    "resumeBooking": "Finish booking",
+    "booking": "Booking...",
+    "booked": "Courier booked. Pickup requested.",
+    "statuses": {
+      "Booking": "Booking unfinished",
+      "PickupRequested": "Awaiting pickup",
+      "InTransit": "In transit",
+      "Delivered": "Delivered",
+      "Returned": "Returned",
+      "Cancelled": "Cancelled"
+    },
+    "pickupTitle": "Pickup locations",
+    "pickupSubtitle": "Names must match pickup locations registered in Shiprocket. Sellers without their own ship from the platform warehouse.",
+    "warehouse": "Platform warehouse",
+    "forSeller": "Seller",
+    "noPickups": "No pickup locations yet. Add the platform warehouse first.",
+    "sellerIdOptional": "Seller id (blank for the platform warehouse)",
+    "pickupName": "Name as registered in Shiprocket",
+    "sellerIdInvalid": "A seller id looks like 00000000-0000-0000-0000-000000000000.",
+    "pickupSaved": "Pickup location saved."
   }
 }

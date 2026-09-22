@@ -32,6 +32,7 @@ function product(overrides: Partial<ProductDto> = {}): ProductDto {
     reservedQuantity: 0,
     createdAtUtc: '2026-08-24T00:00:00Z',
     modifiedAtUtc: null,
+    package: null,
     ...overrides,
   };
 }

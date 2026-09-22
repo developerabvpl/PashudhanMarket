@@ -58,6 +58,21 @@ public sealed class Product : AggregateRoot, IAuditable
 
     public Category Category { get; private set; } = null!;
 
+    /// <summary>
+    /// Packed weight in grams, for couriers. The four package values are set together or not at
+    /// all: a courier quote needs every one of them, so a half-filled parcel is no parcel.
+    /// </summary>
+    public int? WeightGrams { get; private set; }
+
+    /// <summary>Packed length in centimetres.</summary>
+    public decimal? LengthCm { get; private set; }
+
+    /// <summary>Packed breadth in centimetres.</summary>
+    public decimal? BreadthCm { get; private set; }
+
+    /// <summary>Packed height in centimetres.</summary>
+    public decimal? HeightCm { get; private set; }
+
     public DateTime CreatedAtUtc { get; set; }
 
     public string? CreatedBy { get; set; }
@@ -141,6 +156,20 @@ public sealed class Product : AggregateRoot, IAuditable
         CategoryId = category.Id;
 
         return Result.Success();
+    }
+
+    /// <summary>
+    /// Records how one unit ships: weight and box size, as packed. Null clears it. Allowed on an
+    /// archived listing too, since orders placed before archiving may still need to ship.
+    /// </summary>
+    public void SetPackage(int? weightGrams, decimal? lengthCm, decimal? breadthCm, decimal? heightCm)
+    {
+        var all = weightGrams is not null && lengthCm is not null && breadthCm is not null && heightCm is not null;
+
+        WeightGrams = all ? weightGrams : null;
+        LengthCm = all ? lengthCm : null;
+        BreadthCm = all ? breadthCm : null;
+        HeightCm = all ? heightCm : null;
     }
 
     /// <summary>Makes the listing visible. Publishing an active listing is a no-op.</summary>

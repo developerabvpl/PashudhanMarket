@@ -30,7 +30,15 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     public void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products", CatalogModule.SchemaName, table =>
-            table.HasCheckConstraint("CK_Products_Price", "[Price] >= 0"));
+        {
+            table.HasCheckConstraint("CK_Products_Price", "[Price] >= 0");
+
+            // All four package values, or none; and a package that exists is a real one.
+            table.HasCheckConstraint(
+                "CK_Products_Package",
+                "([WeightGrams] IS NULL AND [LengthCm] IS NULL AND [BreadthCm] IS NULL AND [HeightCm] IS NULL) "
+                + "OR ([WeightGrams] > 0 AND [LengthCm] > 0 AND [BreadthCm] > 0 AND [HeightCm] > 0)");
+        });
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
@@ -48,6 +56,11 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.Description).HasMaxLength(4000);
         builder.Property(x => x.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+
+        // Centimetres to one decimal place, which is as fine as any courier measures.
+        builder.Property(x => x.LengthCm).HasPrecision(6, 1);
+        builder.Property(x => x.BreadthCm).HasPrecision(6, 1);
+        builder.Property(x => x.HeightCm).HasPrecision(6, 1);
 
         builder.HasOne(x => x.Category)
             .WithMany()

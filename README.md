@@ -247,8 +247,46 @@ does with a known secret, and the storefront offers a "simulate payment" step in
 Razorpay window. Any other environment without keys switches online payment off, and checkout
 offers cash on delivery only.
 
+Shipping books couriers through Shiprocket, one consignment per seller's part of an order. Staff
+pack a part from the admin portal's order screen (`POST /api/v1/admin/shipping/orders/{id}/parts/{partId}/pack`).
+The parcel is worked out from the products' recorded packages - `PUT
+/api/v1/admin/catalog/products/{id}/package` sets one unit's weight and box - or entered by hand
+when a product has none. Booking is Shiprocket's three steps (order, AWB, pickup), saved after
+each, so packing again after a failure resumes rather than books twice. A cash-on-delivery part
+is booked as COD for its own subtotal. Then the part is marked Packed.
+
+Couriers collect from the seller's own pickup location if one is set, otherwise from the
+platform warehouse (the location with no seller). Only the names are kept here, under the admin
+portal's Shipping page; each must match a pickup location registered in the Shiprocket dashboard.
+
+Shiprocket's tracking webhook, at `/api/v1/shipping/webhooks/courier-tracking` and authenticated
+by the `x-api-key` token set on it, moves the part to Shipped and Delivered. (Shiprocket refuses
+webhook URLs containing its own name, which is why the path does not.) Updates only ever move a
+shipment forward, so late and repeated ones are harmless. Cancelling a part before it is
+collected cancels its consignment. Buyers see the courier, the AWB and a tracking link on their
+order page.
+
+Credentials, as with Razorpay, come from user-secrets or the environment:
+
+```bash
+dotnet user-secrets --project src/UPBazaar.Api set "Shipping:Shiprocket:Email" "api-user@..."
+dotnet user-secrets --project src/UPBazaar.Api set "Shipping:Shiprocket:Password" "..."
+dotnet user-secrets --project src/UPBazaar.Api set "Shipping:Shiprocket:WebhookToken" "..."
+```
+
+Without them, Development and the tests use a fake courier; any other environment turns courier
+booking off, and staff move parts along by hand with `/api/v1/admin/orders/.../status`.
+
 Deliberately not built yet:
 
+- **The real Shiprocket client is untested against Shiprocket.** It follows Shiprocket's
+  published API. Before going live, book one test consignment and point the tracking webhook at
+  the API through a tunnel.
+- **The existing catalogue has no packages.** None of the 70 products has a weight or box size,
+  so until they are measured every parcel is entered by hand at packing. There is no screen for
+  product packages yet; set them through the API.
+- **Returns stop at the record.** A shipment that comes back (RTO) is marked Returned, but
+  nothing restocks it or refunds the buyer yet.
 - **The real Razorpay client is untested against Razorpay.** It follows Razorpay's published
   Orders API and signatures, which the tests cover, but there were no keys to run it with. Try a
   test-mode payment and a webhook (through a tunnel such as ngrok) before going live.

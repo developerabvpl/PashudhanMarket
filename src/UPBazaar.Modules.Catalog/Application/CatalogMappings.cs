@@ -34,7 +34,14 @@ internal static class CatalogMappings
         stock.OnHandQuantity,
         stock.ReservedQuantity,
         product.CreatedAtUtc,
-        product.ModifiedAtUtc);
+        product.ModifiedAtUtc,
+        product.ToPackageDto());
+
+    /// <summary>The product's parcel, or null while its seller has not measured it.</summary>
+    public static ProductPackageDto? ToPackageDto(this Product product) =>
+        product is { WeightGrams: { } weight, LengthCm: { } length, BreadthCm: { } breadth, HeightCm: { } height }
+            ? new ProductPackageDto(weight, length, breadth, height)
+            : null;
 
     /// <summary>One product with its stock, asked of Inventory.</summary>
     public static async Task<ProductDto> ToDtoAsync(

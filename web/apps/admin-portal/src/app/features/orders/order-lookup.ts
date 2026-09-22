@@ -3,6 +3,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { Api, OrderDto, apiV1AdminOrdersOrderIdGet, toApiProblem } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { OrderParcels } from './order-parcels';
 
 type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
 
@@ -12,7 +13,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
  */
 @Component({
   selector: 'upb-order-lookup',
-  imports: [TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState],
+  imports: [TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderParcels],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-3xl px-4 py-8">
@@ -88,6 +89,8 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
             }
           </tbody>
         </table>
+
+        <upb-order-parcels [order]="found" (changed)="retry()" />
       </article>
       } } }
     </section>

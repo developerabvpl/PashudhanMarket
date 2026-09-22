@@ -154,6 +154,30 @@ public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerB
         return (await dispatcher.SendAsync(command, cancellationToken)).ToActionResult();
     }
 
+    /// <summary>Sets how a product ships.</summary>
+    [HttpPut("products/{productId:guid}/package")]
+    [Authorize(CatalogPermissions.ProductsWrite)]
+    [EndpointSummary("Set a product's package")]
+    [EndpointDescription(
+        "Records one unit's packed weight (grams) and box size (centimetres), which Shipping sends to "
+        + "the courier. Send all four values, or all null to clear them.")]
+    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProductDto>> SetPackage(
+        Guid productId,
+        ProductPackageRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.SendAsync(
+                new SetProductPackageCommand(
+                    productId, request.WeightGrams, request.LengthCm, request.BreadthCm, request.HeightCm),
+                cancellationToken))
+            .ToActionResult();
+    }
+
     /// <summary>Publishes a draft.</summary>
     [HttpPost("products/{productId:guid}/publish")]
     [Authorize(CatalogPermissions.ProductsWrite)]
@@ -250,6 +274,12 @@ public sealed record UpdateProductRequest(
     decimal Price,
     Guid CategoryId);
 
+
+/// <param name="WeightGrams">Packed weight of one unit, 1 to 50000 grams.</param>
+/// <param name="LengthCm">Box length, up to 200 cm.</param>
+/// <param name="BreadthCm">Box breadth, up to 200 cm.</param>
+/// <param name="HeightCm">Box height, up to 200 cm.</param>
+public sealed record ProductPackageRequest(int? WeightGrams, decimal? LengthCm, decimal? BreadthCm, decimal? HeightCm);
 
 /// <param name="Name">Display name. The slug is derived from it.</param>
 /// <param name="ParentId">Parent category, or null for the top level.</param>

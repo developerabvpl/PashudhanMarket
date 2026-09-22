@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { Api, OrderDto } from '@upbazaar/data-access';
+import { Api, OrderDto, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
 import { OrderLookup } from './order-lookup';
 
@@ -66,6 +66,11 @@ function submitLookup(element: HTMLElement, orderId: string): void {
 describe('OrderLookup', () => {
   let invoke: ReturnType<typeof vi.fn>;
 
+  /** The lookup answers with the order; the parcels section beneath it asks for shipments, of which there are none. */
+  function answerWith(found: OrderDto): void {
+    invoke.mockImplementation(async (fn: unknown) => (fn === apiV1AdminShippingOrdersOrderIdShipmentsGet ? [] : found));
+  }
+
   beforeEach(() => {
     invoke = vi.fn();
 
@@ -93,7 +98,7 @@ describe('OrderLookup', () => {
   });
 
   it('shows the order once it loads', async () => {
-    invoke.mockResolvedValue(order);
+    answerWith(order);
     const fixture = await render();
 
     submitLookup(fixture.nativeElement, 'o1');
@@ -133,11 +138,11 @@ describe('OrderLookup', () => {
     const retry = fixture.nativeElement.querySelector('button[type="button"]') as HTMLButtonElement;
     expect(retry).not.toBeNull();
 
-    invoke.mockResolvedValue(order);
+    answerWith(order);
     retry.click();
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke.mock.calls.filter(([fn]) => fn !== apiV1AdminShippingOrdersOrderIdShipmentsGet)).toHaveLength(2);
   });
 });

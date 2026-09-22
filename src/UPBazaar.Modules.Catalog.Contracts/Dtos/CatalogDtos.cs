@@ -28,7 +28,15 @@ public sealed record ProductDto(
     int OnHandQuantity,
     int ReservedQuantity,
     DateTime CreatedAtUtc,
-    DateTime? ModifiedAtUtc);
+    DateTime? ModifiedAtUtc,
+    ProductPackageDto? Package);
+
+/// <summary>How one unit of a product ships, as packed. Couriers price on these.</summary>
+/// <param name="WeightGrams">Packed weight in grams.</param>
+/// <param name="LengthCm">Box length in centimetres.</param>
+/// <param name="BreadthCm">Box breadth in centimetres.</param>
+/// <param name="HeightCm">Box height in centimetres.</param>
+public sealed record ProductPackageDto(int WeightGrams, decimal LengthCm, decimal BreadthCm, decimal HeightCm);
 
 /// <summary>A product in a listing: enough for a card, nothing that needs a join.</summary>
 public sealed record ProductSummaryDto(
