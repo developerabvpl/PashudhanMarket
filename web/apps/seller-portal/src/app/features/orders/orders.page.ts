@@ -56,7 +56,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
   `,
 })
 export class OrdersPage {
-  protected readonly statuses = ['Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'] as const;
+  protected readonly statuses = ['Confirmed', 'Packed', 'Shipped', 'Delivered', 'Returned', 'Cancelled'] as const;
   protected readonly pageSize = 25;
   protected readonly orders = signal<readonly SellerOrderSummaryDto[]>([]);
   protected readonly total = signal(0);

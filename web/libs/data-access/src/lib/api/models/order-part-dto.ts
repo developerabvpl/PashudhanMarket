@@ -6,6 +6,7 @@ export interface OrderPartDto {
   cancellationReason: (string | null);
   id: string;
   lines: Array<OrderLineDto>;
+  returnCondition: (string | null);
   sellerId: string;
   status: string;
   subtotal: number;

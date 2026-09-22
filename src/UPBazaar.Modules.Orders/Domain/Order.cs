@@ -70,8 +70,8 @@ public sealed class Order : AggregateRoot, IAuditable
 
     public string? ModifiedBy { get; set; }
 
-    /// <summary>What is still coming: cancelled parts drop out, so a partial refund shows in the total.</summary>
-    public decimal Subtotal => _parts.Where(p => p.Status != OrderPartStatus.Cancelled).Sum(p => p.Subtotal);
+    /// <summary>What is still coming: cancelled and returned parts drop out, so a refund shows in the total.</summary>
+    public decimal Subtotal => _parts.Where(p => p.IsComing).Sum(p => p.Subtotal);
 
     public decimal Total => Subtotal + ShippingFee;
 
@@ -81,7 +81,8 @@ public sealed class Order : AggregateRoot, IAuditable
     /// </summary>
     public bool CanCancel =>
         Status is OrderStatus.PendingPayment or OrderStatus.Confirmed
-        && _parts.All(p => p.Status is not (OrderPartStatus.Shipped or OrderPartStatus.Delivered));
+        && _parts.All(p => p.Status is OrderPartStatus.AwaitingPayment or OrderPartStatus.Confirmed
+            or OrderPartStatus.Packed or OrderPartStatus.Cancelled);
 
     /// <summary>
     /// Creates an order from checked-out lines. A cash-on-delivery order is confirmed on the spot,
@@ -281,6 +282,98 @@ public sealed class Order : AggregateRoot, IAuditable
         return Result.Success();
     }
 
+    /// <summary>
+    /// The courier could not deliver and is taking the parcel back (RTO). Repeating it is a no-op.
+    /// </summary>
+    public Result StartReturn(Guid partId)
+    {
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.Status is OrderPartStatus.Returning or OrderPartStatus.Returned)
+        {
+            return Result.Success();
+        }
+
+        if (part.Status is not (OrderPartStatus.Packed or OrderPartStatus.Shipped))
+        {
+            return Result.Failure(OrderErrors.NotInTransit);
+        }
+
+        part.MoveTo(OrderPartStatus.Returning);
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// The parcel is back with the seller. For an order paid online its share is now owed back -
+    /// only now, once the goods are in hand, because an RTO can still be turned round while the
+    /// parcel is on its way back. The order ends when nothing in it is still coming.
+    /// </summary>
+    public Result CompleteReturn(Guid partId, DateTime now)
+    {
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.Status == OrderPartStatus.Returned)
+        {
+            return Result.Success();
+        }
+
+        if (part.Status is not (OrderPartStatus.Packed or OrderPartStatus.Shipped or OrderPartStatus.Returning))
+        {
+            return Result.Failure(OrderErrors.NotInTransit);
+        }
+
+        part.MoveTo(OrderPartStatus.Returned);
+
+        Raise(new OrderPartReturnedDomainEvent(
+            PublicId, Number, part.PublicId, part.SellerId,
+            PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m, Currency));
+
+        if (_parts.All(p => p.Status is OrderPartStatus.Cancelled or OrderPartStatus.Returned))
+        {
+            MarkCancelled(CouldNotDeliver, now);
+        }
+        else
+        {
+            CompleteIfDone();
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>Records what the seller found in a returned parcel. Once only.</summary>
+    public Result InspectReturn(Guid partId, ReturnCondition condition, string? note, string? inspectedBy, DateTime now)
+    {
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.Status != OrderPartStatus.Returned || part.ReturnCondition is not null)
+        {
+            return Result.Failure(OrderErrors.NotAwaitingInspection);
+        }
+
+        part.RecordInspection(condition, note, inspectedBy, now);
+
+        return Result.Success();
+    }
+
+    /// <summary>Why an order ends when every part came back undelivered. Shown to the buyer.</summary>
+    public const string CouldNotDeliver = "The courier could not deliver it, and it went back to the seller.";
+
     private void CancelPartInternal(OrderPart part, string reason)
     {
         var refund = PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m;
@@ -303,7 +396,7 @@ public sealed class Order : AggregateRoot, IAuditable
 
     private void CompleteIfDone()
     {
-        var live = _parts.Where(p => p.Status != OrderPartStatus.Cancelled).ToList();
+        var live = _parts.Where(p => p.IsComing).ToList();
 
         if (live.Count > 0 && live.All(p => p.Status == OrderPartStatus.Delivered))
         {
@@ -341,6 +434,18 @@ public sealed class OrderPart : Entity
 
     public string? CancellationReason { get; private set; }
 
+    /// <summary>What the seller found in the parcel after an RTO; null until inspected.</summary>
+    public ReturnCondition? ReturnCondition { get; private set; }
+
+    public string? ReturnNote { get; private set; }
+
+    public string? ReturnInspectedBy { get; private set; }
+
+    public DateTime? ReturnInspectedAtUtc { get; private set; }
+
+    /// <summary>Still on its way to the buyer, or already there: neither called off nor sent back.</summary>
+    public bool IsComing => Status is not (OrderPartStatus.Cancelled or OrderPartStatus.Returned or OrderPartStatus.Returning);
+
     public IReadOnlyCollection<OrderLine> Lines => _lines.AsReadOnly();
 
     public decimal Subtotal => _lines.Sum(l => l.LineTotal);
@@ -355,6 +460,14 @@ public sealed class OrderPart : Entity
     }
 
     internal void MoveTo(OrderPartStatus status) => Status = status;
+
+    internal void RecordInspection(ReturnCondition condition, string? note, string? inspectedBy, DateTime now)
+    {
+        ReturnCondition = condition;
+        ReturnNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        ReturnInspectedBy = inspectedBy;
+        ReturnInspectedAtUtc = now;
+    }
 
     internal void Cancel(string reason)
     {

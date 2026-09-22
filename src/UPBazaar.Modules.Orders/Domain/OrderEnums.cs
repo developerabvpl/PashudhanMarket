@@ -54,4 +54,24 @@ public enum OrderPartStatus
     Delivered = 4,
 
     Cancelled = 5,
+
+    /// <summary>
+    /// The courier could not deliver and is taking it back to the seller (RTO). Numbered after
+    /// the others on purpose: a part only moves to a higher number, so a late "delivered" update can
+    /// never undo a return already under way.
+    /// </summary>
+    Returning = 6,
+
+    /// <summary>Back with the seller, waiting for them to inspect it, or inspected.</summary>
+    Returned = 7,
+}
+
+/// <summary>What the seller found when a returned parcel came back.</summary>
+public enum ReturnCondition
+{
+    /// <summary>Resaleable: its stock goes back on sale.</summary>
+    Good = 0,
+
+    /// <summary>Not resaleable: nothing goes back on sale.</summary>
+    Damaged = 1,
 }

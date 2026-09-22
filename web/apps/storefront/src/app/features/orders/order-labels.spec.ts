@@ -11,6 +11,6 @@ describe('order status badges', () => {
   });
 
   it('still renders a status the storefront does not know yet, in a neutral colour', () => {
-    expect(orderStatusBadge('Returned').tone).toBe('bg-surface-sunken text-ink');
+    expect(orderStatusBadge('OnHold').tone).toBe('bg-surface-sunken text-ink');
   });
 });

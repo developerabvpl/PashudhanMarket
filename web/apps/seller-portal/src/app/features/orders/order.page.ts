@@ -18,6 +18,7 @@ import {
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { ReturnInspection } from './return-inspection';
 
 type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
 
@@ -30,7 +31,7 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
  */
 @Component({
   selector: 'upb-seller-order-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, MatButtonModule, MatFormFieldModule, MatInputModule, ReturnInspection],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -69,6 +70,12 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           {{ o.deliveryAddress.city }}, {{ o.deliveryAddress.state }} {{ o.deliveryAddress.pincode }}
         </address>
       </div>
+
+      @if (o.status === 'Returned') { @if (o.returnCondition) {
+      <p class="upb-card p-5 text-sm">{{ 'returns.inspectedAs.' + o.returnCondition | transloco }}</p>
+      } @else {
+      <upb-return-inspection [order]="o" (inspected)="order.set($event)" />
+      } }
 
       @if (shipment(); as s) {
       <div class="upb-card p-5 text-sm">

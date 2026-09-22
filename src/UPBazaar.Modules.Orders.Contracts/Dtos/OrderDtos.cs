@@ -49,17 +49,19 @@ public sealed record OrderDto(
 /// <summary>One seller's share of an order.</summary>
 /// <param name="Id">Public id.</param>
 /// <param name="SellerId">Public id of the selling account.</param>
-/// <param name="Status">AwaitingPayment, Confirmed, Packed, Shipped, Delivered or Cancelled.</param>
+/// <param name="Status">AwaitingPayment, Confirmed, Packed, Shipped, Delivered, Cancelled, Returning or Returned.</param>
 /// <param name="Subtotal">Sum of this part's lines.</param>
 /// <param name="Lines">What this seller is sending.</param>
 /// <param name="CancellationReason">Why it was cancelled, if it was.</param>
+/// <param name="ReturnCondition">For a part that came back undelivered: Good or Damaged once inspected, else null.</param>
 public sealed record OrderPartDto(
     Guid Id,
     Guid SellerId,
     string Status,
     decimal Subtotal,
     IReadOnlyList<OrderLineDto> Lines,
-    string? CancellationReason);
+    string? CancellationReason,
+    string? ReturnCondition);
 
 /// <summary>
 /// One product in an order, frozen as it was bought. Name, SKU and price are copied in so the

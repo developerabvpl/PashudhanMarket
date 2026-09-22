@@ -211,6 +211,30 @@ public sealed class AdminOrdersController(IDispatcher dispatcher) : ControllerBa
             .ToActionResult();
     }
 
+    /// <summary>Records what was found in a returned parcel.</summary>
+    [HttpPost("{orderId:guid}/parts/{partId:guid}/return-inspection")]
+    [Authorize(OrdersPermissions.Write)]
+    [EndpointSummary("Inspect a returned parcel")]
+    [EndpointDescription(
+        "For a part the courier brought back undelivered, on the seller's behalf: Good puts its stock back on sale, Damaged does not.")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<OrderDto>> InspectReturn(
+        Guid orderId,
+        Guid partId,
+        InspectReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.SendAsync(
+                new InspectReturnCommand(orderId, partId, SellerId: null, request.Condition, request.Note),
+                cancellationToken))
+            .ToActionResult();
+    }
+
     /// <summary>Cancels a seller's part.</summary>
     [HttpPost("{orderId:guid}/parts/{partId:guid}/cancel")]
     [Authorize(OrdersPermissions.Cancel)]

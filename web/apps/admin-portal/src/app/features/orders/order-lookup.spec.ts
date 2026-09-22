@@ -34,6 +34,7 @@ const order: OrderDto = {
       status: 'Confirmed',
       subtotal: 2000,
       cancellationReason: null,
+      returnCondition: null,
       lines: [
         {
           productId: 'p1',

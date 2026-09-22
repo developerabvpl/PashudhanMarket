@@ -356,7 +356,9 @@
       "Packed": "Packed",
       "Shipped": "Shipped",
       "Delivered": "Delivered",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "Returning": "Could not be delivered - going back",
+      "Returned": "Could not be delivered"
     },
     "paymentMethod": {
       "CashOnDelivery": "Cash on delivery",
@@ -428,7 +430,8 @@
       "InTransit": "In transit",
       "Delivered": "Delivered",
       "Returned": "Returned",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "ReturnInTransit": "Returning to seller"
     },
     "pickupTitle": "Pickup locations",
     "pickupSubtitle": "Names must match pickup locations registered in Shiprocket. Sellers without their own ship from the platform warehouse.",
@@ -533,5 +536,18 @@
     "note": "What should the seller fix?",
     "sendBack": "Send back",
     "sentBack": "Sent back to the seller."
+  },
+  "returns": {
+    "inspectTitle": "This parcel came back undelivered",
+    "inspectBody": "Check it. If it can be sold again, its stock goes back on sale.",
+    "note": "What did you find?",
+    "good": "Good - put it back on sale",
+    "damaged": "Damaged - do not restock",
+    "restocked": "Back on sale.",
+    "recordedDamaged": "Recorded as damaged.",
+    "inspectedAs": {
+      "Good": "Returned and put back on sale.",
+      "Damaged": "Returned damaged; not restocked."
+    }
   }
 }

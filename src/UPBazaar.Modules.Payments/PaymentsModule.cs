@@ -76,6 +76,7 @@ public static class PaymentsModuleExtensions
         }
 
         services.AddScoped<PaymentSettler>();
+        services.AddScoped<PartRefundRecorder>();
         services.AddScoped<PaymentSettlementJob>();
 
         return services;

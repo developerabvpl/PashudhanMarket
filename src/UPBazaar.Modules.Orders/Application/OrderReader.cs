@@ -40,7 +40,7 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 o.PaymentMethod.ToString(),
                 o.PaymentStatus.ToString(),
                 o.Parts
-                    .Where(p => p.Status != OrderPartStatus.Cancelled)
+                    .Where(p => p.Status != OrderPartStatus.Cancelled && p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
                     .SelectMany(p => p.Lines)
                     .Sum(l => l.UnitPrice * l.Quantity) + o.ShippingFee,
                 o.Currency,
@@ -78,7 +78,8 @@ internal static class OrderMappings
         part.Subtotal,
         [.. part.Lines.OrderBy(l => l.Id).Select(l =>
             new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal))],
-        part.CancellationReason);
+        part.CancellationReason,
+        part.ReturnCondition?.ToString());
 
     private static DeliveryAddressDto ToDto(this DeliveryAddress address) => new(
         address.FullName,

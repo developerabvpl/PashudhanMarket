@@ -13,7 +13,8 @@ public interface IOrderFulfilmentService
     Task<Result<ShippablePartDto>> GetPartAsync(Guid orderId, Guid partId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Moves a part to Packed, Shipped or Delivered. A part already there or further along is
+    /// Moves a part to Packed, Shipped or Delivered, or - when the courier could not deliver - to
+    /// Returning and then Returned. A part already there or further along is
     /// left as it is and reported as success, because courier updates arrive late, twice, and out
     /// of order; only a move the part can never make - out of Cancelled, say - is refused.
     /// </summary>

@@ -3,10 +3,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HasPermissionDirective } from '@upbazaar/auth';
-import { Api, OrderDto, ShipmentDto, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
+import {
+  Api,
+  OrderDto,
+  ShipmentDto,
+  apiV1AdminOrdersOrderIdPartsPartIdReturnInspectionPost,
+  apiV1AdminShippingOrdersOrderIdShipmentsGet,
+} from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
-import { ShippingPermissions } from '../../core/permissions';
+import { OrderingPermissions, ShippingPermissions } from '../../core/permissions';
 import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
 
 /**
@@ -40,6 +46,15 @@ import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
           } }
         </div>
 
+        @if (part.status === 'Returned' && !part.returnCondition) {
+        <div *hasPermission="ordersWrite" class="flex gap-2">
+          <button mat-stroked-button type="button" (click)="inspect(part.id, 'Good')">{{ 'returns.good' | transloco }}</button>
+          <button mat-stroked-button color="warn" type="button" (click)="inspect(part.id, 'Damaged')">{{ 'returns.damaged' | transloco }}</button>
+        </div>
+        } @else if (part.returnCondition) {
+        <span class="text-sm text-ink-muted">{{ 'returns.inspectedAs.' + part.returnCondition | transloco }}</span>
+        }
+
         @if (canPack(part.id, part.status)) {
         <button *hasPermission="shipmentsWrite" mat-stroked-button type="button" (click)="pack(part.id)">
           {{ (shipmentFor(part.id) ? 'shipping.resumeBooking' : 'shipping.packAndBook') | transloco }}
@@ -55,6 +70,7 @@ export class OrderParcels {
   readonly changed = output<void>();
 
   protected readonly shipmentsWrite = ShippingPermissions.ShipmentsWrite;
+  protected readonly ordersWrite = OrderingPermissions.Write;
   protected readonly shipments = signal<readonly ShipmentDto[]>([]);
 
   private readonly api = inject(Api);
@@ -95,6 +111,24 @@ export class OrderParcels {
     if (shipment) {
       this.toast.success('shipping.booked');
       this.changed.emit();
+    }
+  }
+
+  /**
+   * Inspects a returned parcel on the seller's behalf - for a seller without portal access, or
+   * one who asked support to do it. Good restocks it; Damaged does not.
+   */
+  protected async inspect(partId: string, condition: 'Good' | 'Damaged'): Promise<void> {
+    try {
+      await this.api.invoke(apiV1AdminOrdersOrderIdPartsPartIdReturnInspectionPost, {
+        orderId: this.order().id,
+        partId,
+        body: { condition, note: null },
+      });
+      this.toast.success(condition === 'Good' ? 'returns.restocked' : 'returns.recordedDamaged');
+      this.changed.emit();
+    } catch {
+      // Reported by the interceptor.
     }
   }
 

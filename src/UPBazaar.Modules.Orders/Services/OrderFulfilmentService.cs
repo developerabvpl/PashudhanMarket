@@ -3,6 +3,7 @@ using UPBazaar.Modules.Orders.Application;
 using UPBazaar.Modules.Orders.Contracts;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Domain;
+using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Results;
 
 namespace UPBazaar.Modules.Orders.Services;
@@ -11,7 +12,8 @@ namespace UPBazaar.Modules.Orders.Services;
 internal sealed class OrderFulfilmentService(
     UPBazaarDbContext dbContext,
     OrderTransaction transaction,
-    OrderReader reader) : IOrderFulfilmentService
+    OrderReader reader,
+    IClock clock) : IOrderFulfilmentService
 {
     public async Task<Result<ShippablePartDto>> GetPartAsync(
         Guid orderId,
@@ -52,7 +54,8 @@ internal sealed class OrderFulfilmentService(
         CancellationToken cancellationToken)
     {
         if (!Enum.TryParse<OrderPartStatus>(status, ignoreCase: true, out var target)
-            || target is not (OrderPartStatus.Packed or OrderPartStatus.Shipped or OrderPartStatus.Delivered))
+            || target is not (OrderPartStatus.Packed or OrderPartStatus.Shipped or OrderPartStatus.Delivered
+                or OrderPartStatus.Returning or OrderPartStatus.Returned))
         {
             return Result.Failure(OrderErrors.InvalidTransition);
         }
@@ -73,7 +76,12 @@ internal sealed class OrderFulfilmentService(
                 return Result.Success(true);
             }
 
-            var moved = order.AdvancePart(partId, target);
+            var moved = target switch
+            {
+                OrderPartStatus.Returning => order.StartReturn(partId),
+                OrderPartStatus.Returned => order.CompleteReturn(partId, clock.UtcNow),
+                _ => order.AdvancePart(partId, target),
+            };
 
             if (moved.IsFailure)
             {

@@ -172,6 +172,72 @@ public sealed class OrderTests
             .ShouldBe(OrderErrors.InvalidTransition);
     }
 
+    [Fact]
+    public void A_returned_part_of_a_paid_order_is_owed_back_only_once_it_is_back_with_the_seller()
+    {
+        var order = Place(PaymentMethod.Online);
+        order.ConfirmPayment(order.Total, "pay_1", Now);
+        var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
+        order.AdvancePart(partB, OrderPartStatus.Shipped);
+
+        order.StartReturn(partB).IsSuccess.ShouldBeTrue();
+        order.DomainEvents.OfType<OrderPartReturnedDomainEvent>().ShouldBeEmpty();
+        order.CanCancel.ShouldBeFalse();
+
+        order.CompleteReturn(partB, Now).IsSuccess.ShouldBeTrue();
+        order.CompleteReturn(partB, Now).IsSuccess.ShouldBeTrue();
+
+        order.DomainEvents.OfType<OrderPartReturnedDomainEvent>().ShouldHaveSingleItem().RefundDue.ShouldBe(60m);
+        order.Total.ShouldBe(250m);
+    }
+
+    [Fact]
+    public void A_cash_on_delivery_return_owes_nothing_and_an_order_with_nothing_arriving_ends_cancelled()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+
+        foreach (var part in order.Parts.ToList())
+        {
+            order.AdvancePart(part.PublicId, OrderPartStatus.Shipped);
+            order.CompleteReturn(part.PublicId, Now);
+        }
+
+        order.DomainEvents.OfType<OrderPartReturnedDomainEvent>().ShouldAllBe(e => e.RefundDue == 0m);
+        order.Status.ShouldBe(OrderStatus.Cancelled);
+        order.CancellationReason.ShouldBe(Order.CouldNotDeliver);
+    }
+
+    [Fact]
+    public void An_order_completes_when_every_part_that_did_not_come_back_is_delivered()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+        var partA = order.Parts.Single(p => p.SellerId == SellerA).PublicId;
+        var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
+
+        order.AdvancePart(partA, OrderPartStatus.Delivered);
+        order.AdvancePart(partB, OrderPartStatus.Shipped);
+        order.CompleteReturn(partB, Now);
+
+        order.Status.ShouldBe(OrderStatus.Completed);
+    }
+
+    [Fact]
+    public void Only_a_part_that_left_the_seller_can_come_back_and_it_is_inspected_once()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+        var part = order.Parts.First().PublicId;
+
+        order.StartReturn(part).Error.ShouldBe(OrderErrors.NotInTransit);
+        order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
+
+        order.AdvancePart(part, OrderPartStatus.Shipped);
+        order.CompleteReturn(part, Now);
+
+        order.InspectReturn(part, ReturnCondition.Damaged, "Box crushed", "seller", Now).IsSuccess.ShouldBeTrue();
+        order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
+        order.Parts.First().ReturnCondition.ShouldBe(ReturnCondition.Damaged);
+    }
+
     [Theory]
     [InlineData("uttar pradesh", "Uttar Pradesh")]
     [InlineData("  Delhi ", "Delhi")]

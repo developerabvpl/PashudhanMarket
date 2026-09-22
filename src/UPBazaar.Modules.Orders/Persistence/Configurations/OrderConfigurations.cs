@@ -75,8 +75,12 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
 
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.CancellationReason).HasMaxLength(500);
+        builder.Property(x => x.ReturnCondition).HasConversion<string>().HasMaxLength(16);
+        builder.Property(x => x.ReturnNote).HasMaxLength(500);
+        builder.Property(x => x.ReturnInspectedBy).HasMaxLength(64);
 
         builder.Ignore(x => x.Subtotal);
+        builder.Ignore(x => x.IsComing);
 
         builder.HasMany(x => x.Lines)
             .WithOne()

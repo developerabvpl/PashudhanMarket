@@ -16,7 +16,8 @@ public sealed record HandleCourierWebhookCommand(string RawBody, string? Token) 
 
 /// <summary>
 /// The courier reporting progress. The update is found by AWB, recorded on the shipment, and when
-/// it moves the parcel - collected, delivered - the order's part is moved to match.
+/// it moves the parcel - collected, delivered, or sent back undelivered and back with the seller -
+/// the order's part is moved to match.
 ///
 /// Updates arrive late, twice and out of order, so both halves are forgiving: a shipment only
 /// moves forward, and Orders treats a part already at or past the status as done. An update for
@@ -83,6 +84,8 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
         {
             ShipmentStatus.InTransit => "Shipped",
             ShipmentStatus.Delivered => "Delivered",
+            ShipmentStatus.ReturnInTransit => "Returning",
+            ShipmentStatus.Returned => "Returned",
             _ => null,
         };
 

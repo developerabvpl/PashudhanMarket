@@ -266,6 +266,16 @@ shipment forward, so late and repeated ones are harmless. Cancelling a part befo
 collected cancels its consignment. Buyers see the courier, the AWB and a tracking link on their
 order page.
 
+When the courier cannot deliver (RTO), Shiprocket's updates move the shipment to ReturnInTransit
+and the order's part to Returning, and - on "RTO DELIVERED" - to Returned. Stock that left at
+confirmation does not come back by itself: the seller, in the seller portal, or staff, from the
+order screen, inspect the parcel once and record it Good, which puts its stock back as a
+`Returned` movement, or Damaged, which does not. For an order paid online, the part's share is
+recorded as a refund due only once the parcel is back, since an RTO can be turned round on the
+way; cash on delivery collected nothing, so owes nothing. An order where nothing arrived ends
+Cancelled, saying it could not be delivered. A late "delivered" never undoes a return, and a late
+RTO never undoes a delivery.
+
 Credentials, as with Razorpay, come from user-secrets or the environment:
 
 ```bash
@@ -311,8 +321,8 @@ Deliberately not built yet:
 - **The existing catalogue has no packages.** None of the 70 products has a weight or box size,
   so until they are measured every parcel is entered by hand at packing. The sample seller can set
   them in the seller portal once staff link an owner to it.
-- **Returns stop at the record.** A shipment that comes back (RTO) is marked Returned, but
-  nothing restocks it or refunds the buyer yet.
+- **Only courier returns (RTO) are handled.** A buyer cannot yet ask to return something that
+  was delivered; that needs a return window, reasons and a reverse pickup.
 - **The real Razorpay client is untested against Razorpay.** It follows Razorpay's published
   Orders API and signatures, which the tests cover, but there were no keys to run it with. Try a
   test-mode payment and a webhook (through a tunnel such as ngrok) before going live.

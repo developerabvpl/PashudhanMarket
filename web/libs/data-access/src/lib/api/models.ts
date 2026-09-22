@@ -23,6 +23,7 @@ export type { CreateProductRequest } from './models/create-product-request';
 export type { CreateStaffUserRequest } from './models/create-staff-user-request';
 export type { DeliveryAddressDto } from './models/delivery-address-dto';
 export type { ForgotPasswordRequest } from './models/forgot-password-request';
+export type { InspectReturnRequest } from './models/inspect-return-request';
 export type { LinkSellerOwnerRequest } from './models/link-seller-owner-request';
 export type { LoginRequest } from './models/login-request';
 export type { MarkRefundedRequest } from './models/mark-refunded-request';

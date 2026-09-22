@@ -23,7 +23,7 @@ internal sealed class ListSellerOrdersQueryValidator : AbstractValidator<ListSel
         RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
         RuleFor(x => x.Status)
             .Must(s => s is null || (Enum.TryParse<OrderPartStatus>(s, ignoreCase: true, out var status) && status != OrderPartStatus.AwaitingPayment))
-            .WithMessage("Status must be Confirmed, Packed, Shipped, Delivered or Cancelled.");
+            .WithMessage("Status must be Confirmed, Packed, Shipped, Delivered, Cancelled, Returning or Returned.");
     }
 }
 
@@ -105,6 +105,7 @@ internal sealed class GetSellerOrderQueryHandler(OrderReader reader) : IQueryHan
             order.PlacedAtUtc,
             dto.DeliveryAddress,
             partDto.Lines,
-            part.CancellationReason);
+            part.CancellationReason,
+            part.ReturnCondition?.ToString());
     }
 }

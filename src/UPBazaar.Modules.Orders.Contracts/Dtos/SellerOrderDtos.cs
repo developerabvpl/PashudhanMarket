@@ -28,7 +28,10 @@ public sealed record SellerOrderSummaryDto(
     string City,
     DateTime PlacedAtUtc);
 
-/// <summary>A seller's part of one order in full: what to pack and where it goes.</summary>
+/// <summary>
+/// A seller's part of one order in full: what to pack and where it goes. ReturnCondition is null
+/// until a part that came back undelivered has been inspected.
+/// </summary>
 public sealed record SellerOrderDto(
     Guid OrderId,
     string OrderNumber,
@@ -41,4 +44,5 @@ public sealed record SellerOrderDto(
     DateTime PlacedAtUtc,
     DeliveryAddressDto DeliveryAddress,
     IReadOnlyList<OrderLineDto> Lines,
-    string? CancellationReason);
+    string? CancellationReason,
+    string? ReturnCondition);

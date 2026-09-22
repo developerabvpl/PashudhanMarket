@@ -36,6 +36,19 @@ public sealed record OrderPartCancelledDomainEvent(
     string Currency) : DomainEvent;
 
 /// <summary>
+/// A seller's part came back undelivered (RTO) and is with the seller again. <see cref="RefundDue"/>
+/// is the part's subtotal if the order was paid online, otherwise zero - cash on delivery collected
+/// nothing.
+/// </summary>
+public sealed record OrderPartReturnedDomainEvent(
+    Guid OrderId,
+    string Number,
+    Guid PartId,
+    Guid SellerId,
+    decimal RefundDue,
+    string Currency) : DomainEvent;
+
+/// <summary>
 /// Nothing in the order is coming any more: the buyer or staff cancelled it, or an online payment
 /// never arrived. Each part cancelled along the way also raised <see cref="OrderPartCancelledDomainEvent"/>.
 /// </summary>

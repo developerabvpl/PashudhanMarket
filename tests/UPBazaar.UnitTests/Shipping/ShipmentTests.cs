@@ -11,7 +11,9 @@ public sealed class ShipmentTests
     [InlineData("In Transit", ShipmentStatus.InTransit)]
     [InlineData("OUT FOR DELIVERY", ShipmentStatus.InTransit)]
     [InlineData(" delivered ", ShipmentStatus.Delivered)]
-    [InlineData("RTO INITIATED", ShipmentStatus.Returned)]
+    [InlineData("RTO INITIATED", ShipmentStatus.ReturnInTransit)]
+    [InlineData("RTO IN TRANSIT", ShipmentStatus.ReturnInTransit)]
+    [InlineData("RTO DELIVERED", ShipmentStatus.Returned)]
     [InlineData("CANCELED", ShipmentStatus.Cancelled)]
     public void Courier_wording_maps_to_a_shipment_status(string raw, ShipmentStatus expected) =>
         CourierStatus.Map(raw).ShouldBe(expected);
@@ -43,6 +45,29 @@ public sealed class ShipmentTests
 
         shipment.ApplyCourierStatus("DELIVERED", ShipmentStatus.Delivered, Now).ShouldBeFalse();
         shipment.Status.ShouldBe(ShipmentStatus.Returned);
+    }
+
+    [Fact]
+    public void A_return_runs_from_in_transit_to_returned_and_never_turns_into_a_delivery()
+    {
+        var shipment = Booked();
+        shipment.ApplyCourierStatus("IN TRANSIT", ShipmentStatus.InTransit, Now);
+
+        shipment.ApplyCourierStatus("RTO INITIATED", ShipmentStatus.ReturnInTransit, Now).ShouldBeTrue();
+        shipment.ApplyCourierStatus("DELIVERED", ShipmentStatus.Delivered, Now).ShouldBeFalse();
+        shipment.ApplyCourierStatus("RTO DELIVERED", ShipmentStatus.Returned, Now).ShouldBeTrue();
+
+        shipment.Status.ShouldBe(ShipmentStatus.Returned);
+    }
+
+    [Fact]
+    public void A_delivered_shipment_is_not_turned_round_by_a_late_rto()
+    {
+        var shipment = Booked();
+        shipment.ApplyCourierStatus("DELIVERED", ShipmentStatus.Delivered, Now);
+
+        shipment.ApplyCourierStatus("RTO INITIATED", ShipmentStatus.ReturnInTransit, Now).ShouldBeFalse();
+        shipment.Status.ShouldBe(ShipmentStatus.Delivered);
     }
 
     [Fact]

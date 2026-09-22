@@ -16,10 +16,13 @@ public enum ShipmentStatus
 
     Delivered = 3,
 
-    /// <summary>Could not be delivered and is on its way back to, or back with, the seller.</summary>
+    /// <summary>Could not be delivered, and is back with the seller.</summary>
     Returned = 4,
 
     Cancelled = 5,
+
+    /// <summary>Could not be delivered, and the courier is taking it back to the seller (RTO).</summary>
+    ReturnInTransit = 6,
 }
 
 /// <summary>
@@ -98,7 +101,7 @@ public sealed class Shipment : AggregateRoot, IAuditable
     public string? ModifiedBy { get; set; }
 
     /// <summary>Still one the courier could act on, as opposed to finished or called off.</summary>
-    public bool IsLive => Status is not (ShipmentStatus.Cancelled or ShipmentStatus.Returned);
+    public bool IsLive => Status is not (ShipmentStatus.Cancelled or ShipmentStatus.Returned or ShipmentStatus.Delivered);
 
     /// <summary>Booked but not yet collected, so the carrier can still cancel it.</summary>
     public bool CanCancel => Status is ShipmentStatus.Booking or ShipmentStatus.PickupRequested;
@@ -160,13 +163,14 @@ public sealed class Shipment : AggregateRoot, IAuditable
 
     /// <summary>
     /// Applies a courier update and says whether the shipment moved. Updates only ever move a
-    /// shipment forward, so a late "in transit" after "delivered" is recorded but changes nothing.
+    /// shipment forward along one of its two roads - to the buyer, or back to the seller - so a late
+    /// "in transit" after "delivered" is recorded but changes nothing.
     /// </summary>
     public bool ApplyCourierStatus(string rawStatus, ShipmentStatus? mapped, DateTime now)
     {
         _events.Add(ShipmentEvent.Create(rawStatus, now));
 
-        if (mapped is not { } next || !IsLive || next <= Status)
+        if (mapped is not { } next || !CanMove(Status, next))
         {
             return false;
         }
@@ -177,6 +181,21 @@ public sealed class Shipment : AggregateRoot, IAuditable
     }
 
     public void Cancel() => Status = ShipmentStatus.Cancelled;
+
+    /// <summary>
+    /// Where a shipment may go from where it is. Not an ordering of the enum: delivery and return
+    /// are alternative endings, and a parcel on its way back can still be reported "returned"
+    /// without first being reported "in transit".
+    /// </summary>
+    private static bool CanMove(ShipmentStatus from, ShipmentStatus to) => (from, to) switch
+    {
+        (ShipmentStatus.Booking or ShipmentStatus.PickupRequested, ShipmentStatus.Cancelled) => true,
+        (ShipmentStatus.Booking or ShipmentStatus.PickupRequested, ShipmentStatus.InTransit) => true,
+        (ShipmentStatus.Booking or ShipmentStatus.PickupRequested or ShipmentStatus.InTransit,
+            ShipmentStatus.Delivered or ShipmentStatus.ReturnInTransit or ShipmentStatus.Returned) => true,
+        (ShipmentStatus.ReturnInTransit, ShipmentStatus.Returned) => true,
+        _ => false,
+    };
 }
 
 /// <summary>One courier update, as the courier worded it.</summary>
@@ -259,7 +278,8 @@ public static class CourierStatus
         {
             "DELIVERED" => ShipmentStatus.Delivered,
             "CANCELED" or "CANCELLED" => ShipmentStatus.Cancelled,
-            _ when status.StartsWith("RTO", StringComparison.Ordinal) => ShipmentStatus.Returned,
+            "RTO DELIVERED" => ShipmentStatus.Returned,
+            _ when status.StartsWith("RTO", StringComparison.Ordinal) => ShipmentStatus.ReturnInTransit,
             _ when InTransit.Contains(status) => ShipmentStatus.InTransit,
             _ => null,
         };

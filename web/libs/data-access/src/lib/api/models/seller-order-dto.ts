@@ -14,6 +14,7 @@ export interface SellerOrderDto {
   partId: string;
   paymentMethod: string;
   placedAtUtc: string;
+  returnCondition: (string | null);
   status: string;
   subtotal: number;
 }

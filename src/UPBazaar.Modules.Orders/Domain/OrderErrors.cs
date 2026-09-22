@@ -54,6 +54,14 @@ public static class OrderErrors
         "orders.part.invalid_transition",
         "That part of the order cannot move to this status from where it is.");
 
+    public static readonly Error NotInTransit = Error.Conflict(
+        "orders.part.not_in_transit",
+        "Only a part that has left the seller can be returned.");
+
+    public static readonly Error NotAwaitingInspection = Error.Conflict(
+        "orders.part.not_awaiting_inspection",
+        "Only a returned parcel not yet inspected can be inspected.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "orders.concurrent_change",
         "The order was changed by someone else at the same time. Reload it and try again.");

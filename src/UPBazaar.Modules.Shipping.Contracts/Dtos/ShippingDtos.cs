@@ -21,7 +21,7 @@ public sealed record ParcelSuggestionDto(ParcelDto? Parcel, IReadOnlyList<string
 /// <param name="OrderNumber">That order's number.</param>
 /// <param name="OrderPartId">The seller's part being shipped.</param>
 /// <param name="SellerId">Whose goods.</param>
-/// <param name="Status">Booking, PickupRequested, InTransit, Delivered, Returned or Cancelled.</param>
+/// <param name="Status">Booking, PickupRequested, InTransit, Delivered, ReturnInTransit, Returned or Cancelled.</param>
 /// <param name="Carrier">Shiprocket, or Fake in development.</param>
 /// <param name="PickupLocation">The pickup location's name as registered with the carrier.</param>
 /// <param name="Parcel">What was booked.</param>

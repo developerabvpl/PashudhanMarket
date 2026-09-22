@@ -19,6 +19,8 @@ const TONES: Readonly<Record<string, string>> = {
   Delivered: 'bg-success/15 text-ink',
   Completed: 'bg-success/15 text-ink',
   Cancelled: 'bg-surface-sunken text-ink-muted',
+  Returning: 'bg-warning/15 text-ink',
+  Returned: 'bg-surface-sunken text-ink-muted',
 };
 
 const NEUTRAL = 'bg-surface-sunken text-ink';

@@ -53,6 +53,34 @@ public sealed class SellerOrdersController(IDispatcher dispatcher, ICurrentUser 
     public Task<ActionResult<SellerOrderDto>> Get(Guid orderId, CancellationToken cancellationToken) =>
         AsSeller(seller => dispatcher.QueryAsync(new GetSellerOrderQuery(seller, orderId), cancellationToken));
 
+    /// <summary>Records what the seller found in a returned parcel.</summary>
+    [HttpPost("{orderId:guid}/parts/{partId:guid}/return-inspection")]
+    [EndpointSummary("Inspect my returned parcel")]
+    [EndpointDescription(
+        "For a part the courier brought back undelivered: Good puts its stock back on sale, Damaged does not. Once per parcel.")]
+    [ProducesResponseType<SellerOrderDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public Task<ActionResult<SellerOrderDto>> InspectReturn(
+        Guid orderId,
+        Guid partId,
+        InspectReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsSeller<SellerOrderDto>(async seller =>
+        {
+            var inspected = await dispatcher.SendAsync(
+                new InspectReturnCommand(orderId, partId, seller, request.Condition, request.Note), cancellationToken);
+
+            return inspected.IsFailure
+                ? Result.Failure<SellerOrderDto>(inspected.Error)
+                : await dispatcher.QueryAsync(new GetSellerOrderQuery(seller, orderId), cancellationToken);
+        });
+    }
+
     private async Task<ActionResult<T>> AsSeller<T>(Func<Guid, Task<Result<T>>> action)
     {
         var seller = Guid.TryParse(currentUser.UserId, out var user)
@@ -67,5 +95,9 @@ public sealed class SellerOrdersController(IDispatcher dispatcher, ICurrentUser 
 
 /// <param name="Page">1-based page number. Defaults to 1.</param>
 /// <param name="PageSize">Items per page, 1 to 100. Defaults to 25.</param>
-/// <param name="Status">Confirmed, Packed, Shipped, Delivered or Cancelled.</param>
+/// <param name="Status">Confirmed, Packed, Shipped, Delivered, Cancelled, Returning or Returned.</param>
 public sealed record SellerOrdersRequest(int? Page, int? PageSize, string? Status);
+
+/// <param name="Condition">Good (restock it) or Damaged (do not).</param>
+/// <param name="Note">What was wrong, if anything.</param>
+public sealed record InspectReturnRequest(string Condition, string? Note);

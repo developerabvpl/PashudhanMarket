@@ -12,47 +12,48 @@ using UPBazaar.SharedKernel.Results;
 namespace UPBazaar.Modules.Payments.Application;
 
 /// <summary>
-/// Records the refund owed when part of a paid order is cancelled.
-///
-/// Orders works out the amount - the part's subtotal if the order was paid online, else zero - and
-/// this finds the payment it comes out of. The outbox may deliver the event more than once; the
-/// payment ignores a part it has already recorded. An exception here is left to propagate so the
-/// outbox retries, because a refund that silently fails to be recorded is money nobody returns.
+/// Records the refund owed out of an order's payment when one of its parts will not reach the
+/// buyer - cancelled, or sent back undelivered. Orders works out the amount; this finds the
+/// payment it comes out of. The outbox may deliver an event more than once, and the payment
+/// ignores a part it has already recorded. An exception is left to propagate so the outbox
+/// retries, because a refund that silently fails to be recorded is money nobody returns.
 /// </summary>
-internal sealed partial class OrderPartCancelledHandler(
+internal sealed partial class PartRefundRecorder(
     UPBazaarDbContext dbContext,
     IClock clock,
-    ILogger<OrderPartCancelledHandler> logger) : IDomainEventHandler<OrderPartCancelledDomainEvent>
+    ILogger<PartRefundRecorder> logger)
 {
-    public async Task HandleAsync(OrderPartCancelledDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task RecordAsync(
+        Guid orderId,
+        string orderNumber,
+        Guid partId,
+        decimal refundDue,
+        string reason,
+        CancellationToken cancellationToken)
     {
-        if (domainEvent.RefundDue <= 0)
+        if (refundDue <= 0)
         {
             return;
         }
 
         var payment = await dbContext.Set<Payment>()
             .Include(p => p.Refunds)
-            .Where(p => p.OrderId == domainEvent.OrderId && p.Status == PaymentStatus.Paid)
+            .Where(p => p.OrderId == orderId && p.Status == PaymentStatus.Paid)
             .OrderByDescending(p => p.PaidAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (payment is null)
         {
-            LogNoPayment(logger, domainEvent.Number, domainEvent.RefundDue);
+            LogNoPayment(logger, orderNumber, refundDue);
 
             return;
         }
 
-        var recorded = payment.RecordPartRefundDue(
-            domainEvent.PartId,
-            domainEvent.RefundDue,
-            "Part of the order was cancelled.",
-            clock.UtcNow);
+        var recorded = payment.RecordPartRefundDue(partId, refundDue, reason, clock.UtcNow);
 
         if (recorded.IsFailure)
         {
-            LogRefundRefused(logger, domainEvent.Number, recorded.Error.Code);
+            LogRefundRefused(logger, orderNumber, recorded.Error.Code);
 
             return;
         }
@@ -65,6 +66,26 @@ internal sealed partial class OrderPartCancelledHandler(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Refund for order {Number} was not recorded: {ErrorCode}")]
     private static partial void LogRefundRefused(ILogger logger, string number, string errorCode);
+}
+
+/// <summary>A part of a paid order was cancelled: its share is owed back.</summary>
+internal sealed class OrderPartCancelledHandler(PartRefundRecorder refunds)
+    : IDomainEventHandler<OrderPartCancelledDomainEvent>
+{
+    public Task HandleAsync(OrderPartCancelledDomainEvent e, CancellationToken cancellationToken) =>
+        refunds.RecordAsync(e.OrderId, e.Number, e.PartId, e.RefundDue, "Part of the order was cancelled.", cancellationToken);
+}
+
+/// <summary>
+/// A part of a paid order came back undelivered and is with the seller again. Recorded only now,
+/// not when the courier first turned round, because an RTO can still be reversed on the way.
+/// </summary>
+internal sealed class OrderPartReturnedHandler(PartRefundRecorder refunds)
+    : IDomainEventHandler<OrderPartReturnedDomainEvent>
+{
+    public Task HandleAsync(OrderPartReturnedDomainEvent e, CancellationToken cancellationToken) =>
+        refunds.RecordAsync(
+            e.OrderId, e.Number, e.PartId, e.RefundDue, "The parcel could not be delivered and went back to the seller.", cancellationToken);
 }
 
 /// <summary>
