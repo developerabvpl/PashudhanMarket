@@ -5,6 +5,14 @@ namespace UPBazaar.Modules.Catalog.Domain;
 /// <summary>Every failure this module can return.</summary>
 public static class CatalogErrors
 {
+    public static readonly Error NotADraft = Error.Conflict(
+        "catalog.product.not_a_draft",
+        "Only a draft can be edited or submitted for review. Ask a moderator to change a live listing.");
+
+    public static readonly Error NotInReview = Error.Conflict(
+        "catalog.product.not_in_review",
+        "This listing is not waiting for review.");
+
     public static readonly Error ProductNotFound = Error.NotFound(
         "catalog.product.not_found",
         "The product does not exist.");

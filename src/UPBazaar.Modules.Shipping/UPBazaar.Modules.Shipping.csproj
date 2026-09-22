@@ -15,6 +15,7 @@
     <ProjectReference Include="..\UPBazaar.SharedKernel\UPBazaar.SharedKernel.csproj" />
     <ProjectReference Include="..\UPBazaar.Infrastructure\UPBazaar.Infrastructure.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Shipping.Contracts\UPBazaar.Modules.Shipping.Contracts.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Sellers.Contracts\UPBazaar.Modules.Sellers.Contracts.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Orders.Contracts\UPBazaar.Modules.Orders.Contracts.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Catalog.Contracts\UPBazaar.Modules.Catalog.Contracts.csproj" />
   </ItemGroup>

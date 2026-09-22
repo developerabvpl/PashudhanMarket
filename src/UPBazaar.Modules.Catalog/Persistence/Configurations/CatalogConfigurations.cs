@@ -56,6 +56,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.Description).HasMaxLength(4000);
         builder.Property(x => x.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.ReviewNote).HasMaxLength(1000);
 
         // Centimetres to one decimal place, which is as fine as any courier measures.
         builder.Property(x => x.LengthCm).HasPrecision(6, 1);

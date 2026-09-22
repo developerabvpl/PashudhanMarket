@@ -182,12 +182,33 @@ public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerB
     [HttpPost("products/{productId:guid}/publish")]
     [Authorize(CatalogPermissions.ProductsWrite)]
     [EndpointSummary("Publish a product")]
-    [EndpointDescription("Makes a draft visible to shoppers. Publishing an active product changes nothing.")]
+    [EndpointDescription(
+        "Makes a draft, or a seller's listing in review, visible to shoppers. Publishing an active "
+        + "product changes nothing.")]
     [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductDto>> PublishProduct(Guid productId, CancellationToken cancellationToken) =>
         (await dispatcher.SendAsync(new PublishProductCommand(productId), cancellationToken)).ToActionResult();
+
+    /// <summary>Sends a seller's listing back for changes.</summary>
+    [HttpPost("products/{productId:guid}/send-back")]
+    [Authorize(CatalogPermissions.ProductsWrite)]
+    [EndpointSummary("Send a listing back")]
+    [EndpointDescription("Returns a listing InReview to its seller as a Draft, with a note saying what to fix.")]
+    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ProductDto>> SendBack(
+        Guid productId,
+        SendBackRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.SendAsync(new SendProductBackCommand(productId, request.Note), cancellationToken)).ToActionResult();
+    }
 
     /// <summary>Archives a product.</summary>
     [HttpDelete("products/{productId:guid}")]
@@ -274,6 +295,9 @@ public sealed record UpdateProductRequest(
     decimal Price,
     Guid CategoryId);
 
+
+/// <param name="Note">What the seller should fix, shown to them.</param>
+public sealed record SendBackRequest(string Note);
 
 /// <param name="WeightGrams">Packed weight of one unit, 1 to 50000 grams.</param>
 /// <param name="LengthCm">Box length, up to 200 cm.</param>

@@ -16,6 +16,7 @@ export interface ProductDto {
   package: (null | ProductPackageDto);
   price: number;
   reservedQuantity: number;
+  reviewNote: (string | null);
   sellerId: string;
   sku: string;
   slug: string;

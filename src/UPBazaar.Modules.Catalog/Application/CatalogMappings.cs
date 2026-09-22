@@ -35,7 +35,8 @@ internal static class CatalogMappings
         stock.ReservedQuantity,
         product.CreatedAtUtc,
         product.ModifiedAtUtc,
-        product.ToPackageDto());
+        product.ToPackageDto(),
+        product.ReviewNote);
 
     /// <summary>The product's parcel, or null while its seller has not measured it.</summary>
     public static ProductPackageDto? ToPackageDto(this Product product) =>

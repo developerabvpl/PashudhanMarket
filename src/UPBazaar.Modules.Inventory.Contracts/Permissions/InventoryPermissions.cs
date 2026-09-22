@@ -21,11 +21,15 @@ public static class InventoryPermissions
     /// </summary>
     public const string AdjustmentsApprove = "inventory.adjustments.approve";
 
+    /// <summary>A seller recording how many of their own products they have.</summary>
+    public const string OwnStockWrite = "inventory.stock.own.write";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         StockRead,
         StockWrite,
         AdjustmentsApprove,
+        OwnStockWrite,
     ];
 }

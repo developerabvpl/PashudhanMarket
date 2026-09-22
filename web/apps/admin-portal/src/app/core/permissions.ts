@@ -28,3 +28,14 @@ export const ShippingPermissions = {
   ShipmentsRead: 'shipping.shipments.read',
   ShipmentsWrite: 'shipping.shipments.write',
 } as const;
+
+/** Permission names the seller review screens depend on. */
+export const SellersPermissions = {
+  Read: 'sellers.read',
+  KycApprove: 'sellers.kyc.approve',
+} as const;
+
+/** Permission names the listing review screen depends on. */
+export const CatalogPermissions = {
+  ProductsWrite: 'catalog.products.write',
+} as const;

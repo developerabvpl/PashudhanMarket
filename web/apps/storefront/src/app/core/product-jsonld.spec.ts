@@ -18,6 +18,7 @@ const baseProduct: ProductDto = {
   createdAtUtc: '2026-03-14T10:00:00Z',
   modifiedAtUtc: null,
   package: null,
+  reviewNote: null,
 };
 
 const url = 'https://upbazaar.example/products/a1';

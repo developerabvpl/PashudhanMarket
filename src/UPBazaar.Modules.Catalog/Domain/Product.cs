@@ -15,6 +15,9 @@ public enum ProductStatus
 
     /// <summary>Withdrawn for good. Kept because orders reference it.</summary>
     Archived = 2,
+
+    /// <summary>A seller's draft waiting for a moderator to publish it or send it back. Invisible to shoppers.</summary>
+    InReview = 3,
 }
 
 /// <summary>
@@ -72,6 +75,9 @@ public sealed class Product : AggregateRoot, IAuditable
 
     /// <summary>Packed height in centimetres.</summary>
     public decimal? HeightCm { get; private set; }
+
+    /// <summary>Why a moderator sent the listing back, while it is back in Draft; cleared on publishing.</summary>
+    public string? ReviewNote { get; private set; }
 
     public DateTime CreatedAtUtc { get; set; }
 
@@ -172,6 +178,57 @@ public sealed class Product : AggregateRoot, IAuditable
         HeightCm = all ? heightCm : null;
     }
 
+    /// <summary>A seller asks for their draft to be published. Only a draft can be submitted.</summary>
+    public Result SubmitForReview()
+    {
+        if (Status != ProductStatus.Draft)
+        {
+            return Result.Failure(CatalogErrors.NotADraft);
+        }
+
+        Status = ProductStatus.InReview;
+
+        return Result.Success();
+    }
+
+    /// <summary>A moderator sends a listing back to its seller as a draft, saying why.</summary>
+    public Result SendBack(string note)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(note);
+
+        if (Status != ProductStatus.InReview)
+        {
+            return Result.Failure(CatalogErrors.NotInReview);
+        }
+
+        Status = ProductStatus.Draft;
+        ReviewNote = note.Trim();
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Changes only the price - what a seller may still do to a live listing without a new review,
+    /// since a price is operational rather than a claim about the product. Buyers with it in their
+    /// cart see the change flagged, exactly as when staff re-price it.
+    /// </summary>
+    public Result Reprice(decimal price)
+    {
+        if (Status == ProductStatus.Archived)
+        {
+            return Result.Failure(CatalogErrors.ProductArchived);
+        }
+
+        if (price != Price && Status == ProductStatus.Active)
+        {
+            Raise(new ProductPriceChangedDomainEvent(PublicId, Price, price, Currency));
+        }
+
+        Price = price;
+
+        return Result.Success();
+    }
+
     /// <summary>Makes the listing visible. Publishing an active listing is a no-op.</summary>
     public Result Publish()
     {
@@ -184,6 +241,7 @@ public sealed class Product : AggregateRoot, IAuditable
         }
 
         Status = ProductStatus.Active;
+        ReviewNote = null;
         Raise(new ProductPublishedDomainEvent(PublicId, SellerId, Sku));
 
         return Result.Success();

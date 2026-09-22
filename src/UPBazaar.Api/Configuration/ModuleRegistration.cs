@@ -40,7 +40,7 @@ public static class ModuleRegistration
 
         return services
             .AddIdentityModule(configuration)
-            .AddSellersModule()
+            .AddSellersModule(configuration)
             .AddCatalogModule(configuration)
             .AddInventoryModule()
             .AddCartModule()

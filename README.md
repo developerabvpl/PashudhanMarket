@@ -277,14 +277,40 @@ dotnet user-secrets --project src/UPBazaar.Api set "Shipping:Shiprocket:WebhookT
 Without them, Development and the tests use a fake courier; any other environment turns courier
 booking off, and staff move parts along by hand with `/api/v1/admin/orders/.../status`.
 
+Sellers sign up themselves. A seller creates an account in the seller portal and applies with
+shop, address and KYC details (PAN, optional GSTIN checked against it, bank account and IFSC).
+Staff with `sellers.kyc.approve` approve or reject from the admin portal's Sellers page; a
+rejected applicant sees the note and can resubmit. Approval grants the owner the SellerOwner role,
+which the seller portal picks up by refreshing the session. One account runs one shop. A seller's
+public id is the seller id products, orders and shipments already carry, and every seller-facing
+endpoint (`/api/v1/seller/...`) finds the seller from the caller's token through
+`ISellerDirectory`, so no request can name another seller's shop.
+
+An approved seller can:
+
+- create listings as drafts and submit them for review; a moderator publishes them or sends
+  them back with a note, from the admin portal's Listings to review page;
+- change the price, stock count and package of a live listing without a new review, but not its
+  wording or category, which the moderator approved;
+- work through their own parts of orders and pack and book couriers for them;
+- set their own Shiprocket pickup location.
+
+The sample catalogue's seller (`22222222-...`) is seeded in development as "UP Gaushala
+Collective", approved and without an owner; staff link one with
+`POST /api/v1/admin/sellers/{id}/owner`.
+
 Deliberately not built yet:
 
+- **Bank account numbers are stored in plain text.** Like the TOTP secrets, they should be
+  encrypted at rest before real payouts run. The API only ever returns the last four digits.
+- **The seller portal was not tried in a browser past its sign-in page**, since that needs a
+  password account; the whole seller flow is covered by the integration tests.
 - **The real Shiprocket client is untested against Shiprocket.** It follows Shiprocket's
   published API. Before going live, book one test consignment and point the tracking webhook at
   the API through a tunnel.
 - **The existing catalogue has no packages.** None of the 70 products has a weight or box size,
-  so until they are measured every parcel is entered by hand at packing. There is no screen for
-  product packages yet; set them through the API.
+  so until they are measured every parcel is entered by hand at packing. The sample seller can set
+  them in the seller portal once staff link an owner to it.
 - **Returns stop at the record.** A shipment that comes back (RTO) is marked Returned, but
   nothing restocks it or refunds the buyer yet.
 - **The real Razorpay client is untested against Razorpay.** It follows Razorpay's published
@@ -293,8 +319,6 @@ Deliberately not built yet:
 - **Refunds are manual.** Payments records what is owed; the money goes back through the
   Razorpay dashboard. Automatic refunds through Razorpay's API can replace that step without the
   refund record changing.
-- **Sellers cannot see their orders.** Parts are indexed by seller, but the Sellers module does
-  not yet link a signed-in account to a seller id, so fulfilment is staff-only for now.
 - **Delivery is free.** `ShippingFee` is always zero until Shipping prices a delivery.
 
 - **Tokens are signed with a symmetric key.** Fine for one API; a second service verifying

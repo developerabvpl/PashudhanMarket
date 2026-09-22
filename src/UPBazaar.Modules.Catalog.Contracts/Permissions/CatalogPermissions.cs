@@ -21,11 +21,15 @@ public static class CatalogPermissions
     /// <summary>Create and rename categories.</summary>
     public const string CategoriesWrite = "catalog.categories.write";
 
+    /// <summary>A seller creating and editing their own listings, which a moderator then publishes.</summary>
+    public const string OwnProductsWrite = "catalog.products.own.write";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         ProductsRead,
         ProductsWrite,
         CategoriesWrite,
+        OwnProductsWrite,
     ];
 }

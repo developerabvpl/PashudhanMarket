@@ -16,10 +16,14 @@ public static class ShippingPermissions
     /// <summary>Book couriers for packed parcels and manage pickup locations.</summary>
     public const string ShipmentsWrite = "shipping.shipments.write";
 
+    /// <summary>A seller packing and booking couriers for their own parts, and setting their pickup location.</summary>
+    public const string OwnShipmentsWrite = "shipping.shipments.own.write";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         ShipmentsRead,
         ShipmentsWrite,
+        OwnShipmentsWrite,
     ];
 }

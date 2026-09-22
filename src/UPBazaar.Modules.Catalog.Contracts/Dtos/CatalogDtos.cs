@@ -29,7 +29,8 @@ public sealed record ProductDto(
     int ReservedQuantity,
     DateTime CreatedAtUtc,
     DateTime? ModifiedAtUtc,
-    ProductPackageDto? Package);
+    ProductPackageDto? Package,
+    string? ReviewNote);
 
 /// <summary>How one unit of a product ships, as packed. Couriers price on these.</summary>
 /// <param name="WeightGrams">Packed weight in grams.</param>

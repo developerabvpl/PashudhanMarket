@@ -61,6 +61,7 @@ public static class IdentityModuleExtensions
         services.AddScoped<LoginAuditWriter>();
         services.AddScoped<IdentitySeeder>();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddScoped<IUserRoles, UserRoles>();
 
         return services;
     }

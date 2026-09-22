@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Catalog.Services;
 using UPBazaar.Modules.Identity.Services;
+using UPBazaar.Modules.Sellers.Services;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -56,5 +57,8 @@ public static class SeedSetup
 
         await scope.ServiceProvider.GetRequiredService<CatalogSeeder>()
             .SeedAsync(app.Environment.ContentRootPath);
+
+        // The sellers the sample catalogue's products belong to, so every product has a real one.
+        await scope.ServiceProvider.GetRequiredService<SellersSeeder>().SeedAsync();
     }
 }

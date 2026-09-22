@@ -85,6 +85,10 @@ import { AuthService } from '../auth.service';
           <a class="mt-4 block text-center text-sm" routerLink="/forgot-password">
             {{ 'auth.forgotPassword' | transloco }}
           </a>
+
+          @if (registerUrl(); as url) {
+          <a class="mt-2 block text-center text-sm" [routerLink]="url">{{ 'auth.noAccount' | transloco }}</a>
+          }
         </mat-card-content>
       </mat-card>
     </section>
@@ -101,6 +105,12 @@ export class PortalSignInPage {
 
   /** Where to land after a successful sign-in, when there is no return URL. */
   readonly defaultReturnUrl = input('/');
+
+  /**
+   * Where to create an account, for a portal anyone may join - the seller portal, where a new
+   * seller signs up and then applies. Unset for the admin portal, whose accounts staff create.
+   */
+  readonly registerUrl = input<string | null>(null);
 
   protected readonly busy = signal(false);
   protected readonly formError = signal<string | null>(null);

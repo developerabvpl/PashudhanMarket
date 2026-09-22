@@ -33,7 +33,7 @@ internal sealed class ListProductsQueryValidator : AbstractValidator<ListProduct
         RuleFor(x => x.Search).MaximumLength(256);
         RuleFor(x => x.Status)
             .Must(s => s is null || Enum.TryParse<ProductStatus>(s, ignoreCase: true, out _))
-            .WithMessage("Status must be Draft, Active or Archived.");
+            .WithMessage("Status must be Draft, InReview, Active or Archived.");
     }
 }
 

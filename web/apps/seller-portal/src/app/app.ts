@@ -1,23 +1,23 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
+import { AuthService, CurrentUserStore } from '@upbazaar/auth';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
-import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
+import { SellerAccess } from './core/seller-access';
 
 @Component({
   selector: 'upb-root',
   imports: [
     RouterOutlet,
     RouterLink,
+    RouterLinkActive,
     TranslocoPipe,
     LanguageSwitcher,
     ToastHost,
-    HasPermissionDirective,
     MatToolbarModule,
     MatButtonModule,
     MatMenuModule,
@@ -34,14 +34,18 @@ import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
 
     @if (signedIn()) {
     <mat-toolbar color="primary">
-      <a class="font-semibold" routerLink="/products">{{ 'app.sellerPortal' | transloco }}</a>
+      <a class="font-semibold" routerLink="/orders">{{ 'app.sellerPortal' | transloco }}</a>
 
       <span class="flex-1"></span>
 
-      <!-- Hidden rather than disabled: an affordance the API would reject is just noise. -->
-      <a *hasPermission="productsWrite" mat-button routerLink="/products">
-        {{ 'seller.newProduct' | transloco }}
-      </a>
+      <!-- A seller not yet approved has only their application to look at. -->
+      @if (canSell()) {
+      <a mat-button routerLink="/orders" routerLinkActive="!bg-white/10">{{ 'sellerPortal.ordersTitle' | transloco }}</a>
+      <a mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
+      <a mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
+      } @else {
+      <a mat-button routerLink="/apply">{{ 'sellerPortal.applyTitle' | transloco }}</a>
+      }
 
       <upb-language-switcher />
 
@@ -67,21 +71,23 @@ import { CATALOG_PRODUCTS_WRITE } from './features/products/products.routes';
 export class App {
   private readonly auth = inject(AuthService);
   private readonly currentUser = inject(CurrentUserStore);
+  private readonly access = inject(SellerAccess);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
-  protected readonly productsWrite = CATALOG_PRODUCTS_WRITE;
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;
+  protected readonly canSell = this.access.canSell;
 
   constructor() {
     // Restores the header for someone returning with a stored session, without waiting for a
     // guarded route to run.
-    void this.currentUser.ensureLoaded();
+    void this.currentUser.ensureLoaded().then((user) => (user ? this.access.load() : null));
   }
 
   protected async signOut(): Promise<void> {
     await this.auth.logout();
+    this.access.clear();
 
     this.toast.info('auth.signedOut');
 

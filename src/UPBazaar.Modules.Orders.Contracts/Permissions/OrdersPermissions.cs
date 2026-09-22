@@ -30,6 +30,9 @@ public static class OrdersPermissions
     /// </summary>
     public const string Cancel = "orders.cancel";
 
+    /// <summary>A seller seeing their own parts of orders: what to pack and where it goes.</summary>
+    public const string SellerRead = "orders.seller.read";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
@@ -38,5 +41,6 @@ public static class OrdersPermissions
         Read,
         Write,
         Cancel,
+        SellerRead,
     ];
 }

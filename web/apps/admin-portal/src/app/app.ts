@@ -6,7 +6,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
-import { IdentityPermissions, OrderingPermissions, PaymentsPermissions, ShippingPermissions } from './core/permissions';
+import {
+  CatalogPermissions,
+  IdentityPermissions,
+  OrderingPermissions,
+  PaymentsPermissions,
+  SellersPermissions,
+  ShippingPermissions,
+} from './core/permissions';
 
 @Component({
   selector: 'upb-root',
@@ -52,6 +59,12 @@ import { IdentityPermissions, OrderingPermissions, PaymentsPermissions, Shipping
       <a *hasPermission="shipmentsRead" mat-button routerLink="/shipping">
         {{ 'nav.shipments' | transloco }}
       </a>
+      <a *hasPermission="sellersRead" mat-button routerLink="/sellers">
+        {{ 'nav.sellers' | transloco }}
+      </a>
+      <a *hasPermission="productsWrite" mat-button routerLink="/catalog/review">
+        {{ 'nav.listingReview' | transloco }}
+      </a>
 
       <upb-language-switcher />
 
@@ -84,6 +97,8 @@ export class App {
   protected readonly ordersRead = OrderingPermissions.Read;
   protected readonly paymentsRead = PaymentsPermissions.Read;
   protected readonly shipmentsRead = ShippingPermissions.ShipmentsRead;
+  protected readonly sellersRead = SellersPermissions.Read;
+  protected readonly productsWrite = CatalogPermissions.ProductsWrite;
 
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;
