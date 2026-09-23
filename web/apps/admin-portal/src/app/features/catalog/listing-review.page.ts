@@ -1,16 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
+  AdminProductSummaryDto,
   Api,
   ProductDto,
-  ProductSummaryDto,
+  apiV1AdminCatalogProductsGet,
   apiV1AdminCatalogProductsProductIdPublishPost,
   apiV1AdminCatalogProductsProductIdSendBackPost,
-  apiV1CatalogProductsGet,
   catalogGetProduct,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
@@ -20,10 +21,12 @@ import { InrCurrencyPipe } from '@upbazaar/util';
  * Sellers' listings waiting to go live. A moderator reads each one and either publishes it or
  * sends it back as a draft with a note - the note is what the seller sees, so it should say what
  * to fix, not just that something is wrong.
+ *
+ * Oldest first, so the seller who has waited longest is answered first.
  */
 @Component({
   selector: 'upb-listing-review-page',
-  imports: [TranslocoPipe, InrCurrencyPipe, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-6xl px-4 py-8">
@@ -40,6 +43,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
                 [class.bg-surface-sunken]="selected()?.id === product.id" (click)="open(product.id)">
                 <p class="font-medium text-ink">{{ product.name }}</p>
                 <p class="text-sm text-ink-muted"><span class="font-mono text-xs">{{ product.sku }}</span> · {{ product.price | inr }}</p>
+                <p class="text-xs text-ink-muted">{{ product.sellerName ?? ('catalogAdmin.unknownSeller' | transloco) }}</p>
               </button>
             </li>
             } @empty {
@@ -56,7 +60,10 @@ import { InrCurrencyPipe } from '@upbazaar/util';
             @if (p.brand) { · {{ p.brand }} }
           </p>
           <p class="whitespace-pre-line text-ink">{{ p.description ?? ('listingReview.noDescription' | transloco) }}</p>
-          <p class="text-xs text-ink-muted">{{ 'listingReview.seller' | transloco }} <span class="font-mono">{{ p.sellerId }}</span></p>
+          <p class="text-xs text-ink-muted">
+            {{ 'listingReview.seller' | transloco }}: {{ selectedSellerName() ?? p.sellerId }}
+            · <a [routerLink]="['/catalog/products', p.id]">{{ 'listingReview.openListing' | transloco }}</a>
+          </p>
 
           <div class="space-y-3 border-t border-border pt-4">
             <button mat-flat-button color="primary" type="button" [disabled]="busy()" (click)="publish(p)">
@@ -77,9 +84,14 @@ import { InrCurrencyPipe } from '@upbazaar/util';
   `,
 })
 export class ListingReviewPage {
-  protected readonly queue = signal<readonly ProductSummaryDto[]>([]);
+  protected readonly queue = signal<readonly AdminProductSummaryDto[]>([]);
   protected readonly selected = signal<ProductDto | null>(null);
   protected readonly note = signal('');
+
+  /** The queue row already carries the shop name; the full product only has the id. */
+  protected readonly selectedSellerName = computed(
+    () => this.queue().find((row) => row.id === this.selected()?.id)?.sellerName ?? null
+  );
   protected readonly loading = signal(false);
   protected readonly busy = signal(false);
 
@@ -136,7 +148,7 @@ export class ListingReviewPage {
     this.loading.set(true);
 
     try {
-      this.queue.set((await this.api.invoke(apiV1CatalogProductsGet, { Status: 'InReview', PageSize: 100 })).items);
+      this.queue.set((await this.api.invoke(apiV1AdminCatalogProductsGet, { Status: 'InReview', OldestFirst: true, PageSize: 100 })).items);
     } catch {
       // Reported by the interceptor.
     } finally {

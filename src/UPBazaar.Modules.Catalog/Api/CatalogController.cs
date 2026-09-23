@@ -7,6 +7,8 @@ using UPBazaar.Modules.Catalog.Application.Categories;
 using UPBazaar.Modules.Catalog.Application.Products;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Contracts.Permissions;
+using UPBazaar.Modules.Sellers.Contracts;
+using UPBazaar.Modules.Sellers.Contracts.Dtos;
 using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
@@ -90,13 +92,51 @@ public sealed record ListProductsRequest(
     string? Status,
     Guid? SellerId);
 
-/// <summary>Changes to the catalogue. Staff only until seller self-service exists.</summary>
+/// <summary>The catalogue as staff run it. Sellers change their own listings through /seller/catalog.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/admin/catalog")]
 [Produces("application/json")]
-public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerBase
+public sealed class AdminCatalogController(IDispatcher dispatcher, ISellerDirectory sellers) : ControllerBase
 {
+    /// <summary>Lists products for staff.</summary>
+    [HttpGet("products")]
+    [Authorize(CatalogPermissions.ProductsRead)]
+    [EndpointSummary("List products for staff")]
+    [EndpointDescription(
+        "Returns a page of products in any status, with seller and category names, most recently "
+        + "changed first. Set oldestFirst to work a queue, e.g. status=InReview&oldestFirst=true.")]
+    [ProducesResponseType<PagedList<AdminProductSummaryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedList<AdminProductSummaryDto>>> ListProducts(
+        [FromQuery] AdminProductListRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var query = new ListAdminProductsQuery(
+            request.Page ?? 1,
+            request.PageSize ?? 25,
+            request.Search,
+            request.CategoryId,
+            request.Status,
+            request.SellerId,
+            request.OldestFirst ?? false);
+
+        return (await dispatcher.QueryAsync(query, cancellationToken)).ToActionResult();
+    }
+
+    /// <summary>Lists the sellers staff may list products for.</summary>
+    [HttpGet("sellers")]
+    [Authorize(CatalogPermissions.ProductsWrite)]
+    [EndpointSummary("List sellers to list for")]
+    [EndpointDescription(
+        "Every approved seller by shop name, for choosing who sells a product staff create. Needs "
+        + "no seller permission: it carries names only.")]
+    [ProducesResponseType<IReadOnlyList<SellerNameDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<SellerNameDto>>> ListSellers(CancellationToken cancellationToken) =>
+        Ok(await sellers.ListApprovedAsync(cancellationToken));
+
     /// <summary>Creates a draft product.</summary>
     [HttpPost("products")]
     [Authorize(CatalogPermissions.ProductsWrite)]
@@ -260,7 +300,36 @@ public sealed class AdminCatalogController(IDispatcher dispatcher) : ControllerB
                 new UpdateCategoryCommand(categoryId, request.Name, request.ParentId), cancellationToken))
             .ToActionResult();
     }
+
+    /// <summary>Deletes an empty category.</summary>
+    [HttpDelete("categories/{categoryId:guid}")]
+    [Authorize(CatalogPermissions.CategoriesWrite)]
+    [EndpointSummary("Delete a category")]
+    [EndpointDescription(
+        "Deletes a category that has no products, archived ones included, and no sub-categories. "
+        + "Otherwise answers 409: move them elsewhere first.")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> DeleteCategory(Guid categoryId, CancellationToken cancellationToken) =>
+        (await dispatcher.SendAsync(new DeleteCategoryCommand(categoryId), cancellationToken)).ToActionResult();
 }
+
+/// <param name="Page">1-based page number. Defaults to 1.</param>
+/// <param name="PageSize">Items per page, 1 to 100. Defaults to 25.</param>
+/// <param name="Search">Matches name, SKU, brand and category name.</param>
+/// <param name="CategoryId">A category; a top-level one includes its children.</param>
+/// <param name="Status">Draft, InReview, Active or Archived. All when omitted.</param>
+/// <param name="SellerId">Only this seller's listings.</param>
+/// <param name="OldestFirst">Least recently changed first, for working a queue. Defaults to false.</param>
+public sealed record AdminProductListRequest(
+    int? Page,
+    int? PageSize,
+    string? Search,
+    Guid? CategoryId,
+    string? Status,
+    Guid? SellerId,
+    bool? OldestFirst);
 
 /// <param name="Sku">Unique stock-keeping unit. Letters, digits and hyphens; stored upper-case.</param>
 /// <param name="Name">Listing title.</param>

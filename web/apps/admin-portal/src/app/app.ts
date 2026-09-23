@@ -62,9 +62,20 @@ import {
       <a *hasPermission="sellersRead" mat-button routerLink="/sellers">
         {{ 'nav.sellers' | transloco }}
       </a>
-      <a *hasPermission="productsWrite" mat-button routerLink="/catalog/review">
-        {{ 'nav.listingReview' | transloco }}
-      </a>
+      <ng-container *hasPermission="productsRead">
+        <button mat-button type="button" [matMenuTriggerFor]="catalogMenu">
+          {{ 'nav.catalogue' | transloco }}
+        </button>
+        <mat-menu #catalogMenu="matMenu">
+          <a mat-menu-item routerLink="/catalog/products">{{ 'nav.products' | transloco }}</a>
+          <a *hasPermission="categoriesWrite" mat-menu-item routerLink="/catalog/categories">
+            {{ 'nav.categories' | transloco }}
+          </a>
+          <a *hasPermission="productsWrite" mat-menu-item routerLink="/catalog/review">
+            {{ 'nav.listingReview' | transloco }}
+          </a>
+        </mat-menu>
+      </ng-container>
 
       <upb-language-switcher />
 
@@ -98,7 +109,9 @@ export class App {
   protected readonly paymentsRead = PaymentsPermissions.Read;
   protected readonly shipmentsRead = ShippingPermissions.ShipmentsRead;
   protected readonly sellersRead = SellersPermissions.Read;
+  protected readonly productsRead = CatalogPermissions.ProductsRead;
   protected readonly productsWrite = CatalogPermissions.ProductsWrite;
+  protected readonly categoriesWrite = CatalogPermissions.CategoriesWrite;
 
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;

@@ -55,32 +55,7 @@ internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInv
             products = products.Where(p => p.Status == status);
         }
 
-        if (query.CategoryId is { } categoryId)
-        {
-            // A top-level category lists its children's products too, which is what a shopper
-            // clicking "Soap" on the rail expects. One level deep is all the tree has today.
-            products = products.Where(p =>
-                p.Category.PublicId == categoryId
-                || (p.Category.Parent != null && p.Category.Parent.PublicId == categoryId));
-        }
-
-        if (query.SellerId is { } sellerId)
-        {
-            products = products.Where(p => p.SellerId == sellerId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-
-            // Brand and category are searchable because "Goseva" and "diya" are how a shopper
-            // thinks about this catalogue, and neither appears in the product's SKU.
-            products = products.Where(p =>
-                p.Name.Contains(search)
-                || p.Sku.Contains(search)
-                || (p.Brand != null && p.Brand.Contains(search))
-                || p.Category.Name.Contains(search));
-        }
+        products = ProductFilters.Apply(products, query.Search, query.CategoryId, query.SellerId);
 
         var totalCount = await products.CountAsync(cancellationToken);
 
@@ -134,6 +109,49 @@ internal sealed class GetProductQueryHandler(UPBazaarDbContext dbContext, IInven
         }
 
         return await product.ToDtoAsync(inventory, cancellationToken);
+    }
+}
+
+/// <summary>
+/// Search, category and seller filters, shared by the shop's list and the staff one so a search
+/// finds the same products on both.
+/// </summary>
+internal static class ProductFilters
+{
+    public static IQueryable<Product> Apply(
+        IQueryable<Product> products,
+        string? search,
+        Guid? categoryId,
+        Guid? sellerId)
+    {
+        if (categoryId is { } category)
+        {
+            // A top-level category lists its children's products too, which is what a shopper
+            // clicking "Soap" on the rail expects. One level deep is all the tree has today.
+            products = products.Where(p =>
+                p.Category.PublicId == category
+                || (p.Category.Parent != null && p.Category.Parent.PublicId == category));
+        }
+
+        if (sellerId is { } seller)
+        {
+            products = products.Where(p => p.SellerId == seller);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+
+            // Brand and category are searchable because "Goseva" and "diya" are how a shopper
+            // thinks about this catalogue, and neither appears in the product's SKU.
+            products = products.Where(p =>
+                p.Name.Contains(term)
+                || p.Sku.Contains(term)
+                || (p.Brand != null && p.Brand.Contains(term))
+                || p.Category.Name.Contains(term));
+        }
+
+        return products;
     }
 }
 

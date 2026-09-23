@@ -58,3 +58,8 @@ public sealed record SellerSummaryDto(
     string ContactMobile,
     Guid? OwnerUserId,
     DateTime SubmittedAtUtc);
+
+/// <summary>A seller by name only, for pickers and for labelling other modules' records.</summary>
+/// <param name="Id">Public id: the seller id products, orders and shipments carry.</param>
+/// <param name="ShopName">Name buyers see.</param>
+public sealed record SellerNameDto(Guid Id, string ShopName);

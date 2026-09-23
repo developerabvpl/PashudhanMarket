@@ -36,7 +36,15 @@ export const SellersPermissions = {
   KycApprove: 'sellers.kyc.approve',
 } as const;
 
-/** Permission names the listing review screen depends on. */
+/** Permission names the catalogue screens depend on. */
 export const CatalogPermissions = {
+  ProductsRead: 'catalog.products.read',
   ProductsWrite: 'catalog.products.write',
+  CategoriesWrite: 'catalog.categories.write',
+} as const;
+
+/** Permission names the stock panel on the product screen depends on. */
+export const InventoryPermissions = {
+  StockRead: 'inventory.stock.read',
+  StockWrite: 'inventory.stock.write',
 } as const;

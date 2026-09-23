@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Sellers.Contracts.Dtos;
 using UPBazaar.SharedKernel.Results;
 
 namespace UPBazaar.Modules.Sellers.Contracts;
@@ -14,6 +15,17 @@ public interface ISellerDirectory
     /// after it was rejected: an unapproved seller may not act as one anywhere.
     /// </summary>
     Task<Guid?> GetApprovedSellerIdAsync(Guid ownerUserId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Shop names for the given sellers, whatever their status, so staff screens can show a name
+    /// where a record only carries an id. Ids that match no seller are left out of the result.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, string>> GetShopNamesAsync(
+        IReadOnlyCollection<Guid> sellerIds,
+        CancellationToken cancellationToken);
+
+    /// <summary>Every approved seller, by shop name: the ones staff may list products for.</summary>
+    Task<IReadOnlyList<SellerNameDto>> ListApprovedAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>The one failure every seller-facing endpoint shares.</summary>

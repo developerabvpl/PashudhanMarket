@@ -33,6 +33,10 @@ public static class CatalogErrors
         "catalog.category.cycle",
         "A category cannot sit underneath itself.");
 
+    public static readonly Error CategoryInUse = Error.Conflict(
+        "catalog.category.in_use",
+        "This category still has products or sub-categories. Move them elsewhere first.");
+
     public static readonly Error ProductArchived = Error.Conflict(
         "catalog.product.archived",
         "An archived product cannot be changed. Create a new listing instead.");

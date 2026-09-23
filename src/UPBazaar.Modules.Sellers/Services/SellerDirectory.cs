@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Sellers.Contracts;
+using UPBazaar.Modules.Sellers.Contracts.Dtos;
 using UPBazaar.Modules.Sellers.Domain;
 using UPBazaar.SharedKernel.Abstractions;
 
@@ -21,6 +22,31 @@ internal sealed class SellerDirectory(UPBazaarDbContext dbContext) : ISellerDire
 
         return id;
     }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetShopNamesAsync(
+        IReadOnlyCollection<Guid> sellerIds,
+        CancellationToken cancellationToken)
+    {
+        if (sellerIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var ids = sellerIds.Distinct().ToList();
+
+        return await dbContext.Set<Seller>()
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.PublicId))
+            .ToDictionaryAsync(s => s.PublicId, s => s.ShopName, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SellerNameDto>> ListApprovedAsync(CancellationToken cancellationToken) =>
+        await dbContext.Set<Seller>()
+            .AsNoTracking()
+            .Where(s => s.Status == SellerStatus.Approved)
+            .OrderBy(s => s.ShopName)
+            .Select(s => new SellerNameDto(s.PublicId, s.ShopName))
+            .ToListAsync(cancellationToken);
 }
 
 /// <summary>Sellers to create at start-up, bound from <c>Sellers</c>.</summary>

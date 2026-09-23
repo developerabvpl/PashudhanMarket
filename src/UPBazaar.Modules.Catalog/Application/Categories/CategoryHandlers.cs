@@ -165,3 +165,39 @@ internal sealed class UpdateCategoryCommandHandler(UPBazaarDbContext dbContext)
         return false;
     }
 }
+
+/// <summary>Removes a category nothing is filed under.</summary>
+public sealed record DeleteCategoryCommand(Guid CategoryId) : ICommand;
+
+/// <summary>
+/// Deletes only a category with no products and no sub-categories. Archived products count: they
+/// are kept because orders point at them, and each still needs a shelf. A category in that state
+/// can still be renamed or moved.
+/// </summary>
+internal sealed class DeleteCategoryCommandHandler(UPBazaarDbContext dbContext)
+    : ICommandHandler<DeleteCategoryCommand>
+{
+    public async Task<Result> HandleAsync(DeleteCategoryCommand command, CancellationToken cancellationToken)
+    {
+        var category = await dbContext.Set<Category>()
+            .FirstOrDefaultAsync(c => c.PublicId == command.CategoryId, cancellationToken);
+
+        if (category is null)
+        {
+            return Result.Failure(CatalogErrors.CategoryNotFound);
+        }
+
+        var inUse = await dbContext.Set<Product>().AnyAsync(p => p.CategoryId == category.Id, cancellationToken)
+            || await dbContext.Set<Category>().AnyAsync(c => c.ParentId == category.Id, cancellationToken);
+
+        if (inUse)
+        {
+            return Result.Failure(CatalogErrors.CategoryInUse);
+        }
+
+        dbContext.Set<Category>().Remove(category);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+}

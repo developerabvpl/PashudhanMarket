@@ -21,8 +21,12 @@ export type { CatalogGetProduct$Params as CatalogGetProduct$Params } from './fn/
 export { catalogGetProduct as catalogGetProduct } from './fn/catalog/catalog-get-product';
 export type { ApiV1CatalogCategoriesGet$Params as ApiV1CatalogCategoriesGet$Params } from './fn/catalog/api-v-1-catalog-categories-get';
 export { apiV1CatalogCategoriesGet as apiV1CatalogCategoriesGet } from './fn/catalog/api-v-1-catalog-categories-get';
+export type { ApiV1AdminCatalogProductsGet$Params as ApiV1AdminCatalogProductsGet$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-get';
+export { apiV1AdminCatalogProductsGet as apiV1AdminCatalogProductsGet } from './fn/admin-catalog/api-v-1-admin-catalog-products-get';
 export type { ApiV1AdminCatalogProductsPost$Params as ApiV1AdminCatalogProductsPost$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-post';
 export { apiV1AdminCatalogProductsPost as apiV1AdminCatalogProductsPost } from './fn/admin-catalog/api-v-1-admin-catalog-products-post';
+export type { ApiV1AdminCatalogSellersGet$Params as ApiV1AdminCatalogSellersGet$Params } from './fn/admin-catalog/api-v-1-admin-catalog-sellers-get';
+export { apiV1AdminCatalogSellersGet as apiV1AdminCatalogSellersGet } from './fn/admin-catalog/api-v-1-admin-catalog-sellers-get';
 export type { ApiV1AdminCatalogProductsProductIdPut$Params as ApiV1AdminCatalogProductsProductIdPut$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-put';
 export { apiV1AdminCatalogProductsProductIdPut as apiV1AdminCatalogProductsProductIdPut } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-put';
 export type { ApiV1AdminCatalogProductsProductIdDelete$Params as ApiV1AdminCatalogProductsProductIdDelete$Params } from './fn/admin-catalog/api-v-1-admin-catalog-products-product-id-delete';
@@ -37,6 +41,8 @@ export type { ApiV1AdminCatalogCategoriesPost$Params as ApiV1AdminCatalogCategor
 export { apiV1AdminCatalogCategoriesPost as apiV1AdminCatalogCategoriesPost } from './fn/admin-catalog/api-v-1-admin-catalog-categories-post';
 export type { ApiV1AdminCatalogCategoriesCategoryIdPut$Params as ApiV1AdminCatalogCategoriesCategoryIdPut$Params } from './fn/admin-catalog/api-v-1-admin-catalog-categories-category-id-put';
 export { apiV1AdminCatalogCategoriesCategoryIdPut as apiV1AdminCatalogCategoriesCategoryIdPut } from './fn/admin-catalog/api-v-1-admin-catalog-categories-category-id-put';
+export type { ApiV1AdminCatalogCategoriesCategoryIdDelete$Params as ApiV1AdminCatalogCategoriesCategoryIdDelete$Params } from './fn/admin-catalog/api-v-1-admin-catalog-categories-category-id-delete';
+export { apiV1AdminCatalogCategoriesCategoryIdDelete as apiV1AdminCatalogCategoriesCategoryIdDelete } from './fn/admin-catalog/api-v-1-admin-catalog-categories-category-id-delete';
 export type { ApiV1SellerCatalogProductsGet$Params as ApiV1SellerCatalogProductsGet$Params } from './fn/seller-catalog/api-v-1-seller-catalog-products-get';
 export { apiV1SellerCatalogProductsGet as apiV1SellerCatalogProductsGet } from './fn/seller-catalog/api-v-1-seller-catalog-products-get';
 export type { ApiV1SellerCatalogProductsPost$Params as ApiV1SellerCatalogProductsPost$Params } from './fn/seller-catalog/api-v-1-seller-catalog-products-post';
