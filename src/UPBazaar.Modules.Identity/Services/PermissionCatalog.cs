@@ -5,6 +5,7 @@ using UPBazaar.Modules.Inventory.Contracts.Permissions;
 using UPBazaar.Modules.Orders.Contracts.Permissions;
 using UPBazaar.Modules.Payments.Contracts.Permissions;
 using UPBazaar.Modules.Sellers.Contracts.Permissions;
+using UPBazaar.Modules.Settlements.Contracts.Permissions;
 using UPBazaar.Modules.Shipping.Contracts.Permissions;
 
 namespace UPBazaar.Modules.Identity.Services;
@@ -36,6 +37,7 @@ public static class PermissionCatalog
         .. PaymentsPermissions.All,
         .. ShippingPermissions.All,
         .. SellersPermissions.All,
+        .. SettlementsPermissions.All,
         PlatformJobsView,
     ];
 
@@ -76,6 +78,9 @@ public static class PermissionCatalog
                 SellersPermissions.Read,
                 SellersPermissions.Write,
                 SellersPermissions.KycApprove,
+                SettlementsPermissions.Read,
+                SettlementsPermissions.PayoutsApprove,
+                SettlementsPermissions.PolicyWrite,
                 PlatformJobsView,
             ]),
 
@@ -102,6 +107,9 @@ public static class PermissionCatalog
                 OrdersPermissions.Read,
                 PaymentsPermissions.Read,
                 PaymentsPermissions.RefundsWrite,
+                SettlementsPermissions.Read,
+                SettlementsPermissions.PayoutsApprove,
+                SettlementsPermissions.PolicyWrite,
             ]),
 
         new(
@@ -142,6 +150,7 @@ public static class PermissionCatalog
                 InventoryPermissions.OwnStockWrite,
                 OrdersPermissions.SellerRead,
                 ShippingPermissions.OwnShipmentsWrite,
+                SettlementsPermissions.OwnRead,
             ]),
 
         new(

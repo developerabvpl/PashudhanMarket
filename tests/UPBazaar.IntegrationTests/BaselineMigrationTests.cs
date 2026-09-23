@@ -58,10 +58,11 @@ public sealed class BaselineMigrationTests(ApiFixture fixture)
             """);
 
         // Every module declares a schema, but a schema only materialises once the module has
-        // an entity. Identity, Sellers, Catalog, Inventory, Cart, Orders, Payments and Shipping do; the other eight are still
-        // skeletons. This assertion is the tripwire for a module accidentally creating tables
-        // outside its own schema.
-        schemas.Order(StringComparer.Ordinal).ShouldBe(["cart", "catalog", "identity", "inventory", "orders", "payments", "sellers", "shared", "shipping"]);
+        // an entity. Identity, Sellers, Catalog, Inventory, Cart, Orders, Payments, Shipping and
+        // Settlements do; the other seven are still skeletons. This assertion is the tripwire for
+        // a module accidentally creating tables outside its own schema.
+        schemas.Order(StringComparer.Ordinal).ShouldBe(
+            ["cart", "catalog", "identity", "inventory", "orders", "payments", "sellers", "settlements", "shared", "shipping"]);
     }
 
     [DatabaseFact]

@@ -29,6 +29,11 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/products/products.routes').then((m) => m.productRoutes),
   },
   {
+    path: 'earnings',
+    canActivate: [authGuard, approvedSellerGuard],
+    loadComponent: () => import('./features/earnings/earnings.page').then((m) => m.EarningsPage),
+  },
+  {
     path: 'settings',
     canActivate: [authGuard, approvedSellerGuard],
     loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage),

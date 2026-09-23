@@ -283,6 +283,9 @@ public sealed class Order : AggregateRoot, IAuditable
         if (target == OrderPartStatus.Delivered)
         {
             part.RecordDelivered(now, returnWindow);
+
+            Raise(new OrderPartDeliveredDomainEvent(
+                PublicId, Number, part.PublicId, part.SellerId, part.Subtotal, Currency, now, now + returnWindow));
         }
 
         CompleteIfDone();
@@ -378,6 +381,8 @@ public sealed class Order : AggregateRoot, IAuditable
         }
 
         part.ReturnRequest.Decide(approve: false, note, decidedBy, now);
+
+        Raise(new OrderPartReturnRejectedDomainEvent(PublicId, Number, part.PublicId, part.SellerId));
 
         return Result.Success();
     }

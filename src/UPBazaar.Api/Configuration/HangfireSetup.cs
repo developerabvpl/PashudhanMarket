@@ -6,6 +6,7 @@ using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Modules.Inventory.Services;
 using UPBazaar.Modules.Orders.Services;
 using UPBazaar.Modules.Payments.Services;
+using UPBazaar.Modules.Settlements.Application;
 
 namespace UPBazaar.Api.Configuration;
 
@@ -129,6 +130,12 @@ public static class HangfireSetup
             PaymentSettlementJob.RecurringJobId,
             job => job.SettleAsync(CancellationToken.None),
             "*/1 * * * *");
+
+        // Weekly: sellers are paid what became payable over the week, in one transfer each.
+        recurringJobs?.AddOrUpdate<PayoutRunJob>(
+            PayoutRunJob.RecurringJobId,
+            job => job.RunAsync(CancellationToken.None),
+            PayoutRunJob.Schedule);
 
         return app;
     }

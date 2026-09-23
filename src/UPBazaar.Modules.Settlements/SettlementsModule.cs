@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Settlements.Application;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Settlements;
@@ -26,12 +27,19 @@ public sealed class SettlementsModule : IModule
 /// <summary>Registration entry point for the Settlements module.</summary>
 public static class SettlementsModuleExtensions
 {
-    /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
-    /// </summary>
+    /// <summary>Registers the module's schema, validators, handlers and the weekly payout run.</summary>
     /// <param name="services">Service collection.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddSettlementsModule(this IServiceCollection services) =>
+    public static IServiceCollection AddSettlementsModule(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddModule<SettlementsModule>();
+
+        services.AddScoped<PolicyReader>();
+        services.AddScoped<PayoutRunner>();
+        services.AddScoped<PayoutRunJob>();
+
+        return services;
+    }
 }

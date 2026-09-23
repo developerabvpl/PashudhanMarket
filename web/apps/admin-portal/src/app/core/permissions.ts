@@ -43,6 +43,13 @@ export const CatalogPermissions = {
   CategoriesWrite: 'catalog.categories.write',
 } as const;
 
+/** Permission names the settlement screens depend on. */
+export const SettlementsPermissions = {
+  Read: 'settlements.read',
+  PayoutsApprove: 'settlements.payouts.approve',
+  PolicyWrite: 'settlements.policy.write',
+} as const;
+
 /** Permission names the stock panel on the product screen depends on. */
 export const InventoryPermissions = {
   StockRead: 'inventory.stock.read',

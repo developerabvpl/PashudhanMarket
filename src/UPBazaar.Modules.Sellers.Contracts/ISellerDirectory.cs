@@ -32,6 +32,12 @@ public interface ISellerDirectory
     /// seller inspects what comes back. Null if the id matches no seller.
     /// </summary>
     Task<SellerReturnAddressDto?> GetReturnAddressAsync(Guid sellerId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The bank account a seller's payouts go to, unmasked: a payout records exactly where the
+    /// money was sent. Null if the id matches no seller.
+    /// </summary>
+    Task<SellerPayoutAccountDto?> GetPayoutAccountAsync(Guid sellerId, CancellationToken cancellationToken);
 }
 
 /// <summary>The one failure every seller-facing endpoint shares.</summary>

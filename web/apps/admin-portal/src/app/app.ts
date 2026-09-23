@@ -12,6 +12,7 @@ import {
   OrderingPermissions,
   PaymentsPermissions,
   SellersPermissions,
+  SettlementsPermissions,
   ShippingPermissions,
 } from './core/permissions';
 
@@ -59,6 +60,15 @@ import {
       <a *hasPermission="paymentsRead" mat-button routerLink="/payments">
         {{ 'nav.payments' | transloco }}
       </a>
+      <ng-container *hasPermission="settlementsRead">
+        <button mat-button type="button" [matMenuTriggerFor]="settlementsMenu">
+          {{ 'nav.settlements' | transloco }}
+        </button>
+        <mat-menu #settlementsMenu="matMenu">
+          <a mat-menu-item routerLink="/settlements/payouts">{{ 'nav.payouts' | transloco }}</a>
+          <a mat-menu-item routerLink="/settlements/rates">{{ 'nav.settlementRates' | transloco }}</a>
+        </mat-menu>
+      </ng-container>
       <a *hasPermission="shipmentsRead" mat-button routerLink="/shipping">
         {{ 'nav.shipments' | transloco }}
       </a>
@@ -110,6 +120,7 @@ export class App {
   protected readonly usersRead = IdentityPermissions.UsersRead;
   protected readonly ordersRead = OrderingPermissions.Read;
   protected readonly paymentsRead = PaymentsPermissions.Read;
+  protected readonly settlementsRead = SettlementsPermissions.Read;
   protected readonly shipmentsRead = ShippingPermissions.ShipmentsRead;
   protected readonly sellersRead = SellersPermissions.Read;
   protected readonly productsRead = CatalogPermissions.ProductsRead;

@@ -23,6 +23,7 @@
     <ProjectReference Include="..\UPBazaar.Modules.Payments.Contracts\UPBazaar.Modules.Payments.Contracts.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Shipping.Contracts\UPBazaar.Modules.Shipping.Contracts.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Sellers.Contracts\UPBazaar.Modules.Sellers.Contracts.csproj" />
+    <ProjectReference Include="..\UPBazaar.Modules.Settlements.Contracts\UPBazaar.Modules.Settlements.Contracts.csproj" />
     <ProjectReference Include="..\UPBazaar.Modules.Notifications.Contracts\UPBazaar.Modules.Notifications.Contracts.csproj" />
   </ItemGroup>
 

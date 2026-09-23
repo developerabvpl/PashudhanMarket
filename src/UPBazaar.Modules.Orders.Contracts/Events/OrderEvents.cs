@@ -58,8 +58,30 @@ public sealed record OrderPartReturnedDomainEvent(
     string? RefundUpiId = null) : DomainEvent;
 
 /// <summary>
-/// A buyer asked to return a delivered part. Nothing acts on it yet; it is here for the seller's
-/// notification once Notifications sends them.
+/// A seller's part reached the buyer. Settlements starts the seller's earning from it, payable once
+/// <see cref="ReturnWindowClosesAtUtc"/> has passed with no return open.
+/// </summary>
+/// <param name="OrderId">The order.</param>
+/// <param name="Number">Its number.</param>
+/// <param name="PartId">The part delivered.</param>
+/// <param name="SellerId">Whose goods.</param>
+/// <param name="Subtotal">What the buyer paid for the part's goods.</param>
+/// <param name="Currency">ISO currency code.</param>
+/// <param name="DeliveredAtUtc">When the courier delivered it.</param>
+/// <param name="ReturnWindowClosesAtUtc">The last moment the buyer may ask to return it.</param>
+public sealed record OrderPartDeliveredDomainEvent(
+    Guid OrderId,
+    string Number,
+    Guid PartId,
+    Guid SellerId,
+    decimal Subtotal,
+    string Currency,
+    DateTime DeliveredAtUtc,
+    DateTime ReturnWindowClosesAtUtc) : DomainEvent;
+
+/// <summary>
+/// A buyer asked to return a delivered part. Settlements holds the seller's earning from it until
+/// the request is decided; Notifications will tell the seller, once it sends anything.
 /// </summary>
 public sealed record OrderPartReturnRequestedDomainEvent(
     Guid OrderId,
@@ -69,8 +91,18 @@ public sealed record OrderPartReturnRequestedDomainEvent(
     string Reason) : DomainEvent;
 
 /// <summary>
+/// A buyer's return was refused and the part stays with the buyer. Settlements releases the
+/// seller's earning it was holding.
+/// </summary>
+public sealed record OrderPartReturnRejectedDomainEvent(
+    Guid OrderId,
+    string Number,
+    Guid PartId,
+    Guid SellerId) : DomainEvent;
+
+/// <summary>
 /// A buyer's return was accepted and the part is going back. Shipping books a pickup from the
-/// buyer's address from this.
+/// buyer's address from this; Settlements cancels the seller's earning, since the sale is undone.
 /// </summary>
 public sealed record OrderPartReturnApprovedDomainEvent(
     Guid OrderId,

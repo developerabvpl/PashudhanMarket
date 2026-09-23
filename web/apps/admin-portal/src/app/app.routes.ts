@@ -41,6 +41,11 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.catalogRoutes),
   },
   {
+    path: 'settlements',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/settlements/settlements.routes').then((m) => m.settlementRoutes),
+  },
+  {
     path: 'change-password',
     canActivate: [authGuard],
     component: ChangePasswordPage,

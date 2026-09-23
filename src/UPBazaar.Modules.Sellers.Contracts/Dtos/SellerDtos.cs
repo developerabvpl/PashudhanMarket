@@ -69,3 +69,13 @@ public sealed record SellerNameDto(Guid Id, string ShopName);
 /// <param name="ContactMobile">For the courier.</param>
 /// <param name="Address">The seller's registered business address.</param>
 public sealed record SellerReturnAddressDto(string ShopName, string ContactMobile, SellerAddressDto Address);
+
+/// <summary>
+/// Where a seller's payouts are sent, in full. Only Settlements asks for it, for the finance staff
+/// who make the transfer; everything else sees the account number masked.
+/// </summary>
+/// <param name="ShopName">Name the payout is for.</param>
+/// <param name="AccountHolder">Name on the bank account.</param>
+/// <param name="AccountNumber">The full account number.</param>
+/// <param name="Ifsc">The branch's IFSC.</param>
+public sealed record SellerPayoutAccountDto(string ShopName, string AccountHolder, string AccountNumber, string Ifsc);

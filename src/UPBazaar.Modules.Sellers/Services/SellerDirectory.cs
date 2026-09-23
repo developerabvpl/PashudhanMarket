@@ -57,6 +57,13 @@ internal sealed class SellerDirectory(UPBazaarDbContext dbContext) : ISellerDire
                 s.ContactMobile,
                 new SellerAddressDto(s.AddressLine1, s.AddressLine2, s.City, s.State, s.Pincode)))
             .FirstOrDefaultAsync(cancellationToken);
+
+    public Task<SellerPayoutAccountDto?> GetPayoutAccountAsync(Guid sellerId, CancellationToken cancellationToken) =>
+        dbContext.Set<Seller>()
+            .AsNoTracking()
+            .Where(s => s.PublicId == sellerId)
+            .Select(s => new SellerPayoutAccountDto(s.ShopName, s.BankAccountHolder, s.BankAccountNumber, s.Ifsc))
+            .FirstOrDefaultAsync(cancellationToken);
 }
 
 /// <summary>Sellers to create at start-up, bound from <c>Sellers</c>.</summary>
