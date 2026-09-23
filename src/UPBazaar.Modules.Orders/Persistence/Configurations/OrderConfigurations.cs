@@ -81,6 +81,26 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
 
         builder.Ignore(x => x.Subtotal);
         builder.Ignore(x => x.IsComing);
+        builder.Ignore(x => x.IsBuyerReturn);
+
+        // Stored in the part's own row: a request never exists apart from its part, and the
+        // columns stay null on the great majority of parts that nobody sends back.
+        builder.OwnsOne(x => x.ReturnRequest, request =>
+        {
+            request.Property(r => r.Reason).HasColumnName("ReturnReason")
+                .HasConversion<string>().HasMaxLength(16).IsRequired();
+            request.Property(r => r.Comment).HasColumnName("ReturnComment").HasMaxLength(500);
+            request.Property(r => r.RefundUpiId).HasColumnName("ReturnRefundUpiId").HasMaxLength(64);
+            request.Property(r => r.RequestedAtUtc).HasColumnName("ReturnRequestedAtUtc").IsRequired();
+            request.Property(r => r.Status).HasColumnName("ReturnRequestStatus")
+                .HasConversion<string>().HasMaxLength(16).IsRequired();
+            request.Property(r => r.DecisionNote).HasColumnName("ReturnDecisionNote").HasMaxLength(500);
+            request.Property(r => r.DecidedBy).HasColumnName("ReturnDecidedBy").HasMaxLength(64);
+            request.Property(r => r.DecidedAtUtc).HasColumnName("ReturnDecidedAtUtc");
+
+            // Staff's queue of requests waiting for a decision, oldest first.
+            request.HasIndex(r => new { r.Status, r.RequestedAtUtc });
+        });
 
         builder.HasMany(x => x.Lines)
             .WithOne()

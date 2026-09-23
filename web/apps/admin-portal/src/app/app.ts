@@ -53,6 +53,9 @@ import {
       <a *hasPermission="ordersRead" mat-button routerLink="/orders">
         {{ 'nav.orders' | transloco }}
       </a>
+      <a *hasPermission="ordersRead" mat-button routerLink="/orders/returns">
+        {{ 'nav.returns' | transloco }}
+      </a>
       <a *hasPermission="paymentsRead" mat-button routerLink="/payments">
         {{ 'nav.payments' | transloco }}
       </a>

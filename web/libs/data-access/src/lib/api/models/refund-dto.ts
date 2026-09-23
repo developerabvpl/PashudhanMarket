@@ -8,12 +8,14 @@ export interface RefundDto {
   gatewayPaymentId: (string | null);
   gatewayRefundId: (string | null);
   id: string;
+  method: string;
   orderId: string;
   orderNumber: string;
   orderPartId: (string | null);
-  paymentId: string;
+  paymentId: (string | null);
   reason: string;
   refundedAtUtc: (string | null);
   refundedBy: (string | null);
   status: string;
+  upiId: (string | null);
 }

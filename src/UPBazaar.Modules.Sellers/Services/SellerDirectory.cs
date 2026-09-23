@@ -47,6 +47,16 @@ internal sealed class SellerDirectory(UPBazaarDbContext dbContext) : ISellerDire
             .OrderBy(s => s.ShopName)
             .Select(s => new SellerNameDto(s.PublicId, s.ShopName))
             .ToListAsync(cancellationToken);
+
+    public Task<SellerReturnAddressDto?> GetReturnAddressAsync(Guid sellerId, CancellationToken cancellationToken) =>
+        dbContext.Set<Seller>()
+            .AsNoTracking()
+            .Where(s => s.PublicId == sellerId)
+            .Select(s => new SellerReturnAddressDto(
+                s.ShopName,
+                s.ContactMobile,
+                new SellerAddressDto(s.AddressLine1, s.AddressLine2, s.City, s.State, s.Pincode)))
+            .FirstOrDefaultAsync(cancellationToken);
 }
 
 /// <summary>Sellers to create at start-up, bound from <c>Sellers</c>.</summary>

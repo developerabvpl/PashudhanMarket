@@ -102,9 +102,11 @@ internal sealed class ListRefundsQueryHandler(UPBazaarDbContext dbContext)
         ListRefundsQuery query,
         CancellationToken cancellationToken)
     {
+        // A left join: a UPI refund of cash paid at the door has no payment behind it.
         var refunds =
-            from payment in dbContext.Set<Payment>().AsNoTracking()
-            from refund in payment.Refunds
+            from refund in dbContext.Set<Refund>().AsNoTracking()
+            join p in dbContext.Set<Payment>() on refund.PaymentId equals p.Id into payments
+            from payment in payments.DefaultIfEmpty()
             select new { payment, refund };
 
         var filtered = Enum.TryParse<RefundStatus>(query.Status, ignoreCase: true, out var status);
@@ -125,15 +127,17 @@ internal sealed class ListRefundsQueryHandler(UPBazaarDbContext dbContext)
             .Take(query.PageSize)
             .Select(x => new RefundDto(
                 x.refund.PublicId,
-                x.payment.PublicId,
-                x.payment.OrderId,
-                x.payment.OrderNumber,
+                x.payment != null ? (Guid?)x.payment.PublicId : null,
+                x.refund.OrderId,
+                x.refund.OrderNumber,
                 x.refund.OrderPartId,
                 x.refund.Amount,
-                x.payment.Currency,
+                x.refund.Currency,
                 x.refund.Reason,
                 x.refund.Status.ToString(),
-                x.payment.GatewayPaymentId,
+                x.refund.Method.ToString(),
+                x.refund.UpiId,
+                x.payment != null ? x.payment.GatewayPaymentId : null,
                 x.refund.GatewayRefundId,
                 x.refund.CreatedAtUtc,
                 x.refund.RefundedAtUtc,
@@ -147,17 +151,21 @@ internal sealed class ListRefundsQueryHandler(UPBazaarDbContext dbContext)
 /// <summary>Maps refunds to the DTO staff see.</summary>
 internal static class PaymentMappings
 {
-    public static RefundDto ToDto(this Refund refund, Payment payment) => new(
+    /// <param name="refund">The refund.</param>
+    /// <param name="payment">The payment it reverses; null for a UPI refund.</param>
+    public static RefundDto ToDto(this Refund refund, Payment? payment) => new(
         refund.PublicId,
-        payment.PublicId,
-        payment.OrderId,
-        payment.OrderNumber,
+        payment?.PublicId,
+        refund.OrderId,
+        refund.OrderNumber,
         refund.OrderPartId,
         refund.Amount,
-        payment.Currency,
+        refund.Currency,
         refund.Reason,
         refund.Status.ToString(),
-        payment.GatewayPaymentId,
+        refund.Method.ToString(),
+        refund.UpiId,
+        payment?.GatewayPaymentId,
         refund.GatewayRefundId,
         refund.CreatedAtUtc,
         refund.RefundedAtUtc,

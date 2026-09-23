@@ -116,6 +116,38 @@ public sealed class OrdersController(IDispatcher dispatcher, ICurrentUser curren
             .ToActionResult();
     }
 
+    /// <summary>Asks to return a delivered part of one of the caller's orders.</summary>
+    [HttpPost("{orderId:guid}/parts/{partId:guid}/return")]
+    [Authorize(OrdersPermissions.OwnWrite)]
+    [EndpointSummary("Ask to return a parcel")]
+    [EndpointDescription(
+        "For a delivered part, within its return window (see returnableUntilUtc). The whole parcel "
+        + "goes back. The seller approves or refuses; once approved a courier collects it, and the "
+        + "refund is due when it is back with the seller. A cash-on-delivery order needs a UPI id "
+        + "for the refund. Once per parcel.")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<OrderDto>> RequestReturn(
+        Guid orderId,
+        Guid partId,
+        RequestReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!TryGetBuyer(out var buyerId))
+        {
+            return NotSignedIn<OrderDto>();
+        }
+
+        return (await dispatcher.SendAsync(
+                new RequestReturnCommand(orderId, partId, buyerId, request.Reason, request.Comment, request.RefundUpiId),
+                cancellationToken))
+            .ToActionResult();
+    }
+
     /// <summary>Lists the states and union territories an order can be delivered to.</summary>
     [HttpGet("delivery-states")]
     [AllowAnonymous]
@@ -211,12 +243,58 @@ public sealed class AdminOrdersController(IDispatcher dispatcher) : ControllerBa
             .ToActionResult();
     }
 
+    /// <summary>Lists buyers' return requests.</summary>
+    [HttpGet("returns")]
+    [Authorize(OrdersPermissions.Read)]
+    [EndpointSummary("List return requests")]
+    [EndpointDescription(
+        "Buyers' requests to return delivered parcels, from every seller. Filter to Requested for "
+        + "the ones still waiting for a decision, oldest first.")]
+    [ProducesResponseType<PagedList<ReturnRequestSummaryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedList<ReturnRequestSummaryDto>>> ListReturns(
+        [FromQuery] ReturnRequestsRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.QueryAsync(
+                new ListReturnRequestsQuery(request.Page ?? 1, request.PageSize ?? 25, request.Status, SellerId: null),
+                cancellationToken))
+            .ToActionResult();
+    }
+
+    /// <summary>Accepts or refuses a buyer's return on the seller's behalf.</summary>
+    [HttpPost("{orderId:guid}/parts/{partId:guid}/return-decision")]
+    [Authorize(OrdersPermissions.Write)]
+    [EndpointSummary("Decide a return request")]
+    [EndpointDescription(
+        "For a seller who has not answered, or a dispute. Approving books a courier pickup from the "
+        + "buyer; refusing needs a note, which the buyer sees.")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<OrderDto>> DecideReturn(
+        Guid orderId,
+        Guid partId,
+        DecideReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.SendAsync(
+                new DecideReturnCommand(orderId, partId, SellerId: null, request.Approve, request.Note),
+                cancellationToken))
+            .ToActionResult();
+    }
+
     /// <summary>Records what was found in a returned parcel.</summary>
     [HttpPost("{orderId:guid}/parts/{partId:guid}/return-inspection")]
     [Authorize(OrdersPermissions.Write)]
     [EndpointSummary("Inspect a returned parcel")]
     [EndpointDescription(
-        "For a part the courier brought back undelivered, on the seller's behalf: Good puts its stock back on sale, Damaged does not.")]
+        "For a part that came back, on the seller's behalf: Good puts its stock back on sale, Damaged does not.")]
     [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -276,6 +354,20 @@ public sealed record AdvanceOrderPartRequest(string Status);
 /// <param name="Status">PendingPayment, Confirmed, Completed or Cancelled.</param>
 /// <param name="Number">All or part of an order number.</param>
 public sealed record ListOrdersRequest(int? Page, int? PageSize, string? Status, string? Number);
+
+/// <param name="Reason">Damaged, WrongItem, NotAsDescribed, QualityIssue, NoLongerNeeded or Other.</param>
+/// <param name="Comment">What is wrong, in the buyer's words. Required for Other.</param>
+/// <param name="RefundUpiId">Where to send the refund, such as name@okicici. Required for a cash-on-delivery order.</param>
+public sealed record RequestReturnRequest(string Reason, string? Comment, string? RefundUpiId);
+
+/// <param name="Approve">True to accept and book a pickup; false to refuse.</param>
+/// <param name="Note">Why it is refused, shown to the buyer. Required when refusing.</param>
+public sealed record DecideReturnRequest(bool Approve, string? Note);
+
+/// <param name="Page">1-based page number. Defaults to 1.</param>
+/// <param name="PageSize">Items per page, 1 to 100. Defaults to 25.</param>
+/// <param name="Status">Requested, Approved or Rejected. All when omitted.</param>
+public sealed record ReturnRequestsRequest(int? Page, int? PageSize, string? Status);
 
 /// <summary>Route names, for Location headers.</summary>
 public static class OrdersRoutes

@@ -58,6 +58,20 @@ public sealed class SellerShippingController(
             cancellationToken);
     }
 
+    /// <summary>Books the pickup for a buyer's approved return of the seller's parcel.</summary>
+    [HttpPost("orders/{orderId:guid}/parts/{partId:guid}/return-pickup")]
+    [EndpointSummary("Book my return pickup")]
+    [EndpointDescription("Approving a return books its pickup automatically; this tries again if that failed.")]
+    [ProducesResponseType<ShipmentDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public Task<ActionResult<ShipmentDto>> BookReturnPickup(Guid orderId, Guid partId, CancellationToken cancellationToken) =>
+        ForOwnPart(
+            orderId,
+            partId,
+            seller => dispatcher.SendAsync(new BookReturnPickupCommand(orderId, partId, seller), cancellationToken),
+            cancellationToken);
+
     /// <summary>Lists the seller's shipments for one order.</summary>
     [HttpGet("orders/{orderId:guid}/shipments")]
     [EndpointSummary("My shipments for an order")]
@@ -111,7 +125,7 @@ public sealed class SellerShippingController(
             var part = await orders.GetPartAsync(orderId, partId, cancellationToken);
 
             return part.IsFailure || part.Value.SellerId != seller
-                ? Result.Failure<T>(Error.NotFound("shipping.part.not_found", "That part of the order was not found."))
+                ? Result.Failure<T>(ShippingErrors.PartNotFound)
                 : await action(seller);
         }, cancellationToken);
 

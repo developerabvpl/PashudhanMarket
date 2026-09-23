@@ -13,11 +13,13 @@ import {
   apiV1SellerOrdersOrderIdGet,
   apiV1SellerShippingOrdersOrderIdPartsPartIdPackPost,
   apiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet,
+  apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost,
   apiV1SellerShippingOrdersOrderIdShipmentsGet,
   toApiProblem,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { ReturnDecision } from './return-decision';
 import { ReturnInspection } from './return-inspection';
 
 type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
@@ -31,7 +33,7 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
  */
 @Component({
   selector: 'upb-seller-order-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, MatButtonModule, MatFormFieldModule, MatInputModule, ReturnInspection],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, MatButtonModule, MatFormFieldModule, MatInputModule, ReturnDecision, ReturnInspection],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -43,7 +45,10 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           <h1 class="font-mono text-2xl font-semibold text-ink">{{ o.orderNumber }}</h1>
           <p class="text-sm text-ink-muted">{{ o.placedAtUtc | dateIst: 'datetime' }}</p>
         </div>
-        <span class="rounded-full bg-surface-sunken px-3 py-1 text-sm">{{ 'orders.partStatus.' + o.status | transloco }}</span>
+        <span class="rounded-full bg-surface-sunken px-3 py-1 text-sm">
+          {{ (o.returnRequest?.status === 'Approved' && (o.status === 'Returning' || o.status === 'Returned')
+            ? 'orders.returnStatus.' : 'orders.partStatus.') + o.status | transloco }}
+        </span>
       </header>
 
       <div class="upb-card p-5">
@@ -70,6 +75,34 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           {{ o.deliveryAddress.city }}, {{ o.deliveryAddress.state }} {{ o.deliveryAddress.pincode }}
         </address>
       </div>
+
+      @switch (o.returnRequest?.status) {
+      @case ('Requested') {
+      <upb-return-decision [order]="o" (decided)="load(o.orderId)" />
+      }
+      @case ('Rejected') {
+      <p class="upb-card p-5 text-sm">{{ 'returns.refusedNote' | transloco: { note: o.returnRequest?.decisionNote ?? '' } }}</p>
+      }
+      @case ('Approved') { @if (o.status === 'Returning') {
+      <div class="upb-card space-y-2 p-5 text-sm">
+        <p class="text-ink">{{ 'returns.awaitingPickup' | transloco }}</p>
+        @if (returnShipment(); as r) {
+        <p>
+          {{ r.courierName ?? '—' }} · AWB <span class="font-mono">{{ r.awb ?? '—' }}</span> ·
+          {{ 'shipping.statuses.' + r.status | transloco }}
+        </p>
+        }
+        @if (!returnShipment() || returnShipment()?.status === 'Booking') {
+        @if (returnShipment()?.lastError; as error) {
+        <p class="text-danger">{{ 'returns.pickupFailed' | transloco: { error: error } }}</p>
+        }
+        <button mat-stroked-button type="button" [disabled]="busy()" (click)="bookReturnPickup(o)">
+          {{ 'returns.bookPickup' | transloco }}
+        </button>
+        }
+      </div>
+      } }
+      }
 
       @if (o.status === 'Returned') { @if (o.returnCondition) {
       <p class="upb-card p-5 text-sm">{{ 'returns.inspectedAs.' + o.returnCondition | transloco }}</p>
@@ -133,6 +166,9 @@ export class OrderPage {
 
   protected readonly order = signal<SellerOrderDto | null>(null);
   protected readonly shipment = signal<ShipmentDto | null>(null);
+
+  /** The courier collecting a buyer's return, once booked. */
+  protected readonly returnShipment = signal<ShipmentDto | null>(null);
   protected readonly suggestion = signal<ParcelSuggestionDto | null>(null);
   protected readonly parcel = signal<Record<ParcelField, string>>({ weightGrams: '', lengthCm: '', breadthCm: '', heightCm: '' });
   protected readonly busy = signal(false);
@@ -199,13 +235,34 @@ export class OrderPage {
     }
   }
 
-  private async load(orderId: string): Promise<void> {
+  /** Books the return collection again when booking it on approval did not go through. */
+  protected async bookReturnPickup(order: SellerOrderDto): Promise<void> {
+    this.busy.set(true);
+
+    try {
+      this.returnShipment.set(await this.api.invoke(apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost, {
+        orderId: order.orderId,
+        partId: order.partId,
+      }));
+      this.toast.success('returns.pickupBooked');
+    } catch {
+      // Reported by the interceptor; reloading shows what the booking got stuck on.
+      await this.load(order.orderId);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  protected async load(orderId: string): Promise<void> {
     try {
       const order = await this.api.invoke(apiV1SellerOrdersOrderIdGet, { orderId });
       const shipments = await this.api.invoke(apiV1SellerShippingOrdersOrderIdShipmentsGet, { orderId });
+      const live = (direction: string) =>
+        shipments.find((s) => s.orderPartId === order.partId && s.direction === direction && s.status !== 'Cancelled') ?? null;
 
       this.order.set(order);
-      this.shipment.set(shipments.find((s) => s.orderPartId === order.partId && s.status !== 'Cancelled') ?? null);
+      this.shipment.set(live('Forward'));
+      this.returnShipment.set(live('Return'));
 
       if (this.canPack() && !this.suggestion()) {
         await this.loadSuggestion(order);

@@ -118,6 +118,23 @@ public sealed class AdminShippingController(IDispatcher dispatcher) : Controller
             .ToActionResult();
     }
 
+    /// <summary>Books the pickup for a buyer's approved return.</summary>
+    [HttpPost("orders/{orderId:guid}/parts/{partId:guid}/return-pickup")]
+    [Authorize(ShippingPermissions.ShipmentsWrite)]
+    [EndpointSummary("Book a return pickup")]
+    [EndpointDescription(
+        "Approving a return books its pickup automatically. Use this when that booking failed - "
+        + "the shipment shows why - to try again; it carries on from the step that failed.")]
+    [ProducesResponseType<ShipmentDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ShipmentDto>> BookReturnPickup(
+        Guid orderId,
+        Guid partId,
+        CancellationToken cancellationToken) =>
+        (await dispatcher.SendAsync(new BookReturnPickupCommand(orderId, partId, SellerId: null), cancellationToken))
+        .ToActionResult();
+
     /// <summary>Lists the shipments for one order.</summary>
     [HttpGet("orders/{orderId:guid}/shipments")]
     [Authorize(ShippingPermissions.ShipmentsRead)]

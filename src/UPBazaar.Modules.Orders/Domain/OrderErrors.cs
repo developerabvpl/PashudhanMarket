@@ -62,6 +62,26 @@ public static class OrderErrors
         "orders.part.not_awaiting_inspection",
         "Only a returned parcel not yet inspected can be inspected.");
 
+    public static readonly Error NotDelivered = Error.Conflict(
+        "orders.part.not_delivered",
+        "Only a parcel that has been delivered can be returned.");
+
+    public static readonly Error ReturnWindowClosed = Error.Conflict(
+        "orders.part.return_window_closed",
+        "The time to return this parcel has passed.");
+
+    public static readonly Error ReturnAlreadyRequested = Error.Conflict(
+        "orders.part.return_already_requested",
+        "A return has already been asked for on this parcel.");
+
+    public static readonly Error ReturnNotPending = Error.Conflict(
+        "orders.part.return_not_pending",
+        "There is no return request waiting for a decision on this parcel.");
+
+    public static readonly Error RefundUpiIdRequired = Error.Validation(
+        "orders.part.refund_upi_required",
+        "This order was paid in cash. Give a UPI id to receive the refund.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "orders.concurrent_change",
         "The order was changed by someone else at the same time. Reload it and try again.");

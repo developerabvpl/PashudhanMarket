@@ -37,6 +37,18 @@ public static class ShippingErrors
         "shipping.pickup.not_found",
         "No pickup location is set up for that seller.");
 
+    public static readonly Error PartNotFound = Error.NotFound(
+        "shipping.part.not_found",
+        "That part of the order was not found.");
+
+    public static readonly Error NoApprovedReturn = Error.Conflict(
+        "shipping.return.not_approved",
+        "This parcel has no approved return waiting for a pickup.");
+
+    public static readonly Error NoReturnAddress = Error.Conflict(
+        "shipping.return.no_address",
+        "The seller has no registered address to send the return to.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "shipping.concurrent_change",
         "The shipment was updated at the same time by something else. Try again.");

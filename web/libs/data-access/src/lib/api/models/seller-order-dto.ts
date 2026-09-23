@@ -3,6 +3,7 @@
 
 import { DeliveryAddressDto } from '../models/delivery-address-dto';
 import { OrderLineDto } from '../models/order-line-dto';
+import { ReturnRequestDto } from '../models/return-request-dto';
 export interface SellerOrderDto {
   cancellationReason: (string | null);
   codAmount: number;
@@ -15,6 +16,7 @@ export interface SellerOrderDto {
   paymentMethod: string;
   placedAtUtc: string;
   returnCondition: (string | null);
+  returnRequest: (null | ReturnRequestDto);
   status: string;
   subtotal: number;
 }

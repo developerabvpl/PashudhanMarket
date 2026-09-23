@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Api, OrderDto, apiV1AdminOrdersOrderIdGet, toApiProblem } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
@@ -28,6 +28,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
             required
             class="w-full rounded-control border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
             placeholder="00000000-0000-0000-0000-000000000000"
+            [value]="orderId() ?? ''"
           />
         </label>
         <button
@@ -97,6 +98,9 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
   `,
 })
 export class OrderLookup {
+  /** ?orderId=..., bound by the router: other screens, such as the returns queue, link straight to an order. */
+  readonly orderId = input<string | undefined>(undefined);
+
   private readonly api = inject(Api);
   private readonly lastQueried = signal<string | null>(null);
 
@@ -107,6 +111,13 @@ export class OrderLookup {
 
   /** Every line across the sellers' parts: support reads an order as one list, not per parcel. */
   protected readonly lines = computed(() => this.order()?.parts.flatMap((part) => part.lines) ?? []);
+
+  constructor() {
+    effect(() => {
+      const orderId = this.orderId();
+      untracked(() => void (orderId ? this.load(orderId) : undefined));
+    });
+  }
 
   find(event: Event): void {
     event.preventDefault();

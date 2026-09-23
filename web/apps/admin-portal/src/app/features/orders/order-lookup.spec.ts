@@ -35,6 +35,9 @@ const order: OrderDto = {
       subtotal: 2000,
       cancellationReason: null,
       returnCondition: null,
+      deliveredAtUtc: null,
+      returnableUntilUtc: null,
+      returnRequest: null,
       lines: [
         {
           productId: 'p1',

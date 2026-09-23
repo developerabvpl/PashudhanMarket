@@ -67,7 +67,9 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
             return Result.Success();
         }
 
-        var moved = shipment.ApplyCourierStatus(rawStatus, CourierStatus.Map(rawStatus), clock.UtcNow);
+        var isReturn = shipment.Direction == ShipmentDirection.Return;
+        var mapped = isReturn ? CourierStatus.MapReturn(rawStatus) : CourierStatus.Map(rawStatus);
+        var moved = shipment.ApplyCourierStatus(rawStatus, mapped, clock.UtcNow);
 
         try
         {
@@ -80,12 +82,16 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
             return Result.Failure(ShippingErrors.ConcurrentChange);
         }
 
-        var partStatus = shipment.Status switch
+        // A buyer's return moves its part only on arrival: the part has been Returning since the
+        // return was approved, and a return reaching the seller is the part coming back.
+        var partStatus = (isReturn, shipment.Status) switch
         {
-            ShipmentStatus.InTransit => "Shipped",
-            ShipmentStatus.Delivered => "Delivered",
-            ShipmentStatus.ReturnInTransit => "Returning",
-            ShipmentStatus.Returned => "Returned",
+            (true, ShipmentStatus.Delivered) => "Returned",
+            (true, _) => null,
+            (false, ShipmentStatus.InTransit) => "Shipped",
+            (false, ShipmentStatus.Delivered) => "Delivered",
+            (false, ShipmentStatus.ReturnInTransit) => "Returning",
+            (false, ShipmentStatus.Returned) => "Returned",
             _ => null,
         };
 

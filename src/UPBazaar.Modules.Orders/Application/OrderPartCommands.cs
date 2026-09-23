@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Domain;
@@ -32,7 +33,9 @@ internal sealed class AdvanceOrderPartCommandValidator : AbstractValidator<Advan
 internal sealed class AdvanceOrderPartCommandHandler(
     UPBazaarDbContext dbContext,
     OrderTransaction transaction,
-    OrderReader reader) : ICommandHandler<AdvanceOrderPartCommand, OrderDto>
+    OrderReader reader,
+    IClock clock,
+    IOptions<OrdersModuleOptions> options) : ICommandHandler<AdvanceOrderPartCommand, OrderDto>
 {
     public Task<Result<OrderDto>> HandleAsync(AdvanceOrderPartCommand command, CancellationToken cancellationToken) =>
         transaction.RunAsync(async ct =>
@@ -46,7 +49,9 @@ internal sealed class AdvanceOrderPartCommandHandler(
 
             var moved = order.AdvancePart(
                 command.PartId,
-                Enum.Parse<OrderPartStatus>(command.Status, ignoreCase: true));
+                Enum.Parse<OrderPartStatus>(command.Status, ignoreCase: true),
+                clock.UtcNow,
+                options.Value.ReturnWindow);
 
             if (moved.IsFailure)
             {

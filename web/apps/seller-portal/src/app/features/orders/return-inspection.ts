@@ -7,7 +7,8 @@ import { Api, SellerOrderDto, apiV1SellerOrdersOrderIdPartsPartIdReturnInspectio
 import { ToastService } from '@upbazaar/ui';
 
 /**
- * What the seller found in a parcel the courier brought back. Good puts the stock back on sale;
+ * What the seller found in a parcel that came back - undelivered, or returned by the buyer. Good
+ * puts the stock back on sale;
  * Damaged does not. Asked once: the answer cannot be changed afterwards, since changing it would
  * put goods on sale, or take them off, a second time.
  */
@@ -17,7 +18,9 @@ import { ToastService } from '@upbazaar/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="rounded-card border border-warning/50 bg-warning/10 p-5">
-      <h2 class="font-medium text-ink">{{ 'returns.inspectTitle' | transloco }}</h2>
+      <h2 class="font-medium text-ink">
+        {{ (order().returnRequest?.status === 'Approved' ? 'returns.inspectTitleBuyerReturn' : 'returns.inspectTitle') | transloco }}
+      </h2>
       <p class="mt-1 text-sm text-ink">{{ 'returns.inspectBody' | transloco }}</p>
       <mat-form-field class="mt-3 w-full" subscriptSizing="dynamic">
         <mat-label>{{ 'returns.note' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>

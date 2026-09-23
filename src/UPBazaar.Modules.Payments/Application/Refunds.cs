@@ -61,6 +61,29 @@ internal sealed partial class PartRefundRecorder(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Records a refund of cash paid at the door, owed to the UPI id the buyer gave. There is no
+    /// payment to hang it on, so it stands alone; a part already refunded is left as it is.
+    /// </summary>
+    public async Task RecordUpiAsync(
+        Guid orderId,
+        string orderNumber,
+        Guid partId,
+        decimal refundDue,
+        string currency,
+        string upiId,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        if (refundDue <= 0 || await dbContext.Set<Refund>().AnyAsync(r => r.OrderPartId == partId, cancellationToken))
+        {
+            return;
+        }
+
+        dbContext.Set<Refund>().Add(Refund.ToUpi(orderId, orderNumber, partId, refundDue, currency, upiId, reason, clock.UtcNow));
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Order {Number} owes a refund of {Amount} but has no paid payment")]
     private static partial void LogNoPayment(ILogger logger, string number, decimal amount);
 
@@ -77,20 +100,34 @@ internal sealed class OrderPartCancelledHandler(PartRefundRecorder refunds)
 }
 
 /// <summary>
-/// A part of a paid order came back undelivered and is with the seller again. Recorded only now,
-/// not when the courier first turned round, because an RTO can still be reversed on the way.
+/// A part is back with the seller: undelivered, or returned by the buyer. Recorded only now, not
+/// when it started back, because a return can still go wrong on the way. A buyer's return of a
+/// cash-on-delivery order is owed to the UPI id they gave; everything else comes out of the
+/// online payment.
 /// </summary>
 internal sealed class OrderPartReturnedHandler(PartRefundRecorder refunds)
     : IDomainEventHandler<OrderPartReturnedDomainEvent>
 {
-    public Task HandleAsync(OrderPartReturnedDomainEvent e, CancellationToken cancellationToken) =>
-        refunds.RecordAsync(
-            e.OrderId, e.Number, e.PartId, e.RefundDue, "The parcel could not be delivered and went back to the seller.", cancellationToken);
+    public Task HandleAsync(OrderPartReturnedDomainEvent e, CancellationToken cancellationToken)
+    {
+        if (!e.RequestedByBuyer)
+        {
+            return refunds.RecordAsync(
+                e.OrderId, e.Number, e.PartId, e.RefundDue, "The parcel could not be delivered and went back to the seller.", cancellationToken);
+        }
+
+        const string reason = "The buyer returned the parcel and it is back with the seller.";
+
+        return e.RefundUpiId is { } upiId
+            ? refunds.RecordUpiAsync(e.OrderId, e.Number, e.PartId, e.RefundDue, e.Currency, upiId, reason, cancellationToken)
+            : refunds.RecordAsync(e.OrderId, e.Number, e.PartId, e.RefundDue, reason, cancellationToken);
+    }
 }
 
 /// <summary>
-/// Staff record that they have refunded the money in the Razorpay dashboard, with the refund id
-/// Razorpay gave them, so the record shows where the money went.
+/// Staff record that they have refunded the money - in the Razorpay dashboard, or by UPI - with
+/// the refund id Razorpay gave them or the UPI transaction reference, so the record shows where
+/// the money went.
 /// </summary>
 public sealed record MarkRefundedCommand(Guid RefundId, string GatewayRefundId) : ICommand<RefundDto>;
 
@@ -108,16 +145,16 @@ internal sealed class MarkRefundedCommandHandler(UPBazaarDbContext dbContext, IC
 {
     public async Task<Result<RefundDto>> HandleAsync(MarkRefundedCommand command, CancellationToken cancellationToken)
     {
-        var payment = await dbContext.Set<Payment>()
-            .Include(p => p.Refunds)
-            .FirstOrDefaultAsync(p => p.Refunds.Any(r => r.PublicId == command.RefundId), cancellationToken);
+        var refund = await dbContext.Set<Refund>().FirstOrDefaultAsync(r => r.PublicId == command.RefundId, cancellationToken);
 
-        var refund = payment?.Refunds.Single(r => r.PublicId == command.RefundId);
-
-        if (payment is null || refund is null)
+        if (refund is null)
         {
             return Result.Failure<RefundDto>(PaymentErrors.RefundNotFound);
         }
+
+        var payment = refund.PaymentId is { } paymentId
+            ? await dbContext.Set<Payment>().AsNoTracking().FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken)
+            : null;
 
         var marked = refund.MarkRefunded(command.GatewayRefundId, currentUser.UserId, clock.UtcNow);
 

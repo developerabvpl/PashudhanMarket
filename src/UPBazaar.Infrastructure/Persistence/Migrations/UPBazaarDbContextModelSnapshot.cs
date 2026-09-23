@@ -1214,6 +1214,9 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
 
@@ -1234,6 +1237,9 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                     b.Property<string>("ReturnNote")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReturnWindowClosesAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("SellerId")
                         .HasColumnType("uniqueidentifier");
@@ -1411,14 +1417,32 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<string>("GatewayRefundId")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<Guid?>("OrderPartId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<long>("PaymentId")
+                    b.Property<long?>("PaymentId")
                         .HasColumnType("bigint");
 
                     b.Property<Guid>("PublicId")
@@ -1441,14 +1465,22 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
+                    b.Property<string>("UpiId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("OrderPartId")
+                        .IsUnique()
+                        .HasFilter("[OrderPartId] IS NOT NULL");
+
+                    b.HasIndex("PaymentId");
 
                     b.HasIndex("PublicId")
                         .IsUnique();
-
-                    b.HasIndex("PaymentId", "OrderPartId")
-                        .IsUnique()
-                        .HasFilter("[OrderPartId] IS NOT NULL");
 
                     b.HasIndex("Status", "CreatedAtUtc");
 
@@ -1681,6 +1713,11 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
                     b.Property<decimal>("HeightCm")
                         .HasPrecision(6, 1)
                         .HasColumnType("decimal(6,1)");
@@ -1754,12 +1791,12 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("OrderNumber");
 
-                    b.HasIndex("OrderPartId")
-                        .IsUnique()
-                        .HasFilter("[Status] <> 'Cancelled'");
-
                     b.HasIndex("PublicId")
                         .IsUnique();
+
+                    b.HasIndex("OrderPartId", "Direction")
+                        .IsUnique()
+                        .HasFilter("[Status] <> 'Cancelled'");
 
                     b.ToTable("Shipments", "shipping");
                 });
@@ -1955,6 +1992,63 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsOne("UPBazaar.Modules.Orders.Domain.ReturnRequest", "ReturnRequest", b1 =>
+                        {
+                            b1.Property<long>("OrderPartId")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Comment")
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)")
+                                .HasColumnName("ReturnComment");
+
+                            b1.Property<DateTime?>("DecidedAtUtc")
+                                .HasColumnType("datetime2")
+                                .HasColumnName("ReturnDecidedAtUtc");
+
+                            b1.Property<string>("DecidedBy")
+                                .HasMaxLength(64)
+                                .HasColumnType("nvarchar(64)")
+                                .HasColumnName("ReturnDecidedBy");
+
+                            b1.Property<string>("DecisionNote")
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)")
+                                .HasColumnName("ReturnDecisionNote");
+
+                            b1.Property<string>("Reason")
+                                .IsRequired()
+                                .HasMaxLength(16)
+                                .HasColumnType("nvarchar(16)")
+                                .HasColumnName("ReturnReason");
+
+                            b1.Property<string>("RefundUpiId")
+                                .HasMaxLength(64)
+                                .HasColumnType("nvarchar(64)")
+                                .HasColumnName("ReturnRefundUpiId");
+
+                            b1.Property<DateTime>("RequestedAtUtc")
+                                .HasColumnType("datetime2")
+                                .HasColumnName("ReturnRequestedAtUtc");
+
+                            b1.Property<string>("Status")
+                                .IsRequired()
+                                .HasMaxLength(16)
+                                .HasColumnType("nvarchar(16)")
+                                .HasColumnName("ReturnRequestStatus");
+
+                            b1.HasKey("OrderPartId");
+
+                            b1.HasIndex("Status", "RequestedAtUtc");
+
+                            b1.ToTable("OrderParts", "orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderPartId");
+                        });
+
+                    b.Navigation("ReturnRequest");
                 });
 
             modelBuilder.Entity("UPBazaar.Modules.Payments.Domain.Refund", b =>
@@ -1962,8 +2056,7 @@ namespace UPBazaar.Infrastructure.Persistence.Migrations
                     b.HasOne("UPBazaar.Modules.Payments.Domain.Payment", null)
                         .WithMany("Refunds")
                         .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("UPBazaar.Modules.Shipping.Domain.ShipmentEvent", b =>

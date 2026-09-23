@@ -191,7 +191,9 @@ public sealed class AdminPaymentsController(IDispatcher dispatcher) : Controller
 /// <param name="Signature">Checkout's <c>razorpay_signature</c>.</param>
 public sealed record VerifyRazorpayPaymentRequest(string GatewayOrderId, string GatewayPaymentId, string Signature);
 
-/// <param name="GatewayRefundId">The refund id Razorpay showed, <c>rfnd_...</c>.</param>
+/// <param name="GatewayRefundId">
+/// The refund id Razorpay showed, <c>rfnd_...</c>; or for a UPI refund, the UPI transaction reference (UTR).
+/// </param>
 public sealed record MarkRefundedRequest(string GatewayRefundId);
 
 /// <param name="Page">1-based page number. Defaults to 1.</param>

@@ -21,11 +21,24 @@ const refund: RefundDto = {
   currency: 'INR',
   reason: 'Payment could not be applied to the order: This order is not waiting for payment.',
   status: 'Due',
+  method: 'Razorpay',
+  upiId: null,
   gatewayPaymentId: 'pay_late',
   gatewayRefundId: null,
   createdAtUtc: '2026-09-22T10:00:00Z',
   refundedAtUtc: null,
   refundedBy: null,
+};
+
+const upiRefund: RefundDto = {
+  ...refund,
+  id: 'r2',
+  paymentId: null,
+  orderNumber: 'UPB-260923-PQRSTU',
+  reason: 'The buyer returned the parcel and it is back with the seller.',
+  method: 'Upi',
+  upiId: 'asha@okicici',
+  gatewayPaymentId: null,
 };
 
 const payment: PaymentDto = {
@@ -56,7 +69,7 @@ describe('PaymentsPage', () => {
   beforeEach(() => {
     invoke = vi.fn(async (fn: unknown) => {
       if (fn === apiV1AdminPaymentsRefundsGet) {
-        return page([refund]);
+        return page([refund, upiRefund]);
       }
 
       if (fn === apiV1AdminPaymentsGet) {
@@ -83,6 +96,9 @@ describe('PaymentsPage', () => {
     expect(invoke).toHaveBeenCalledWith(apiV1AdminPaymentsRefundsGet, { Page: 1, PageSize: 25, Status: 'Due' });
     expect(fixture.nativeElement.textContent).toContain('UPB-260922-ABCDEF');
     expect(fixture.nativeElement.textContent).toContain('pay_late');
+
+    // Cash paid at the door goes back to the buyer's UPI id, not through Razorpay.
+    expect(fixture.nativeElement.textContent).toContain('UPI to asha@okicici');
   });
 
   it('shows every payment with its Razorpay ids on the other view', async () => {

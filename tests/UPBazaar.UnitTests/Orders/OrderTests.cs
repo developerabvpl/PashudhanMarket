@@ -6,6 +6,7 @@ namespace UPBazaar.UnitTests.Orders;
 public sealed class OrderTests
 {
     private static readonly DateTime Now = new(2026, 9, 21, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly TimeSpan Window = TimeSpan.FromDays(7);
     private static readonly Guid SellerA = Guid.NewGuid();
     private static readonly Guid SellerB = Guid.NewGuid();
 
@@ -105,7 +106,7 @@ public sealed class OrderTests
     public void Nothing_can_be_cancelled_once_a_part_has_shipped()
     {
         var order = Place(PaymentMethod.CashOnDelivery);
-        order.AdvancePart(order.Parts.First().PublicId, OrderPartStatus.Shipped);
+        order.AdvancePart(order.Parts.First().PublicId, OrderPartStatus.Shipped, Now, Window);
 
         order.CanCancel.ShouldBeFalse();
         order.Cancel("Too late", Now).Error.ShouldBe(OrderErrors.CannotCancel);
@@ -151,10 +152,10 @@ public sealed class OrderTests
         var partA = order.Parts.Single(p => p.SellerId == SellerA).PublicId;
         var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
 
-        order.AdvancePart(partA, OrderPartStatus.Packed).IsSuccess.ShouldBeTrue();
-        order.AdvancePart(partA, OrderPartStatus.Packed).Error.ShouldBe(OrderErrors.InvalidTransition);
-        order.AdvancePart(partA, OrderPartStatus.Delivered).IsSuccess.ShouldBeTrue();
-        order.AdvancePart(partA, OrderPartStatus.Shipped).Error.ShouldBe(OrderErrors.InvalidTransition);
+        order.AdvancePart(partA, OrderPartStatus.Packed, Now, Window).IsSuccess.ShouldBeTrue();
+        order.AdvancePart(partA, OrderPartStatus.Packed, Now, Window).Error.ShouldBe(OrderErrors.InvalidTransition);
+        order.AdvancePart(partA, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
+        order.AdvancePart(partA, OrderPartStatus.Shipped, Now, Window).Error.ShouldBe(OrderErrors.InvalidTransition);
 
         order.Status.ShouldBe(OrderStatus.Confirmed);
 
@@ -168,7 +169,7 @@ public sealed class OrderTests
     {
         var order = Place(PaymentMethod.Online);
 
-        order.AdvancePart(order.Parts.First().PublicId, OrderPartStatus.Packed).Error
+        order.AdvancePart(order.Parts.First().PublicId, OrderPartStatus.Packed, Now, Window).Error
             .ShouldBe(OrderErrors.InvalidTransition);
     }
 
@@ -178,7 +179,7 @@ public sealed class OrderTests
         var order = Place(PaymentMethod.Online);
         order.ConfirmPayment(order.Total, "pay_1", Now);
         var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
-        order.AdvancePart(partB, OrderPartStatus.Shipped);
+        order.AdvancePart(partB, OrderPartStatus.Shipped, Now, Window);
 
         order.StartReturn(partB).IsSuccess.ShouldBeTrue();
         order.DomainEvents.OfType<OrderPartReturnedDomainEvent>().ShouldBeEmpty();
@@ -198,7 +199,7 @@ public sealed class OrderTests
 
         foreach (var part in order.Parts.ToList())
         {
-            order.AdvancePart(part.PublicId, OrderPartStatus.Shipped);
+            order.AdvancePart(part.PublicId, OrderPartStatus.Shipped, Now, Window);
             order.CompleteReturn(part.PublicId, Now);
         }
 
@@ -214,8 +215,8 @@ public sealed class OrderTests
         var partA = order.Parts.Single(p => p.SellerId == SellerA).PublicId;
         var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
 
-        order.AdvancePart(partA, OrderPartStatus.Delivered);
-        order.AdvancePart(partB, OrderPartStatus.Shipped);
+        order.AdvancePart(partA, OrderPartStatus.Delivered, Now, Window);
+        order.AdvancePart(partB, OrderPartStatus.Shipped, Now, Window);
         order.CompleteReturn(partB, Now);
 
         order.Status.ShouldBe(OrderStatus.Completed);
@@ -230,12 +231,105 @@ public sealed class OrderTests
         order.StartReturn(part).Error.ShouldBe(OrderErrors.NotInTransit);
         order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
 
-        order.AdvancePart(part, OrderPartStatus.Shipped);
+        order.AdvancePart(part, OrderPartStatus.Shipped, Now, Window);
         order.CompleteReturn(part, Now);
 
         order.InspectReturn(part, ReturnCondition.Damaged, "Box crushed", "seller", Now).IsSuccess.ShouldBeTrue();
         order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
         order.Parts.First().ReturnCondition.ShouldBe(ReturnCondition.Damaged);
+    }
+
+    [Fact]
+    public void A_buyer_can_ask_to_return_a_delivered_part_only_within_its_window_and_only_once()
+    {
+        var order = Place(PaymentMethod.Online);
+        order.ConfirmPayment(order.Total, "pay_1", Now);
+        var part = order.Parts.First().PublicId;
+
+        order.RequestReturn(part, ReturnReason.Damaged, null, null, Now).Error.ShouldBe(OrderErrors.NotDelivered);
+
+        order.AdvancePart(part, OrderPartStatus.Delivered, Now, Window);
+        order.Parts.First().ReturnWindowClosesAtUtc.ShouldBe(Now + Window);
+
+        order.RequestReturn(part, ReturnReason.Damaged, null, null, Now + Window + TimeSpan.FromMinutes(1))
+            .Error.ShouldBe(OrderErrors.ReturnWindowClosed);
+
+        order.RequestReturn(part, ReturnReason.Damaged, "Lid cracked", "ignored@upi", Now + Window).IsSuccess.ShouldBeTrue();
+        order.RequestReturn(part, ReturnReason.Damaged, null, null, Now).Error.ShouldBe(OrderErrors.ReturnAlreadyRequested);
+
+        // Paid online, so the refund goes back through the payment, not to a UPI id.
+        order.Parts.First().ReturnRequest!.RefundUpiId.ShouldBeNull();
+        order.DomainEvents.OfType<OrderPartReturnRequestedDomainEvent>().ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public void A_cash_on_delivery_buyer_must_say_where_the_refund_goes()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+        var part = order.Parts.First().PublicId;
+        order.AdvancePart(part, OrderPartStatus.Delivered, Now, Window);
+
+        order.RequestReturn(part, ReturnReason.WrongItem, null, " ", Now).Error.ShouldBe(OrderErrors.RefundUpiIdRequired);
+        order.RequestReturn(part, ReturnReason.WrongItem, null, "asha@okicici", Now).IsSuccess.ShouldBeTrue();
+        order.Parts.First().ReturnRequest!.RefundUpiId.ShouldBe("asha@okicici");
+    }
+
+    [Fact]
+    public void An_approved_cash_return_owes_the_buyer_their_money_and_the_order_stays_completed()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+        var partA = order.Parts.Single(p => p.SellerId == SellerA).PublicId;
+        var partB = order.Parts.Single(p => p.SellerId == SellerB).PublicId;
+        order.AdvancePart(partA, OrderPartStatus.Delivered, Now, Window);
+        order.AdvancePart(partB, OrderPartStatus.Delivered, Now, Window);
+        order.RequestReturn(partB, ReturnReason.QualityIssue, null, "asha@okicici", Now);
+
+        order.ApproveReturn(partB, null, "seller", Now).IsSuccess.ShouldBeTrue();
+        order.ApproveReturn(partB, null, "seller", Now).Error.ShouldBe(OrderErrors.ReturnNotPending);
+        order.Parts.Single(p => p.PublicId == partB).Status.ShouldBe(OrderPartStatus.Returning);
+        order.DomainEvents.OfType<OrderPartReturnApprovedDomainEvent>().ShouldHaveSingleItem();
+
+        order.CompleteReturn(partB, Now).IsSuccess.ShouldBeTrue();
+
+        var returned = order.DomainEvents.OfType<OrderPartReturnedDomainEvent>().ShouldHaveSingleItem();
+        returned.RefundDue.ShouldBe(60m);
+        returned.RequestedByBuyer.ShouldBeTrue();
+        returned.RefundUpiId.ShouldBe("asha@okicici");
+        order.Status.ShouldBe(OrderStatus.Completed);
+    }
+
+    [Fact]
+    public void Returning_every_part_leaves_the_order_completed_not_cancelled()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+
+        foreach (var part in order.Parts.Select(p => p.PublicId).ToList())
+        {
+            order.AdvancePart(part, OrderPartStatus.Delivered, Now, Window);
+            order.RequestReturn(part, ReturnReason.NoLongerNeeded, null, "asha@okicici", Now);
+            order.ApproveReturn(part, null, "seller", Now);
+            order.CompleteReturn(part, Now);
+        }
+
+        order.Status.ShouldBe(OrderStatus.Completed);
+        order.CancellationReason.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_rejected_return_keeps_the_part_delivered_and_cannot_be_asked_again()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery);
+        var part = order.Parts.First().PublicId;
+        order.AdvancePart(part, OrderPartStatus.Delivered, Now, Window);
+        order.RequestReturn(part, ReturnReason.NoLongerNeeded, null, "asha@okicici", Now);
+
+        order.RejectReturn(part, "Opened food cannot be returned.", "seller", Now).IsSuccess.ShouldBeTrue();
+
+        var rejected = order.Parts.First();
+        rejected.Status.ShouldBe(OrderPartStatus.Delivered);
+        rejected.ReturnRequest!.Status.ShouldBe(ReturnRequestStatus.Rejected);
+        rejected.ReturnRequest.DecisionNote.ShouldBe("Opened food cannot be returned.");
+        order.RequestReturn(part, ReturnReason.Other, "Please", "asha@okicici", Now).Error.ShouldBe(OrderErrors.ReturnAlreadyRequested);
     }
 
     [Theory]

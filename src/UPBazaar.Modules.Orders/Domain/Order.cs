@@ -259,8 +259,10 @@ public sealed class Order : AggregateRoot, IAuditable
     /// <summary>
     /// Moves a part forward: Confirmed, Packed, Shipped, Delivered. A step may be skipped - a
     /// courier scan can report Shipped for a part nobody marked Packed - but never taken back.
+    /// Delivery starts the buyer's return window, fixed now at <paramref name="returnWindow"/> so a
+    /// later change of policy does not move the deadline on parcels already delivered.
     /// </summary>
-    public Result AdvancePart(Guid partId, OrderPartStatus target)
+    public Result AdvancePart(Guid partId, OrderPartStatus target, DateTime now, TimeSpan returnWindow)
     {
         var part = _parts.FirstOrDefault(p => p.PublicId == partId);
 
@@ -277,7 +279,105 @@ public sealed class Order : AggregateRoot, IAuditable
         }
 
         part.MoveTo(target);
+
+        if (target == OrderPartStatus.Delivered)
+        {
+            part.RecordDelivered(now, returnWindow);
+        }
+
         CompleteIfDone();
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// The buyer asks to send a delivered part back. Allowed once per part, until its return window
+    /// closes. A cash-on-delivery buyer must say where the refund goes, since there is no online
+    /// payment to reverse; an online buyer's refund goes back the way it came, so any UPI id they
+    /// sent is ignored.
+    /// </summary>
+    public Result RequestReturn(Guid partId, ReturnReason reason, string? comment, string? refundUpiId, DateTime now)
+    {
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.ReturnRequest is not null)
+        {
+            return Result.Failure(OrderErrors.ReturnAlreadyRequested);
+        }
+
+        if (part.Status != OrderPartStatus.Delivered)
+        {
+            return Result.Failure(OrderErrors.NotDelivered);
+        }
+
+        if (part.ReturnWindowClosesAtUtc is not { } closes || now > closes)
+        {
+            return Result.Failure(OrderErrors.ReturnWindowClosed);
+        }
+
+        var isCod = PaymentMethod == PaymentMethod.CashOnDelivery;
+
+        if (isCod && string.IsNullOrWhiteSpace(refundUpiId))
+        {
+            return Result.Failure(OrderErrors.RefundUpiIdRequired);
+        }
+
+        part.RequestReturn(ReturnRequest.Create(reason, comment, isCod ? refundUpiId : null, now));
+
+        Raise(new OrderPartReturnRequestedDomainEvent(PublicId, Number, part.PublicId, part.SellerId, reason.ToString()));
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// The seller, or staff, accept a return: the part starts back, and Shipping books a pickup
+    /// from the buyer when it hears of it.
+    /// </summary>
+    public Result ApproveReturn(Guid partId, string? note, string? decidedBy, DateTime now)
+    {
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.ReturnRequest?.Status != ReturnRequestStatus.Requested)
+        {
+            return Result.Failure(OrderErrors.ReturnNotPending);
+        }
+
+        part.ReturnRequest.Decide(approve: true, note, decidedBy, now);
+        part.MoveTo(OrderPartStatus.Returning);
+
+        Raise(new OrderPartReturnApprovedDomainEvent(PublicId, Number, part.PublicId, part.SellerId));
+
+        return Result.Success();
+    }
+
+    /// <summary>The seller, or staff, refuse a return, saying why. The part stays delivered.</summary>
+    public Result RejectReturn(Guid partId, string note, string? decidedBy, DateTime now)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(note);
+
+        var part = _parts.FirstOrDefault(p => p.PublicId == partId);
+
+        if (part is null)
+        {
+            return Result.Failure(OrderErrors.PartNotFound);
+        }
+
+        if (part.ReturnRequest?.Status != ReturnRequestStatus.Requested)
+        {
+            return Result.Failure(OrderErrors.ReturnNotPending);
+        }
+
+        part.ReturnRequest.Decide(approve: false, note, decidedBy, now);
 
         return Result.Success();
     }
@@ -310,9 +410,13 @@ public sealed class Order : AggregateRoot, IAuditable
     }
 
     /// <summary>
-    /// The parcel is back with the seller. For an order paid online its share is now owed back -
-    /// only now, once the goods are in hand, because an RTO can still be turned round while the
-    /// parcel is on its way back. The order ends when nothing in it is still coming.
+    /// The parcel is back with the seller. Its share is now owed back - only now, once the goods
+    /// are in hand, because a return can still go wrong on the way.
+    ///
+    /// After an RTO that is only for an order paid online: cash on delivery collected nothing. After
+    /// a buyer's return it is owed either way, since the buyer paid at the door, and a cash refund
+    /// goes to the UPI id they gave. An order ends as cancelled only when nothing in it ever reached
+    /// the buyer; an order whose goods were delivered and then sent back stays completed.
     /// </summary>
     public Result CompleteReturn(Guid partId, DateTime now)
     {
@@ -333,13 +437,22 @@ public sealed class Order : AggregateRoot, IAuditable
             return Result.Failure(OrderErrors.NotInTransit);
         }
 
+        var byBuyer = part.IsBuyerReturn;
+
         part.MoveTo(OrderPartStatus.Returned);
 
         Raise(new OrderPartReturnedDomainEvent(
-            PublicId, Number, part.PublicId, part.SellerId,
-            PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m, Currency));
+            PublicId,
+            Number,
+            part.PublicId,
+            part.SellerId,
+            byBuyer || PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m,
+            Currency,
+            RequestedByBuyer: byBuyer,
+            RefundUpiId: part.ReturnRequest?.RefundUpiId));
 
-        if (_parts.All(p => p.Status is OrderPartStatus.Cancelled or OrderPartStatus.Returned))
+        if (_parts.All(p => p.Status == OrderPartStatus.Cancelled
+                || (p.Status == OrderPartStatus.Returned && !p.IsBuyerReturn)))
         {
             MarkCancelled(CouldNotDeliver, now);
         }
@@ -394,11 +507,19 @@ public sealed class Order : AggregateRoot, IAuditable
         Raise(new OrderCancelledDomainEvent(PublicId, Number, reason));
     }
 
+    /// <summary>
+    /// The order is complete once every part that went out has reached the buyer. A part the
+    /// buyer then sent back still reached them; a cancelled part or an RTO never did, so neither
+    /// counts either way.
+    /// </summary>
     private void CompleteIfDone()
     {
-        var live = _parts.Where(p => p.IsComing).ToList();
+        var wentOut = _parts
+            .Where(p => p.Status != OrderPartStatus.Cancelled
+                && (p.IsBuyerReturn || p.Status is not (OrderPartStatus.Returning or OrderPartStatus.Returned)))
+            .ToList();
 
-        if (live.Count > 0 && live.All(p => p.Status == OrderPartStatus.Delivered))
+        if (wentOut.Count > 0 && wentOut.All(p => p.Status == OrderPartStatus.Delivered || p.IsBuyerReturn))
         {
             Status = OrderStatus.Completed;
         }
@@ -443,6 +564,21 @@ public sealed class OrderPart : Entity
 
     public DateTime? ReturnInspectedAtUtc { get; private set; }
 
+    /// <summary>When the courier reported it delivered; null until then.</summary>
+    public DateTime? DeliveredAtUtc { get; private set; }
+
+    /// <summary>The last moment the buyer may ask to return it; fixed at delivery.</summary>
+    public DateTime? ReturnWindowClosesAtUtc { get; private set; }
+
+    /// <summary>The buyer's request to send it back, if they made one.</summary>
+    public ReturnRequest? ReturnRequest { get; private set; }
+
+    /// <summary>
+    /// Going or gone back because the buyer's return was approved, as opposed to an RTO: the goods
+    /// reached the buyer first, so their money is owed however they paid.
+    /// </summary>
+    public bool IsBuyerReturn => ReturnRequest?.Status == ReturnRequestStatus.Approved;
+
     /// <summary>Still on its way to the buyer, or already there: neither called off nor sent back.</summary>
     public bool IsComing => Status is not (OrderPartStatus.Cancelled or OrderPartStatus.Returned or OrderPartStatus.Returning);
 
@@ -460,6 +596,14 @@ public sealed class OrderPart : Entity
     }
 
     internal void MoveTo(OrderPartStatus status) => Status = status;
+
+    internal void RecordDelivered(DateTime now, TimeSpan returnWindow)
+    {
+        DeliveredAtUtc = now;
+        ReturnWindowClosesAtUtc = now + returnWindow;
+    }
+
+    internal void RequestReturn(ReturnRequest request) => ReturnRequest = request;
 
     internal void RecordInspection(ReturnCondition condition, string? note, string? inspectedBy, DateTime now)
     {

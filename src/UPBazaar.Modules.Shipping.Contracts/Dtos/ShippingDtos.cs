@@ -22,6 +22,7 @@ public sealed record ParcelSuggestionDto(ParcelDto? Parcel, IReadOnlyList<string
 /// <param name="OrderPartId">The seller's part being shipped.</param>
 /// <param name="SellerId">Whose goods.</param>
 /// <param name="Status">Booking, PickupRequested, InTransit, Delivered, ReturnInTransit, Returned or Cancelled.</param>
+/// <param name="Direction">Forward (to the buyer) or Return (a buyer's return, collected from them and taken to the seller).</param>
 /// <param name="Carrier">Shiprocket, or Fake in development.</param>
 /// <param name="PickupLocation">The pickup location's name as registered with the carrier.</param>
 /// <param name="Parcel">What was booked.</param>
@@ -41,6 +42,7 @@ public sealed record ShipmentDto(
     Guid OrderPartId,
     Guid SellerId,
     string Status,
+    string Direction,
     string Carrier,
     string PickupLocation,
     ParcelDto Parcel,

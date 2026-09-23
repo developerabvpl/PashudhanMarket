@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
 using UPBazaar.Modules.Orders.Application;
@@ -31,12 +32,19 @@ public static class OrdersModuleExtensions
 {
     /// <summary>Registers the module's schema, handlers, validators and services.</summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration, for <see cref="OrdersModuleOptions"/>.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddOrdersModule(this IServiceCollection services)
+    public static IServiceCollection AddOrdersModule(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddModule<OrdersModule>();
+
+        services.AddOptions<OrdersModuleOptions>()
+            .Bind(configuration.GetSection(OrdersModuleOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddScoped<OrderTransaction>();
         services.AddScoped<OrderReader>();

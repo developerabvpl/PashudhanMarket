@@ -94,8 +94,10 @@ type View = 'refunds' | 'payments';
             <td mat-cell *matCellDef="let row" class="text-sm">{{ row.reason }}</td>
           </ng-container>
           <ng-container matColumnDef="gatewayPaymentId">
-            <th mat-header-cell *matHeaderCellDef>{{ 'payments.razorpayPayment' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-mono text-xs">{{ row.gatewayPaymentId ?? '—' }}</td>
+            <th mat-header-cell *matHeaderCellDef>{{ 'payments.refundTo' | transloco }}</th>
+            <td mat-cell *matCellDef="let row" class="font-mono text-xs">
+              {{ row.method === 'Upi' ? ('payments.upiTo' | transloco: { upi: row.upiId }) : (row.gatewayPaymentId ?? '—') }}
+            </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>{{ 'common.actions' | transloco }}</th>

@@ -14,6 +14,7 @@ internal static class ShipmentMappings
         shipment.OrderPartId,
         shipment.SellerId,
         shipment.Status.ToString(),
+        shipment.Direction.ToString(),
         shipment.Carrier,
         shipment.PickupLocation,
         new ParcelDto(shipment.WeightGrams, shipment.LengthCm, shipment.BreadthCm, shipment.HeightCm),

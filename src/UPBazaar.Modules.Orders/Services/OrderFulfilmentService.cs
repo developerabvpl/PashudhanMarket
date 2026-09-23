@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Orders.Application;
 using UPBazaar.Modules.Orders.Contracts;
@@ -13,7 +14,8 @@ internal sealed class OrderFulfilmentService(
     UPBazaarDbContext dbContext,
     OrderTransaction transaction,
     OrderReader reader,
-    IClock clock) : IOrderFulfilmentService
+    IClock clock,
+    IOptions<OrdersModuleOptions> options) : IOrderFulfilmentService
 {
     public async Task<Result<ShippablePartDto>> GetPartAsync(
         Guid orderId,
@@ -44,7 +46,8 @@ internal sealed class OrderFulfilmentService(
             order.Currency,
             order.PlacedAtUtc,
             dto.DeliveryAddress,
-            partDto.Lines);
+            partDto.Lines,
+            part.IsBuyerReturn);
     }
 
     public async Task<Result> AdvancePartAsync(
@@ -80,7 +83,7 @@ internal sealed class OrderFulfilmentService(
             {
                 OrderPartStatus.Returning => order.StartReturn(partId),
                 OrderPartStatus.Returned => order.CompleteReturn(partId, clock.UtcNow),
-                _ => order.AdvancePart(partId, target),
+                _ => order.AdvancePart(partId, target, clock.UtcNow, options.Value.ReturnWindow),
             };
 
             if (moved.IsFailure)

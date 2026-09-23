@@ -56,9 +56,9 @@ public enum OrderPartStatus
     Cancelled = 5,
 
     /// <summary>
-    /// The courier could not deliver and is taking it back to the seller (RTO). Numbered after
-    /// the others on purpose: a part only moves to a higher number, so a late "delivered" update can
-    /// never undo a return already under way.
+    /// Going back to the seller: the courier could not deliver it (RTO), or the buyer's return was
+    /// approved. Numbered after the others on purpose: a part only moves to a higher number, so a
+    /// late "delivered" update can never undo a return already under way.
     /// </summary>
     Returning = 6,
 
@@ -74,4 +74,39 @@ public enum ReturnCondition
 
     /// <summary>Not resaleable: nothing goes back on sale.</summary>
     Damaged = 1,
+}
+
+/// <summary>Why a buyer wants to send a delivered parcel back.</summary>
+public enum ReturnReason
+{
+    /// <summary>Arrived broken, leaking or crushed.</summary>
+    Damaged = 0,
+
+    /// <summary>Not what was ordered.</summary>
+    WrongItem = 1,
+
+    /// <summary>Differs from the listing's description.</summary>
+    NotAsDescribed = 2,
+
+    /// <summary>Spoilt, stale or poorly made.</summary>
+    QualityIssue = 3,
+
+    /// <summary>Nothing wrong with it; the buyer changed their mind. The seller may refuse.</summary>
+    NoLongerNeeded = 4,
+
+    /// <summary>Anything else; the buyer must say what.</summary>
+    Other = 5,
+}
+
+/// <summary>Where a buyer's return request stands. What happens to the goods is the part's status.</summary>
+public enum ReturnRequestStatus
+{
+    /// <summary>Waiting for the seller, or staff, to decide.</summary>
+    Requested = 0,
+
+    /// <summary>Accepted: a return pickup is booked and the part is on its way back.</summary>
+    Approved = 1,
+
+    /// <summary>Refused, with a note saying why. Final: the buyer can take it up with support.</summary>
+    Rejected = 2,
 }

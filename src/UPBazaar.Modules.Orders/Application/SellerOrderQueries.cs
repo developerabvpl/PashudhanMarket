@@ -68,7 +68,8 @@ internal sealed class ListSellerOrdersQueryHandler(UPBazaarDbContext dbContext)
                 x.order.Currency,
                 x.part.Lines.Sum(l => l.Quantity),
                 x.order.DeliveryAddress.City,
-                x.order.PlacedAtUtc))
+                x.order.PlacedAtUtc,
+                x.part.ReturnRequest != null ? x.part.ReturnRequest.Status.ToString() : null))
             .ToListAsync(cancellationToken);
 
         return new PagedList<SellerOrderSummaryDto>(items, query.Page, query.PageSize, total);
@@ -106,6 +107,7 @@ internal sealed class GetSellerOrderQueryHandler(OrderReader reader) : IQueryHan
             dto.DeliveryAddress,
             partDto.Lines,
             part.CancellationReason,
-            part.ReturnCondition?.ToString());
+            part.ReturnCondition?.ToString(),
+            part.ReturnRequest?.ToDto(includeUpiId: false));
     }
 }

@@ -68,22 +68,24 @@ public sealed record PaymentDto(
 
 /// <summary>Money owed back to a buyer, and whether it has gone back yet.</summary>
 /// <param name="Id">Public id.</param>
-/// <param name="PaymentId">The payment it comes out of.</param>
+/// <param name="PaymentId">The online payment it comes out of; null for a UPI refund of cash paid at the door.</param>
 /// <param name="OrderId">The order.</param>
 /// <param name="OrderNumber">That order's number.</param>
-/// <param name="OrderPartId">The seller's part that was cancelled; null when the whole payment is refunded.</param>
+/// <param name="OrderPartId">The seller's part it is for; null when the whole payment is refunded.</param>
 /// <param name="Amount">How much.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="Reason">Why it is owed.</param>
 /// <param name="Status">Due, or Refunded once someone has made it and recorded it.</param>
-/// <param name="GatewayPaymentId">The Razorpay payment to refund against.</param>
-/// <param name="GatewayRefundId">Razorpay's refund id, once refunded.</param>
+/// <param name="Method">Razorpay (reverse the online payment) or Upi (send it to <paramref name="UpiId"/>).</param>
+/// <param name="UpiId">Where a UPI refund is sent; null for Razorpay.</param>
+/// <param name="GatewayPaymentId">The Razorpay payment to refund against; null for UPI.</param>
+/// <param name="GatewayRefundId">Razorpay's refund id, or the UPI transaction reference (UTR), once refunded.</param>
 /// <param name="CreatedAtUtc">When it became owed.</param>
 /// <param name="RefundedAtUtc">When it was recorded as made.</param>
 /// <param name="RefundedBy">Who recorded it.</param>
 public sealed record RefundDto(
     Guid Id,
-    Guid PaymentId,
+    Guid? PaymentId,
     Guid OrderId,
     string OrderNumber,
     Guid? OrderPartId,
@@ -91,6 +93,8 @@ public sealed record RefundDto(
     string Currency,
     string Reason,
     string Status,
+    string Method,
+    string? UpiId,
     string? GatewayPaymentId,
     string? GatewayRefundId,
     DateTime CreatedAtUtc,

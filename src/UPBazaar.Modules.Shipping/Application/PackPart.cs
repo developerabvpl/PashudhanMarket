@@ -93,7 +93,9 @@ internal sealed class PackPartCommandHandler(
 
         var shipment = await dbContext.Set<Shipment>()
             .Include(s => s.Events)
-            .FirstOrDefaultAsync(s => s.OrderPartId == part.PartId && s.Status != ShipmentStatus.Cancelled, cancellationToken);
+            .FirstOrDefaultAsync(
+                s => s.OrderPartId == part.PartId && s.Direction == ShipmentDirection.Forward && s.Status != ShipmentStatus.Cancelled,
+                cancellationToken);
 
         if (part.Status is "Cancelled" or "AwaitingPayment")
         {

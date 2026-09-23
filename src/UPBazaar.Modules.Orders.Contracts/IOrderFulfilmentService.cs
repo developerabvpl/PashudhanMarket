@@ -14,7 +14,8 @@ public interface IOrderFulfilmentService
 
     /// <summary>
     /// Moves a part to Packed, Shipped or Delivered, or - when the courier could not deliver - to
-    /// Returning and then Returned. A part already there or further along is
+    /// Returning and then Returned; or, when a buyer's return reaches the seller, to Returned. A
+    /// part already there or further along is
     /// left as it is and reported as success, because courier updates arrive late, twice, and out
     /// of order; only a move the part can never make - out of Cancelled, say - is refused.
     /// </summary>
@@ -35,6 +36,10 @@ public interface IOrderFulfilmentService
 /// <param name="PlacedAtUtc">When the order was placed.</param>
 /// <param name="DeliveryAddress">Where it goes.</param>
 /// <param name="Lines">What is in it.</param>
+/// <param name="BuyerReturnApproved">
+/// True when the part is going back because the buyer's return was approved: a courier must
+/// collect it from the delivery address. False for an RTO, which the courier brings back itself.
+/// </param>
 public sealed record ShippablePartDto(
     Guid OrderId,
     string OrderNumber,
@@ -48,4 +53,5 @@ public sealed record ShippablePartDto(
     string Currency,
     DateTime PlacedAtUtc,
     DeliveryAddressDto DeliveryAddress,
-    IReadOnlyList<OrderLineDto> Lines);
+    IReadOnlyList<OrderLineDto> Lines,
+    bool BuyerReturnApproved);

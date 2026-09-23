@@ -22,7 +22,8 @@
     "sellers": "Sellers",
     "listingReview": "Listings to review",
     "catalogue": "Catalogue",
-    "categories": "Categories"
+    "categories": "Categories",
+    "returns": "Returns"
   },
   "state": {
     "loading": "Loading",
@@ -367,7 +368,38 @@
       "Online": "Online payment"
     },
     "shippedWith": "With {{courier}}, AWB {{awb}}",
-    "track": "Track parcel"
+    "track": "Track parcel",
+    "returnStatus": {
+      "Returning": "Being returned",
+      "Returned": "Returned"
+    },
+    "return": {
+      "start": "Return this parcel",
+      "until": "You can ask to return it until {{date}}.",
+      "reasonLabel": "Why are you returning it?",
+      "reasons": {
+        "Damaged": "It arrived damaged",
+        "WrongItem": "I received the wrong item",
+        "NotAsDescribed": "It is not as described",
+        "QualityIssue": "Poor quality or spoilt",
+        "NoLongerNeeded": "I no longer need it",
+        "Other": "Something else"
+      },
+      "commentLabel": "Tell the seller more",
+      "commentRequired": "Tell the seller what is wrong.",
+      "upiLabel": "UPI id for your refund",
+      "upiHint": "You paid in cash, so the refund is sent to this UPI id, such as name@okicici.",
+      "wholeParcel": "The whole parcel goes back. You are refunded {{amount}} once it reaches the seller.",
+      "submit": "Ask to return it",
+      "cancel": "Not now",
+      "sent": "Return requested. The seller will reply soon.",
+      "requested": "You asked to return this on {{date}}. Waiting for the seller to reply.",
+      "approved": "Return accepted. A courier will collect the parcel from your delivery address.",
+      "pickupWith": "Collection by {{courier}}, AWB {{awb}}",
+      "refundUpi": "Back with the seller. Your refund of {{amount}} will be sent to {{upi}}.",
+      "refundOnline": "Back with the seller. Your refund of {{amount}} will go back to your original payment.",
+      "rejected": "The seller did not accept this return: {{note}}"
+    }
   },
   "payments": {
     "due": "{{amount}} to pay",
@@ -400,6 +432,10 @@
     "markRefundedTitle": "Record a refund",
     "markRefundedBody": "Refund {{amount}} for order {{number}} in the Razorpay dashboard against payment {{payment}}, then enter the refund id Razorpay shows.",
     "gatewayRefundId": "Razorpay refund id",
+    "markRefundedUpiBody": "Send {{amount}} for order {{number}} to the UPI id {{upi}}, then enter the transaction reference (UTR) your bank shows.",
+    "utr": "UPI transaction reference (UTR)",
+    "upiTo": "UPI to {{upi}}",
+    "refundTo": "Refund to",
     "refundRecorded": "Refund recorded.",
     "statuses": {
       "Created": "Awaiting buyer",
@@ -587,6 +623,33 @@
     "deleted": "Category deleted."
   },
   "returns": {
+    "title": "Returns",
+    "subtitle": "Buyers asking to send delivered parcels back. The refund falls due when the parcel is back with the seller.",
+    "none": "No return requests here.",
+    "all": "All",
+    "statuses": {
+      "Requested": "Waiting for a decision",
+      "Approved": "Accepted",
+      "Rejected": "Refused"
+    },
+    "order": "Order",
+    "reason": "Reason",
+    "value": "Value",
+    "requestedAt": "Asked",
+    "requestTitle": "The buyer wants to return this parcel",
+    "requestedOn": "Asked on {{date}}",
+    "buyerSays": "Buyer says: {{comment}}",
+    "approve": "Accept return",
+    "reject": "Refuse",
+    "rejectNote": "Why are you refusing? The buyer sees this.",
+    "approvedToast": "Return accepted. A courier pickup is being booked.",
+    "rejectedToast": "Return refused.",
+    "refusedNote": "Return refused: {{note}}",
+    "awaitingPickup": "Return accepted. The parcel is on its way back.",
+    "pickupFailed": "The return pickup is not booked yet: {{error}}",
+    "bookPickup": "Book pickup again",
+    "pickupBooked": "Return pickup booked.",
+    "inspectTitleBuyerReturn": "The buyer's return has arrived",
     "inspectTitle": "This parcel came back undelivered",
     "inspectBody": "Check it. If it can be sold again, its stock goes back on sale.",
     "note": "What did you find?",

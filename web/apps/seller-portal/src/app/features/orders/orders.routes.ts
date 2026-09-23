@@ -7,6 +7,10 @@ export const orderRoutes: Route[] = [
     loadComponent: () => import('./orders.page').then((m) => m.OrdersPage),
   },
   {
+    path: 'returns',
+    loadComponent: () => import('./returns.page').then((m) => m.ReturnsPage),
+  },
+  {
     path: ':orderId',
     loadComponent: () => import('./order.page').then((m) => m.OrderPage),
   },

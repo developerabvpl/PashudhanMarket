@@ -9,4 +9,9 @@ export const orderRoutes: Route[] = [
     canActivate: [permissionGuard(OrderingPermissions.Read)],
     loadComponent: () => import('./order-lookup').then((m) => m.OrderLookup),
   },
+  {
+    path: 'returns',
+    canActivate: [permissionGuard(OrderingPermissions.Read)],
+    loadComponent: () => import('./returns.page').then((m) => m.ReturnsPage),
+  },
 ];

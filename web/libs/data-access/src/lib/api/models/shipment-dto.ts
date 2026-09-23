@@ -10,6 +10,7 @@ export interface ShipmentDto {
   codAmount: number;
   courierName: (string | null);
   createdAtUtc: string;
+  direction: string;
   events: Array<ShipmentEventDto>;
   id: string;
   lastError: (string | null);

@@ -171,7 +171,7 @@ public sealed class Payment : AggregateRoot, IAuditable
         OrderOutcome = OrderOutcome.Refused;
         OrderOutcomeReason = reason;
 
-        _refunds.Add(Refund.Create(orderPartId: null, Amount, $"Payment could not be applied to the order: {reason}", now));
+        _refunds.Add(Refund.Create(this, orderPartId: null, Amount, $"Payment could not be applied to the order: {reason}", now));
     }
 
     /// <summary>
@@ -196,7 +196,7 @@ public sealed class Payment : AggregateRoot, IAuditable
             return Result.Failure(PaymentErrors.RefundExceedsPayment);
         }
 
-        _refunds.Add(Refund.Create(orderPartId, amount, reason, now));
+        _refunds.Add(Refund.Create(this, orderPartId, amount, reason, now));
 
         return Result.Success();
     }
@@ -209,12 +209,28 @@ public enum RefundStatus
     Refunded = 1,
 }
 
+/// <summary>How owed money goes back to the buyer.</summary>
+public enum RefundMethod
+{
+    /// <summary>Reversed against the buyer's online payment, in the Razorpay dashboard.</summary>
+    Razorpay = 0,
+
+    /// <summary>
+    /// Sent to the UPI id the buyer gave: for a cash-on-delivery order, which has no online
+    /// payment to reverse.
+    /// </summary>
+    Upi = 1,
+}
+
 /// <summary>
-/// Money owed back to the buyer out of one payment.
+/// Money owed back to a buyer.
 ///
-/// Recorded here, made by hand: staff refund in the Razorpay dashboard and then record the
-/// refund id against it. Automatic refunds can replace the hand step later without the record
-/// changing shape.
+/// Recorded here, made by hand: staff refund in the Razorpay dashboard, or send it by UPI, and
+/// then record the refund id or the UPI transaction reference against it. Automatic refunds can
+/// replace the hand step later without the record changing shape.
+///
+/// A Razorpay refund belongs to the payment it reverses. A UPI refund stands alone, since cash on
+/// delivery leaves no payment here; so every refund carries its order, whatever it came out of.
 /// </summary>
 public sealed class Refund : Entity
 {
@@ -222,17 +238,30 @@ public sealed class Refund : Entity
     {
     }
 
-    public long PaymentId { get; private set; }
+    /// <summary>The online payment it reverses; null for a UPI refund of cash paid at the door.</summary>
+    public long? PaymentId { get; private set; }
 
-    /// <summary>The seller's part of the order that was cancelled; null when the whole payment is owed.</summary>
+    public Guid OrderId { get; private set; }
+
+    public string OrderNumber { get; private set; } = string.Empty;
+
+    /// <summary>The seller's part of the order it is for; null when the whole payment is owed.</summary>
     public Guid? OrderPartId { get; private set; }
 
     public decimal Amount { get; private set; }
+
+    public string Currency { get; private set; } = string.Empty;
+
+    public RefundMethod Method { get; private set; }
+
+    /// <summary>Where a <see cref="RefundMethod.Upi"/> refund is sent.</summary>
+    public string? UpiId { get; private set; }
 
     public string Reason { get; private set; } = string.Empty;
 
     public RefundStatus Status { get; private set; }
 
+    /// <summary>Razorpay's refund id, or for a UPI refund the transaction reference (UTR), once made.</summary>
     public string? GatewayRefundId { get; private set; }
 
     public DateTime CreatedAtUtc { get; private set; }
@@ -242,14 +271,49 @@ public sealed class Refund : Entity
     /// <summary>User id of whoever recorded the refund as made.</summary>
     public string? RefundedBy { get; private set; }
 
-    internal static Refund Create(Guid? orderPartId, decimal amount, string reason, DateTime now) => new()
+    internal static Refund Create(Payment payment, Guid? orderPartId, decimal amount, string reason, DateTime now) => new()
     {
+        OrderId = payment.OrderId,
+        OrderNumber = payment.OrderNumber,
         OrderPartId = orderPartId,
         Amount = amount,
-        Reason = reason.Length > 500 ? reason[..500] : reason,
+        Currency = payment.Currency,
+        Method = RefundMethod.Razorpay,
+        Reason = Truncate(reason),
         Status = RefundStatus.Due,
         CreatedAtUtc = now,
     };
+
+    /// <summary>A refund of cash paid at the door for one part, to be sent to the buyer's UPI id.</summary>
+    public static Refund ToUpi(
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        decimal amount,
+        string currency,
+        string upiId,
+        string reason,
+        DateTime now)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(upiId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+
+        return new Refund
+        {
+            OrderId = orderId,
+            OrderNumber = orderNumber,
+            OrderPartId = orderPartId,
+            Amount = amount,
+            Currency = currency,
+            Method = RefundMethod.Upi,
+            UpiId = upiId.Trim(),
+            Reason = Truncate(reason),
+            Status = RefundStatus.Due,
+            CreatedAtUtc = now,
+        };
+    }
+
+    private static string Truncate(string reason) => reason.Length > 500 ? reason[..500] : reason;
 
     public Result MarkRefunded(string gatewayRefundId, string? by, DateTime now)
     {

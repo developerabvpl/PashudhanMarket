@@ -26,6 +26,15 @@ public interface ICourierGateway
     /// <summary>Asks the courier to come and collect.</summary>
     Task<Result> RequestPickupAsync(string carrierShipmentId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Creates the carrier's order for a buyer's return: collected from the buyer, delivered to the
+    /// seller. The carrier schedules the collection itself once an AWB is assigned.
+    /// </summary>
+    Task<Result<CarrierOrder>> CreateReturnOrderAsync(CourierReturnRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Issues an AWB for a return order.</summary>
+    Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken);
+
     /// <summary>Cancels a consignment the courier has not collected yet.</summary>
     Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken);
 
@@ -61,6 +70,39 @@ public sealed record CourierOrderRequest(
     decimal LengthCm,
     decimal BreadthCm,
     decimal HeightCm);
+
+/// <summary>Everything a carrier needs to book a buyer's return.</summary>
+/// <param name="Reference">Our reference on the carrier's side.</param>
+/// <param name="OrderDateUtc">When the return was booked.</param>
+/// <param name="CollectFrom">The buyer, at the address the goods were delivered to.</param>
+/// <param name="DeliverTo">The seller, at their registered address.</param>
+/// <param name="Items">What is coming back.</param>
+/// <param name="SubTotal">Declared value.</param>
+/// <param name="WeightGrams">Packed weight.</param>
+/// <param name="LengthCm">Box length.</param>
+/// <param name="BreadthCm">Box breadth.</param>
+/// <param name="HeightCm">Box height.</param>
+public sealed record CourierReturnRequest(
+    string Reference,
+    DateTime OrderDateUtc,
+    CourierAddress CollectFrom,
+    CourierAddress DeliverTo,
+    IReadOnlyList<CourierOrderItem> Items,
+    decimal SubTotal,
+    int WeightGrams,
+    decimal LengthCm,
+    decimal BreadthCm,
+    decimal HeightCm);
+
+/// <summary>A person at an address, for either end of a return.</summary>
+public sealed record CourierAddress(
+    string Name,
+    string Phone,
+    string Line1,
+    string? Line2,
+    string City,
+    string State,
+    string Pincode);
 
 /// <summary>One product line in a consignment.</summary>
 public sealed record CourierOrderItem(string Name, string Sku, int Units, decimal SellingPrice);

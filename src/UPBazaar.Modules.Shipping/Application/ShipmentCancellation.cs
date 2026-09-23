@@ -25,7 +25,8 @@ internal sealed partial class OrderPartCancelledShipmentHandler(
     {
         var shipment = await dbContext.Set<Shipment>()
             .FirstOrDefaultAsync(
-                s => s.OrderPartId == domainEvent.PartId && s.Status != ShipmentStatus.Cancelled,
+                s => s.OrderPartId == domainEvent.PartId && s.Direction == ShipmentDirection.Forward
+                    && s.Status != ShipmentStatus.Cancelled,
                 cancellationToken);
 
         if (shipment is null)

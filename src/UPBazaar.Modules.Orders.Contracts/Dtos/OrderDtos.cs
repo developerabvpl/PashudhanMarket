@@ -53,7 +53,12 @@ public sealed record OrderDto(
 /// <param name="Subtotal">Sum of this part's lines.</param>
 /// <param name="Lines">What this seller is sending.</param>
 /// <param name="CancellationReason">Why it was cancelled, if it was.</param>
-/// <param name="ReturnCondition">For a part that came back undelivered: Good or Damaged once inspected, else null.</param>
+/// <param name="ReturnCondition">For a part that came back: Good or Damaged once inspected, else null.</param>
+/// <param name="DeliveredAtUtc">When the courier delivered it; null until then.</param>
+/// <param name="ReturnableUntilUtc">
+/// The last moment the buyer may ask to return it, fixed at delivery; null until delivered.
+/// </param>
+/// <param name="ReturnRequest">The buyer's request to send it back, if they made one.</param>
 public sealed record OrderPartDto(
     Guid Id,
     Guid SellerId,
@@ -61,7 +66,59 @@ public sealed record OrderPartDto(
     decimal Subtotal,
     IReadOnlyList<OrderLineDto> Lines,
     string? CancellationReason,
-    string? ReturnCondition);
+    string? ReturnCondition,
+    DateTime? DeliveredAtUtc,
+    DateTime? ReturnableUntilUtc,
+    ReturnRequestDto? ReturnRequest);
+
+/// <summary>
+/// A buyer's request to send a delivered part back. Whether the goods have actually gone back
+/// is the part's status: Returning once approved, Returned once they are with the seller.
+/// </summary>
+/// <param name="Status">Requested, Approved or Rejected.</param>
+/// <param name="Reason">Damaged, WrongItem, NotAsDescribed, QualityIssue, NoLongerNeeded or Other.</param>
+/// <param name="Comment">The buyer's own words, if any.</param>
+/// <param name="RefundUpiId">
+/// Where a cash-on-delivery refund is paid. Null for orders paid online, and never shown to sellers.
+/// </param>
+/// <param name="RequestedAtUtc">When the buyer asked.</param>
+/// <param name="DecisionNote">Why it was refused, or a note left on approving.</param>
+/// <param name="DecidedAtUtc">When the seller or staff decided.</param>
+public sealed record ReturnRequestDto(
+    string Status,
+    string Reason,
+    string? Comment,
+    string? RefundUpiId,
+    DateTime RequestedAtUtc,
+    string? DecisionNote,
+    DateTime? DecidedAtUtc);
+
+/// <summary>A return request in a queue: enough to decide which to open next.</summary>
+/// <param name="OrderId">The order.</param>
+/// <param name="OrderNumber">Its number.</param>
+/// <param name="PartId">The part the buyer wants to send back.</param>
+/// <param name="SellerId">Whose part it is.</param>
+/// <param name="PartStatus">Delivered while undecided, then Returning and Returned.</param>
+/// <param name="Status">Requested, Approved or Rejected.</param>
+/// <param name="Reason">Why the buyer wants to return it.</param>
+/// <param name="Comment">The buyer's own words, if any.</param>
+/// <param name="PaymentMethod">CashOnDelivery (refunded by UPI) or Online (refunded through Razorpay).</param>
+/// <param name="Subtotal">What will be refunded once the goods are back.</param>
+/// <param name="Currency">ISO currency code.</param>
+/// <param name="RequestedAtUtc">When the buyer asked.</param>
+public sealed record ReturnRequestSummaryDto(
+    Guid OrderId,
+    string OrderNumber,
+    Guid PartId,
+    Guid SellerId,
+    string PartStatus,
+    string Status,
+    string Reason,
+    string? Comment,
+    string PaymentMethod,
+    decimal Subtotal,
+    string Currency,
+    DateTime RequestedAtUtc);
 
 /// <summary>
 /// One product in an order, frozen as it was bought. Name, SKU and price are copied in so the

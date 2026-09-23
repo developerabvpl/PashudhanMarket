@@ -94,6 +94,35 @@ public sealed class ShipmentTests
         shipment.CanCancel.ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("RETURN PICKED UP", ShipmentStatus.InTransit)]
+    [InlineData("Return In Transit", ShipmentStatus.InTransit)]
+    [InlineData("RETURN DELIVERED", ShipmentStatus.Delivered)]
+    [InlineData("DELIVERED", ShipmentStatus.Delivered)]
+    [InlineData("RETURN CANCELLED", ShipmentStatus.Cancelled)]
+    public void Return_wording_maps_with_or_without_its_prefix(string raw, ShipmentStatus expected) =>
+        CourierStatus.MapReturn(raw).ShouldBe(expected);
+
+    [Theory]
+    [InlineData("RTO INITIATED")]
+    [InlineData("RETURN OUT FOR PICKUP")]
+    public void A_return_has_no_rto_of_its_own(string raw) => CourierStatus.MapReturn(raw).ShouldBeNull();
+
+    [Fact]
+    public void A_return_is_prepaid_and_delivered_means_back_with_the_seller()
+    {
+        var shipment = Shipment.CreateReturn(
+            Guid.NewGuid(), "UPB-260922-ABCDEF", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Fake", (500, 20m, 15m, 10m));
+
+        shipment.Direction.ShouldBe(ShipmentDirection.Return);
+        shipment.PaymentMode.ShouldBe("Prepaid");
+        shipment.CodAmount.ShouldBe(0m);
+        shipment.CarrierReference.ShouldEndWith("-R");
+
+        shipment.ApplyCourierStatus("RTO INITIATED", ShipmentStatus.ReturnInTransit, Now).ShouldBeFalse();
+        shipment.ApplyCourierStatus("RETURN DELIVERED", ShipmentStatus.Delivered, Now).ShouldBeTrue();
+    }
+
     private static Shipment Booked()
     {
         var shipment = Shipment.Create(

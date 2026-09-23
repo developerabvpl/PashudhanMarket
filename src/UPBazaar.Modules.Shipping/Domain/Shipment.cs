@@ -25,8 +25,19 @@ public enum ShipmentStatus
     ReturnInTransit = 6,
 }
 
+/// <summary>Which way a consignment travels. Stored by name.</summary>
+public enum ShipmentDirection
+{
+    /// <summary>From the seller to the buyer. If it cannot be delivered it comes back as an RTO, still Forward.</summary>
+    Forward = 0,
+
+    /// <summary>A buyer's return: collected from the buyer's address and taken to the seller.</summary>
+    Return = 1,
+}
+
 /// <summary>
-/// One courier consignment: one seller's part of one order, from booking to the door.
+/// One courier consignment: one seller's part of one order, from booking to the door - or, for a
+/// buyer's return, from the buyer's door back to the seller.
 ///
 /// Booking with the carrier is three calls - create the order, assign an AWB, request pickup -
 /// and any of them can fail. The shipment records how far it got after each one, so packing
@@ -52,12 +63,18 @@ public sealed class Shipment : AggregateRoot, IAuditable
 
     public ShipmentStatus Status { get; private set; }
 
+    public ShipmentDirection Direction { get; private set; }
+
     /// <summary>Shiprocket, or Fake in development.</summary>
     public string Carrier { get; private set; } = string.Empty;
 
     /// <summary>Our reference on the carrier's side: unique per consignment, since one order can ship in several.</summary>
     public string CarrierReference { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The Shiprocket pickup location the courier collects from. For a return it is
+    /// <see cref="BuyerPickup"/>: the courier collects from the delivery address instead.
+    /// </summary>
     public string PickupLocation { get; private set; } = string.Empty;
 
     public int WeightGrams { get; private set; }
@@ -106,6 +123,9 @@ public sealed class Shipment : AggregateRoot, IAuditable
     /// <summary>Booked but not yet collected, so the carrier can still cancel it.</summary>
     public bool CanCancel => Status is ShipmentStatus.Booking or ShipmentStatus.PickupRequested;
 
+    /// <summary>What <see cref="PickupLocation"/> says on a return, which is collected from the buyer.</summary>
+    public const string BuyerPickup = "Buyer's address";
+
     public static Shipment Create(
         Guid orderId,
         string orderNumber,
@@ -132,6 +152,37 @@ public sealed class Shipment : AggregateRoot, IAuditable
         PaymentMode = codAmount > 0 ? "COD" : "Prepaid",
         CodAmount = codAmount,
         Status = ShipmentStatus.Booking,
+        Direction = ShipmentDirection.Forward,
+    };
+
+    /// <summary>
+    /// A buyer's return of a delivered part. Always prepaid: the buyer pays nothing to send it back.
+    /// </summary>
+    public static Shipment CreateReturn(
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        Guid buyerId,
+        Guid sellerId,
+        string carrier,
+        (int WeightGrams, decimal LengthCm, decimal BreadthCm, decimal HeightCm) parcel) => new()
+    {
+        OrderId = orderId,
+        OrderNumber = orderNumber,
+        OrderPartId = orderPartId,
+        BuyerId = buyerId,
+        SellerId = sellerId,
+        Carrier = carrier,
+        CarrierReference = $"{orderNumber}-{orderPartId.ToString("N")[..6].ToUpperInvariant()}-R",
+        PickupLocation = BuyerPickup,
+        WeightGrams = parcel.WeightGrams,
+        LengthCm = parcel.LengthCm,
+        BreadthCm = parcel.BreadthCm,
+        HeightCm = parcel.HeightCm,
+        PaymentMode = "Prepaid",
+        CodAmount = 0m,
+        Status = ShipmentStatus.Booking,
+        Direction = ShipmentDirection.Return,
     };
 
     public void RecordCarrierOrder(string carrierOrderId, string carrierShipmentId)
@@ -170,7 +221,7 @@ public sealed class Shipment : AggregateRoot, IAuditable
     {
         _events.Add(ShipmentEvent.Create(rawStatus, now));
 
-        if (mapped is not { } next || !CanMove(Status, next))
+        if (mapped is not { } next || !CanMove(Direction, Status, next))
         {
             return false;
         }
@@ -185,10 +236,13 @@ public sealed class Shipment : AggregateRoot, IAuditable
     /// <summary>
     /// Where a shipment may go from where it is. Not an ordering of the enum: delivery and return
     /// are alternative endings, and a parcel on its way back can still be reported "returned"
-    /// without first being reported "in transit".
+    /// without first being reported "in transit". A buyer's return has one road only: its
+    /// "delivered" means delivered to the seller, and it has no RTO of its own.
     /// </summary>
-    private static bool CanMove(ShipmentStatus from, ShipmentStatus to) => (from, to) switch
+    private static bool CanMove(ShipmentDirection direction, ShipmentStatus from, ShipmentStatus to) => (from, to) switch
     {
+        _ when direction == ShipmentDirection.Return
+            && to is ShipmentStatus.ReturnInTransit or ShipmentStatus.Returned => false,
         (ShipmentStatus.Booking or ShipmentStatus.PickupRequested, ShipmentStatus.Cancelled) => true,
         (ShipmentStatus.Booking or ShipmentStatus.PickupRequested, ShipmentStatus.InTransit) => true,
         (ShipmentStatus.Booking or ShipmentStatus.PickupRequested or ShipmentStatus.InTransit,
@@ -280,6 +334,28 @@ public static class CourierStatus
             "CANCELED" or "CANCELLED" => ShipmentStatus.Cancelled,
             "RTO DELIVERED" => ShipmentStatus.Returned,
             _ when status.StartsWith("RTO", StringComparison.Ordinal) => ShipmentStatus.ReturnInTransit,
+            _ when InTransit.Contains(status) => ShipmentStatus.InTransit,
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// The same for a buyer's return, whose updates Shiprocket may word with a "RETURN" prefix -
+    /// "RETURN PICKED UP", "RETURN DELIVERED" - and whose "delivered" means back with the seller.
+    /// </summary>
+    public static ShipmentStatus? MapReturn(string rawStatus)
+    {
+        var status = rawStatus.Trim().ToUpperInvariant();
+
+        if (status.StartsWith("RETURN ", StringComparison.Ordinal))
+        {
+            status = status["RETURN ".Length..].Trim();
+        }
+
+        return status switch
+        {
+            "DELIVERED" => ShipmentStatus.Delivered,
+            "CANCELED" or "CANCELLED" => ShipmentStatus.Cancelled,
             _ when InTransit.Contains(status) => ShipmentStatus.InTransit,
             _ => null,
         };

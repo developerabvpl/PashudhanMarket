@@ -13,8 +13,9 @@ internal sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
 
-        // One live consignment per part: two people packing at once cannot both book a courier.
-        builder.HasIndex(x => x.OrderPartId)
+        // One live consignment per part each way: two people packing at once cannot both book a
+        // courier, and a return approved twice cannot book two pickups.
+        builder.HasIndex(x => new { x.OrderPartId, x.Direction })
             .IsUnique()
             .HasFilter("[Status] <> 'Cancelled'");
 
@@ -25,6 +26,7 @@ internal sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
 
         builder.Property(x => x.OrderNumber).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.Direction).HasConversion<string>().HasMaxLength(8).IsRequired();
         builder.Property(x => x.Carrier).HasMaxLength(16).IsRequired();
         builder.Property(x => x.CarrierReference).HasMaxLength(32).IsRequired();
         builder.Property(x => x.PickupLocation).HasMaxLength(PickupLocation.NameMaxLength).IsRequired();

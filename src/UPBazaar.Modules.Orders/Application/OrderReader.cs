@@ -79,7 +79,21 @@ internal static class OrderMappings
         [.. part.Lines.OrderBy(l => l.Id).Select(l =>
             new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal))],
         part.CancellationReason,
-        part.ReturnCondition?.ToString());
+        part.ReturnCondition?.ToString(),
+        part.DeliveredAtUtc,
+        part.ReturnWindowClosesAtUtc,
+        part.ReturnRequest?.ToDto(includeUpiId: true));
+
+    /// <param name="request">The request.</param>
+    /// <param name="includeUpiId">False for sellers: the buyer's UPI id is for the platform's refund, not them.</param>
+    public static ReturnRequestDto ToDto(this ReturnRequest request, bool includeUpiId) => new(
+        request.Status.ToString(),
+        request.Reason.ToString(),
+        request.Comment,
+        includeUpiId ? request.RefundUpiId : null,
+        request.RequestedAtUtc,
+        request.DecisionNote,
+        request.DecidedAtUtc);
 
     private static DeliveryAddressDto ToDto(this DeliveryAddress address) => new(
         address.FullName,

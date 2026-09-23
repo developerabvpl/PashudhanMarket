@@ -14,6 +14,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { OrderPayPanel } from '../payments/order-pay-panel';
 import { orderStatusBadge, partStatusBadge } from './order-labels';
+import { ReturnPanel } from './return-panel';
 
 /**
  * One of the buyer's orders, and the confirmation page too: checkout lands here with ?placed=1,
@@ -25,7 +26,7 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
  */
 @Component({
   selector: 'upb-order-detail-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel, ReturnPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
@@ -73,7 +74,7 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
               {{ 'orders.parcel' | transloco: { index: i + 1, count: o.parts.length } }}
             </p>
             <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="partBadge(part.status).tone">
-              {{ partBadge(part.status).key | transloco }}
+              {{ partBadge(part.status, part.returnRequest?.status === 'Approved').key | transloco }}
             </span>
           </div>
           <ul class="divide-y divide-border">
@@ -101,6 +102,7 @@ import { orderStatusBadge, partStatusBadge } from './order-labels';
             }
           </div>
           } }
+          <upb-return-panel [order]="o" [part]="part" [pickup]="pickupFor(part.id)" (requested)="order.set($event)" />
         </div>
         }
       </div>
@@ -216,9 +218,14 @@ export class OrderDetailPage {
     });
   }
 
-  /** The live courier booking for a seller's part, if it has one. */
+  /** The live courier booking that brought a seller's part to the buyer, if it has one. */
   protected shipmentFor(partId: string): ShipmentDto | undefined {
-    return this.shipments().find((s) => s.orderPartId === partId && s.status !== 'Cancelled');
+    return this.shipments().find((s) => s.orderPartId === partId && s.direction === 'Forward' && s.status !== 'Cancelled');
+  }
+
+  /** The courier booked to collect a part the buyer is returning, once there is one. */
+  protected pickupFor(partId: string): ShipmentDto | undefined {
+    return this.shipments().find((s) => s.orderPartId === partId && s.direction === 'Return' && s.status !== 'Cancelled');
   }
 
   /**

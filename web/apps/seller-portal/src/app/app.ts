@@ -40,7 +40,8 @@ import { SellerAccess } from './core/seller-access';
 
       <!-- A seller not yet approved has only their application to look at. -->
       @if (canSell()) {
-      <a mat-button routerLink="/orders" routerLinkActive="!bg-white/10">{{ 'sellerPortal.ordersTitle' | transloco }}</a>
+      <a mat-button routerLink="/orders" routerLinkActive="!bg-white/10" [routerLinkActiveOptions]="{ exact: true }">{{ 'sellerPortal.ordersTitle' | transloco }}</a>
+      <a mat-button routerLink="/orders/returns" routerLinkActive="!bg-white/10">{{ 'nav.returns' | transloco }}</a>
       <a mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
       <a mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
       } @else {

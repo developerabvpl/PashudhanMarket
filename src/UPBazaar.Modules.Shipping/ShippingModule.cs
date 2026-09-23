@@ -75,6 +75,7 @@ public static class ShippingModuleExtensions
         }
 
         services.AddScoped<ParcelPlanner>();
+        services.AddScoped<ReturnPickupBooker>();
 
         return services;
     }

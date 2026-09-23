@@ -94,6 +94,79 @@ internal sealed partial class ShiprocketGateway(
         return response.IsSuccess ? Result.Success() : Result.Failure(ShippingErrors.CourierUnavailable);
     }
 
+    /// <remarks>
+    /// Shiprocket's return order names both addresses in full: "pickup" is the buyer, "shipping" is
+    /// where it goes back to. Its pickup location names are not used, since the seller's
+    /// registered address need not be one. Email fields are left blank: buyers sign in by mobile.
+    /// </remarks>
+    public async Task<Result<CarrierOrder>> CreateReturnOrderAsync(
+        CourierReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        var from = request.CollectFrom;
+        var to = request.DeliverTo;
+
+        var body = new
+        {
+            order_id = request.Reference,
+            order_date = request.OrderDateUtc.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+            pickup_customer_name = from.Name,
+            pickup_last_name = "",
+            pickup_address = from.Line1,
+            pickup_address_2 = from.Line2 ?? "",
+            pickup_city = from.City,
+            pickup_state = from.State,
+            pickup_country = "India",
+            pickup_pincode = from.Pincode,
+            pickup_email = "",
+            pickup_phone = from.Phone,
+            shipping_customer_name = to.Name,
+            shipping_last_name = "",
+            shipping_address = to.Line1,
+            shipping_address_2 = to.Line2 ?? "",
+            shipping_city = to.City,
+            shipping_state = to.State,
+            shipping_country = "India",
+            shipping_pincode = to.Pincode,
+            shipping_email = "",
+            shipping_isd_code = "91",
+            shipping_phone = to.Phone,
+            order_items = request.Items.Select(i => new
+            {
+                name = i.Name,
+                sku = i.Sku,
+                units = i.Units,
+                selling_price = i.SellingPrice,
+            }),
+            payment_method = "Prepaid",
+            total_discount = 0,
+            sub_total = request.SubTotal,
+            length = request.LengthCm,
+            breadth = request.BreadthCm,
+            height = request.HeightCm,
+            weight = request.WeightGrams / 1000m,
+        };
+
+        var response = await SendAsync<CreateOrderResponse>(HttpMethod.Post, "orders/create/return", body, cancellationToken);
+
+        return response.IsSuccess && response.Value is { OrderId: > 0, ShipmentId: > 0 } created
+            ? new CarrierOrder(created.OrderId.ToString(CultureInfo.InvariantCulture), created.ShipmentId.ToString(CultureInfo.InvariantCulture))
+            : Result.Failure<CarrierOrder>(ShippingErrors.CourierUnavailable);
+    }
+
+    public async Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken)
+    {
+        var response = await SendAsync<AssignAwbResponse>(
+            HttpMethod.Post,
+            "courier/assign/awb",
+            new { shipment_id = long.Parse(carrierShipmentId, CultureInfo.InvariantCulture), is_return = 1 },
+            cancellationToken);
+
+        return response.IsSuccess && response.Value?.Response?.Data is { AwbCode.Length: > 0 } data
+            ? new CarrierAwb(data.AwbCode, data.CourierName ?? "Courier")
+            : Result.Failure<CarrierAwb>(ShippingErrors.CourierUnavailable);
+    }
+
     public async Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken)
     {
         var response = await SendAsync<JsonElement>(

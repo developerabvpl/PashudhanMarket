@@ -56,11 +56,18 @@ internal sealed class RefundConfiguration : IEntityTypeConfiguration<Refund>
         // The finance queue: what is still owed, oldest first.
         builder.HasIndex(x => new { x.Status, x.CreatedAtUtc });
 
-        // One refund per cancelled part, even if the cancellation event arrives twice.
-        builder.HasIndex(x => new { x.PaymentId, x.OrderPartId })
+        // One refund per part, even if the event that owes it arrives twice. A part is refunded
+        // once, however: cancelled or sent back, and by Razorpay or by UPI.
+        builder.HasIndex(x => x.OrderPartId)
             .IsUnique()
             .HasFilter("[OrderPartId] IS NOT NULL");
 
+        builder.HasIndex(x => x.OrderId);
+
+        builder.Property(x => x.OrderNumber).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(x => x.Method).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.UpiId).HasMaxLength(64);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.Reason).HasMaxLength(500).IsRequired();
         builder.Property(x => x.GatewayRefundId).HasMaxLength(64);

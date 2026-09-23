@@ -63,3 +63,9 @@ public sealed record SellerSummaryDto(
 /// <param name="Id">Public id: the seller id products, orders and shipments carry.</param>
 /// <param name="ShopName">Name buyers see.</param>
 public sealed record SellerNameDto(Guid Id, string ShopName);
+
+/// <summary>Where a buyer's return is taken, and who to hand it to.</summary>
+/// <param name="ShopName">Name the courier asks for.</param>
+/// <param name="ContactMobile">For the courier.</param>
+/// <param name="Address">The seller's registered business address.</param>
+public sealed record SellerReturnAddressDto(string ShopName, string ContactMobile, SellerAddressDto Address);

@@ -15,6 +15,7 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="ItemCount">Units in the part.</param>
 /// <param name="City">Where it goes, for a glance at the list.</param>
 /// <param name="PlacedAtUtc">When the order was placed.</param>
+/// <param name="ReturnRequestStatus">Requested, Approved or Rejected if the buyer asked to return it; else null.</param>
 public sealed record SellerOrderSummaryDto(
     Guid OrderId,
     string OrderNumber,
@@ -26,11 +27,13 @@ public sealed record SellerOrderSummaryDto(
     string Currency,
     int ItemCount,
     string City,
-    DateTime PlacedAtUtc);
+    DateTime PlacedAtUtc,
+    string? ReturnRequestStatus);
 
 /// <summary>
 /// A seller's part of one order in full: what to pack and where it goes. ReturnCondition is null
-/// until a part that came back undelivered has been inspected.
+/// until a part that came back has been inspected. ReturnRequest is the buyer's request to send it
+/// back, if any, without the buyer's UPI id: refunds are the platform's to pay, not the seller's.
 /// </summary>
 public sealed record SellerOrderDto(
     Guid OrderId,
@@ -45,4 +48,5 @@ public sealed record SellerOrderDto(
     DeliveryAddressDto DeliveryAddress,
     IReadOnlyList<OrderLineDto> Lines,
     string? CancellationReason,
-    string? ReturnCondition);
+    string? ReturnCondition,
+    ReturnRequestDto? ReturnRequest);

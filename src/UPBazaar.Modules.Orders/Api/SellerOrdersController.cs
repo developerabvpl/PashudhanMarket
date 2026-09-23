@@ -53,11 +53,58 @@ public sealed class SellerOrdersController(IDispatcher dispatcher, ICurrentUser 
     public Task<ActionResult<SellerOrderDto>> Get(Guid orderId, CancellationToken cancellationToken) =>
         AsSeller(seller => dispatcher.QueryAsync(new GetSellerOrderQuery(seller, orderId), cancellationToken));
 
+    /// <summary>Lists buyers' requests to return the seller's parcels.</summary>
+    [HttpGet("returns")]
+    [EndpointSummary("List return requests for my parcels")]
+    [EndpointDescription("Filter to Requested for the ones waiting for the seller's decision, oldest first.")]
+    [ProducesResponseType<PagedList<ReturnRequestSummaryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public Task<ActionResult<PagedList<ReturnRequestSummaryDto>>> ListReturns(
+        [FromQuery] ReturnRequestsRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsSeller(seller => dispatcher.QueryAsync(
+            new ListReturnRequestsQuery(request.Page ?? 1, request.PageSize ?? 25, request.Status, seller),
+            cancellationToken));
+    }
+
+    /// <summary>Accepts or refuses a buyer's request to return the seller's parcel.</summary>
+    [HttpPost("{orderId:guid}/parts/{partId:guid}/return-decision")]
+    [EndpointSummary("Decide a return request")]
+    [EndpointDescription(
+        "Approving books a courier pickup from the buyer and the parcel comes back to the seller, "
+        + "to be inspected. Refusing needs a note saying why, which the buyer sees.")]
+    [ProducesResponseType<SellerOrderDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public Task<ActionResult<SellerOrderDto>> DecideReturn(
+        Guid orderId,
+        Guid partId,
+        DecideReturnRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsSeller<SellerOrderDto>(async seller =>
+        {
+            var decided = await dispatcher.SendAsync(
+                new DecideReturnCommand(orderId, partId, seller, request.Approve, request.Note), cancellationToken);
+
+            return decided.IsFailure
+                ? Result.Failure<SellerOrderDto>(decided.Error)
+                : await dispatcher.QueryAsync(new GetSellerOrderQuery(seller, orderId), cancellationToken);
+        });
+    }
+
     /// <summary>Records what the seller found in a returned parcel.</summary>
     [HttpPost("{orderId:guid}/parts/{partId:guid}/return-inspection")]
     [EndpointSummary("Inspect my returned parcel")]
     [EndpointDescription(
-        "For a part the courier brought back undelivered: Good puts its stock back on sale, Damaged does not. Once per parcel.")]
+        "For a part that came back - undelivered, or returned by the buyer: Good puts its stock back on sale, Damaged does not. Once per parcel.")]
     [ProducesResponseType<SellerOrderDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

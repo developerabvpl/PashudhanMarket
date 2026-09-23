@@ -29,6 +29,14 @@ export function orderStatusBadge(status: string): StatusBadge {
   return { key: `orders.status.${status}`, tone: TONES[status] ?? NEUTRAL };
 }
 
-export function partStatusBadge(status: string): StatusBadge {
-  return { key: `orders.partStatus.${status}`, tone: TONES[status] ?? NEUTRAL };
+/**
+ * A part going or gone back reads differently depending on why: "could not be delivered" for a
+ * courier return, "being returned" for one the buyer asked for and the seller accepted.
+ */
+export function partStatusBadge(status: string, buyerReturn = false): StatusBadge {
+  const key = buyerReturn && (status === 'Returning' || status === 'Returned')
+    ? `orders.returnStatus.${status}`
+    : `orders.partStatus.${status}`;
+
+  return { key, tone: TONES[status] ?? NEUTRAL };
 }

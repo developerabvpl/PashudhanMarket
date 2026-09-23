@@ -58,6 +58,16 @@ public sealed class FakeCourierGateway : ICourierGateway
     public Task<Result> RequestPickupAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success());
 
+    public Task<Result<CarrierOrder>> CreateReturnOrderAsync(CourierReturnRequest request, CancellationToken cancellationToken)
+    {
+        var shipmentId = Random.Shared.NextInt64(100_000_000, 999_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        return Task.FromResult(Result.Success(new CarrierOrder($"8{shipmentId}", shipmentId)));
+    }
+
+    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success(new CarrierAwb($"FAKER{carrierShipmentId}", "Fake Express Reverse")));
+
     public Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success());
 
@@ -81,6 +91,12 @@ internal sealed class UnconfiguredCourierGateway : ICourierGateway
 
     public Task<Result> RequestPickupAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure(ShippingErrors.CourierDisabled));
+
+    public Task<Result<CarrierOrder>> CreateReturnOrderAsync(CourierReturnRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Failure<CarrierOrder>(ShippingErrors.CourierDisabled));
+
+    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Failure<CarrierAwb>(ShippingErrors.CourierDisabled));
 
     public Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure(ShippingErrors.CourierDisabled));
