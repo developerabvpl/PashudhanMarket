@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Api, PublicReviewDto, RatingSummaryDto, apiV1ReviewsProductsProductIdGet } from '@upbazaar/data-access';
 import { StarRating } from '@upbazaar/ui';
@@ -100,6 +100,12 @@ const PAGE_SIZE = 10;
 export class ProductReviews {
   readonly productId = input.required<string>();
 
+  /**
+   * The rating as loaded, with the product it belongs to, so the page can put it in its
+   * structured data without ever pairing one product with another's rating.
+   */
+  readonly rated = output<{ productId: string; summary: RatingSummaryDto }>();
+
   protected readonly summary = signal<RatingSummaryDto | null>(null);
   protected readonly reviews = signal<readonly PublicReviewDto[]>([]);
   protected readonly total = signal(0);
@@ -150,6 +156,11 @@ export class ProductReviews {
 
       this.page = page;
       this.summary.set(result.summary);
+
+      if (page === 1) {
+        this.rated.emit({ productId, summary: result.summary });
+      }
+
       this.total.set(result.totalCount);
       this.reviews.update((shown) => (page === 1 ? result.items : [...shown, ...result.items]));
     } catch {

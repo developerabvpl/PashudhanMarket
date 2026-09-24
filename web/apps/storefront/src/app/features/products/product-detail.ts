@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { ProductDto } from '@upbazaar/data-access';
+import { ProductDto, RatingSummaryDto } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
 import { productFacts } from '../../core/product-facts';
@@ -158,7 +158,7 @@ const ORIGIN = 'https://upbazaar.example';
         </div>
       </div>
 
-      <upb-product-reviews [productId]="item.id" />
+      <upb-product-reviews [productId]="item.id" (rated)="rated.set($event)" />
     </article>
     }
   `,
@@ -199,6 +199,16 @@ export class ProductDetail {
     return productFacts(item?.name ?? '');
   });
 
+  /** The rating the reviews section last loaded, and whose it is. Browser only; see product-jsonld. */
+  protected readonly rated = signal<{ productId: string; summary: RatingSummaryDto } | null>(null);
+
+  /** The rating for this product, never one left over from the product shown before it. */
+  private ratingFor(productId: string): RatingSummaryDto | null {
+    const rated = this.rated();
+
+    return rated?.productId === productId ? rated.summary : null;
+  }
+
   protected async addToCart(item: ProductDto): Promise<void> {
     if (await this.cart.add(item)) {
       this.toast.success('cart.added');
@@ -232,7 +242,7 @@ export class ProductDetail {
       this.seo.setJsonLd({
         '@context': 'https://schema.org',
         '@graph': [
-          productJsonLd(item, canonicalUrl, this.photoUrl() && `${ORIGIN}${this.photoUrl()}`),
+          productJsonLd(item, canonicalUrl, this.photoUrl() && `${ORIGIN}${this.photoUrl()}`, this.ratingFor(item.id)),
           breadcrumbJsonLd(item, ORIGIN, canonicalUrl),
         ],
       });

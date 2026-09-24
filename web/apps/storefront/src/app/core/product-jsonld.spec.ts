@@ -113,3 +113,22 @@ describe('productJsonLd images', () => {
     expect((productJsonLd(baseProduct, url, null) as Record<string, any>)['image']).toBeUndefined();
   });
 });
+
+describe('productJsonLd ratings', () => {
+  it('publishes the average and how many rated it', () => {
+    const schema = productJsonLd(baseProduct, url, null, { average: 4.3, count: 12, stars: [0, 1, 1, 3, 7] }) as Record<string, any>;
+
+    expect(schema['aggregateRating']).toEqual({
+      '@type': 'AggregateRating',
+      ratingValue: 4.3,
+      ratingCount: 12,
+      bestRating: 5,
+      worstRating: 1,
+    });
+  });
+
+  it('leaves the rating out until someone has rated it, rather than claiming zero stars', () => {
+    expect(productJsonLd(baseProduct, url, null, { average: 0, count: 0, stars: [0, 0, 0, 0, 0] })).not.toHaveProperty('aggregateRating');
+    expect(productJsonLd(baseProduct, url)).not.toHaveProperty('aggregateRating');
+  });
+});

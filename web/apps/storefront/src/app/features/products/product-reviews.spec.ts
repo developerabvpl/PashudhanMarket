@@ -78,6 +78,25 @@ describe('ProductReviews', () => {
     expect([...element.querySelectorAll('button')].some((b) => b.textContent?.includes('Show more reviews'))).toBe(false);
   });
 
+  it('reports the rating it loaded, with the product it belongs to', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideI18n(),
+        { provide: Api, useValue: { invoke: vi.fn(async () => page([review('r1')], 1, 3)) } },
+        { provide: PLATFORM_ID, useValue: 'browser' },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(ProductReviews);
+    const rated = vi.fn();
+    fixture.componentInstance.rated.subscribe(rated);
+    fixture.componentRef.setInput('productId', 'p1');
+    await fixture.whenStable();
+
+    expect(rated).toHaveBeenCalledWith({ productId: 'p1', summary: { average: 4.5, count: 3, stars: [0, 0, 0, 2, 1] } });
+  });
+
   it('says so when nobody has rated the product', async () => {
     const { element } = await render(vi.fn(async () => page([], 1, 0)));
 
