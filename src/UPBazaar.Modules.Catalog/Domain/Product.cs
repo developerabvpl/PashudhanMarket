@@ -204,6 +204,8 @@ public sealed class Product : AggregateRoot, IAuditable
         Status = ProductStatus.Draft;
         ReviewNote = note.Trim();
 
+        Raise(new ProductSentBackDomainEvent(PublicId, SellerId, Name, ReviewNote));
+
         return Result.Success();
     }
 

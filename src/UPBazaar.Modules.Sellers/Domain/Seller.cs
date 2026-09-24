@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Sellers.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
 using UPBazaar.SharedKernel.Results;
 
@@ -173,6 +174,8 @@ public sealed class Seller : AggregateRoot, IAuditable
         ReviewedAtUtc = now;
         ReviewedBy = reviewedBy;
 
+        Raise(new SellerApprovedDomainEvent(PublicId, ShopName));
+
         return Result.Success();
     }
 
@@ -189,6 +192,8 @@ public sealed class Seller : AggregateRoot, IAuditable
         ReviewNote = note.Trim();
         ReviewedAtUtc = now;
         ReviewedBy = reviewedBy;
+
+        Raise(new SellerRejectedDomainEvent(PublicId, ShopName, ReviewNote));
 
         return Result.Success();
     }

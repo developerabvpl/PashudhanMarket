@@ -9,7 +9,9 @@ using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.IntegrationTests.Infrastructure;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Identity.Contracts.Dtos;
+using UPBazaar.Modules.Notifications.Domain;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
+using UPBazaar.Modules.Sellers.Contracts.Dtos;
 using UPBazaar.Modules.Sellers.Domain;
 using UPBazaar.Modules.Settlements.Contracts.Dtos;
 using UPBazaar.Modules.Settlements.Domain;
@@ -87,6 +89,27 @@ public sealed class SettlementTests(ApiFixture fixture)
         var balance = await seller.GetFromJsonAsync<SellerBalanceDto>(BalanceUri);
         balance!.PaidAmount.ShouldBe(138m);
         balance.PayableAmount.ShouldBe(0m);
+
+        // The seller is told, with the UTR. This one has no email address, so it is recorded as skipped.
+        await ProcessOutboxAsync();
+
+        using var scope = fixture.CreateScope();
+        var told = await scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>().Set<NotificationMessage>()
+            .AsNoTracking()
+            .SingleAsync(m => m.Template == "payout-paid" && m.Body.Contains("N123456789012345"));
+        told.Status.ShouldBe(NotificationStatus.Skipped);
+        told.Subject.ShouldBe("₹138 sent to your bank account");
+    }
+
+    [DatabaseFact]
+    public async Task Finance_pick_sellers_for_a_commission_from_the_approved_ones()
+    {
+        var admin = await AdminClientAsync();
+        var (sellerId, _) = await SellerAsync(admin);
+
+        var sellers = await admin.GetFromJsonAsync<IReadOnlyList<SellerNameDto>>(new Uri("/api/v1/admin/settlements/sellers", UriKind.Relative));
+
+        sellers!.ShouldContain(s => s.Id == sellerId && s.ShopName == "Settlement Gaushala");
     }
 
     [DatabaseFact]

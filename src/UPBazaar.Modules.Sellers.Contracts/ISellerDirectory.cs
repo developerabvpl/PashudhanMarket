@@ -38,6 +38,9 @@ public interface ISellerDirectory
     /// money was sent. Null if the id matches no seller.
     /// </summary>
     Task<SellerPayoutAccountDto?> GetPayoutAccountAsync(Guid sellerId, CancellationToken cancellationToken);
+
+    /// <summary>Where to email a seller about orders, returns, listings and payouts. Null if the id matches no seller.</summary>
+    Task<SellerContactDto?> GetContactAsync(Guid sellerId, CancellationToken cancellationToken);
 }
 
 /// <summary>The one failure every seller-facing endpoint shares.</summary>

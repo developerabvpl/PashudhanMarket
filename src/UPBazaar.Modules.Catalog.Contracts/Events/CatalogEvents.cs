@@ -20,3 +20,10 @@ public sealed record ProductPriceChangedDomainEvent(
     decimal OldPrice,
     decimal NewPrice,
     string Currency) : DomainEvent;
+
+/// <summary>A moderator sent a seller's listing back as a draft, saying what to fix. The seller is told.</summary>
+/// <param name="ProductId">The listing.</param>
+/// <param name="SellerId">Whose it is.</param>
+/// <param name="Name">The listing's title.</param>
+/// <param name="Note">What to fix, in the moderator's words.</param>
+public sealed record ProductSentBackDomainEvent(Guid ProductId, Guid SellerId, string Name, string Note) : DomainEvent;

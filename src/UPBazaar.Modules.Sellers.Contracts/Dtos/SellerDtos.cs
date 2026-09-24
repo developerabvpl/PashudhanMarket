@@ -79,3 +79,10 @@ public sealed record SellerReturnAddressDto(string ShopName, string ContactMobil
 /// <param name="AccountNumber">The full account number.</param>
 /// <param name="Ifsc">The branch's IFSC.</param>
 public sealed record SellerPayoutAccountDto(string ShopName, string AccountHolder, string AccountNumber, string Ifsc);
+
+/// <summary>Where to write to a seller.</summary>
+/// <param name="ShopName">Name to address them by.</param>
+/// <param name="Email">
+/// The shop's contact email, or failing that its owner's sign-in email; null when it has neither.
+/// </param>
+public sealed record SellerContactDto(string ShopName, string? Email);

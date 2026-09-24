@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Shipping.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
 
 namespace UPBazaar.Modules.Shipping.Domain;
@@ -224,6 +225,14 @@ public sealed class Shipment : AggregateRoot, IAuditable
         if (mapped is not { } next || !CanMove(Direction, Status, next))
         {
             return false;
+        }
+
+        // The first scan that has the parcel moving towards the buyer: tell them once.
+        if (Direction == ShipmentDirection.Forward
+            && next == ShipmentStatus.InTransit
+            && Status is ShipmentStatus.Booking or ShipmentStatus.PickupRequested)
+        {
+            Raise(new ShipmentDispatchedDomainEvent(PublicId, OrderId, OrderNumber, OrderPartId, BuyerId, CourierName, Awb));
         }
 
         Status = next;

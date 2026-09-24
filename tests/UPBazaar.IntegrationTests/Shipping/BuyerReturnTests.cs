@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Infrastructure.Persistence;
@@ -9,6 +10,7 @@ using UPBazaar.IntegrationTests.Infrastructure;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Identity.Contracts.Dtos;
 using UPBazaar.Modules.Inventory.Contracts.Dtos;
+using UPBazaar.Modules.Notifications.Domain;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Payments.Contracts.Dtos;
 using UPBazaar.Modules.Payments.Gateway;
@@ -96,6 +98,19 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
                 new { gatewayRefundId = "412345678901" }))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
         (await RefundsForAsync(admin, order.Id)).Single().Status.ShouldBe("Refunded");
+
+        // The buyer is texted where the money went.
+        await ProcessOutboxAsync();
+
+        using var scope = fixture.CreateScope();
+        var texts = await scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>().Set<NotificationMessage>()
+            .AsNoTracking()
+            .Where(m => m.Body.Contains(order.Number))
+            .Select(m => new { m.Template, m.Body })
+            .ToListAsync();
+
+        texts.ShouldContain(t => t.Template == "return-approved");
+        texts.ShouldContain(t => t.Template == "refund-made" && t.Body.Contains("Rs. 150") && t.Body.Contains("asha.devi@okicici"));
     }
 
     [DatabaseFact]

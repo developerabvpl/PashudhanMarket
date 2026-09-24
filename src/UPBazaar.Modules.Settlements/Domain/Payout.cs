@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Settlements.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
 using UPBazaar.SharedKernel.Results;
 
@@ -131,6 +132,8 @@ public sealed class Payout : AggregateRoot, IAuditable
         Utr = utr.Trim();
         PaidAtUtc = now;
         PaidBy = paidBy;
+
+        Raise(new PayoutPaidDomainEvent(PublicId, SellerId, NetAmount, Currency, EarningCount, Utr));
 
         return Result.Success();
     }

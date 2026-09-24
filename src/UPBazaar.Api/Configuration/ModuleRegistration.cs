@@ -53,7 +53,7 @@ public static class ModuleRegistration
             .AddCrmModule()
             .AddAcademyModule()
             .AddCmsModule()
-            .AddNotificationsModule(environment)
+            .AddNotificationsModule(configuration, environment)
             .AddReportingModule();
     }
 }

@@ -1,9 +1,11 @@
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UPBazaar.Infrastructure;
 using UPBazaar.Modules.Notifications.Contracts;
 using UPBazaar.Modules.Notifications.Delivery;
+using UPBazaar.Modules.Notifications.Messages;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Notifications;
@@ -35,16 +37,28 @@ public static class NotificationsModuleExtensions
     /// provider fails at the first send rather than silently dropping a one-time code.
     /// </summary>
     /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration, for <see cref="NotificationsModuleOptions"/>.</param>
     /// <param name="environment">Host environment.</param>
     /// <returns>The same collection, for chaining.</returns>
     public static IServiceCollection AddNotificationsModule(
         this IServiceCollection services,
+        IConfiguration configuration,
         IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(environment);
 
         services.AddModule<NotificationsModule>();
+
+        services.AddOptions<NotificationsModuleOptions>()
+            .Bind(configuration.GetSection(NotificationsModuleOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddScoped<Notifier>();
+        services.AddScoped<BuyerTexts>();
+        services.AddScoped<SellerEmails>();
 
         // Testing counts as development here: the integration suite asserts on the code it
         // sends, and a throwing sender would make the OTP tests untestable.

@@ -52,6 +52,7 @@ public static class OrdersModuleExtensions
         services.AddScoped<OrderCanceller>();
         services.AddScoped<IOrderPaymentService, OrderPaymentService>();
         services.AddScoped<IOrderFulfilmentService, OrderFulfilmentService>();
+        services.AddScoped<IOrderDirectory, OrderDirectory>();
         services.AddScoped<UnpaidOrderExpiryJob>();
 
         return services;

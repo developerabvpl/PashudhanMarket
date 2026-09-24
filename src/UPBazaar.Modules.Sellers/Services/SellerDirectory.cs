@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Modules.Identity.Contracts;
 using UPBazaar.Modules.Sellers.Contracts;
 using UPBazaar.Modules.Sellers.Contracts.Dtos;
 using UPBazaar.Modules.Sellers.Domain;
@@ -10,8 +11,32 @@ using UPBazaar.SharedKernel.Abstractions;
 namespace UPBazaar.Modules.Sellers.Services;
 
 /// <summary>Implements <see cref="ISellerDirectory"/>.</summary>
-internal sealed class SellerDirectory(UPBazaarDbContext dbContext) : ISellerDirectory
+internal sealed class SellerDirectory(UPBazaarDbContext dbContext, IUserDirectory users) : ISellerDirectory
 {
+    public async Task<SellerContactDto?> GetContactAsync(Guid sellerId, CancellationToken cancellationToken)
+    {
+        var seller = await dbContext.Set<Seller>()
+            .AsNoTracking()
+            .Where(s => s.PublicId == sellerId)
+            .Select(s => new { s.ShopName, s.ContactEmail, s.OwnerUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (seller is null)
+        {
+            return null;
+        }
+
+        // The shop's own contact address first: it is the one the seller chose for the business.
+        if (seller.ContactEmail is not null || seller.OwnerUserId is not { } owner)
+        {
+            return new SellerContactDto(seller.ShopName, seller.ContactEmail);
+        }
+
+        var user = await users.GetUserAsync(owner, cancellationToken);
+
+        return new SellerContactDto(seller.ShopName, user.IsSuccess ? user.Value.Email : null);
+    }
+
     public async Task<Guid?> GetApprovedSellerIdAsync(Guid ownerUserId, CancellationToken cancellationToken)
     {
         var id = await dbContext.Set<Seller>()

@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Payments.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
 using UPBazaar.SharedKernel.Results;
 
@@ -231,8 +232,12 @@ public enum RefundMethod
 ///
 /// A Razorpay refund belongs to the payment it reverses. A UPI refund stands alone, since cash on
 /// delivery leaves no payment here; so every refund carries its order, whatever it came out of.
+///
+/// An aggregate root in its own right, though a Razorpay refund is saved with its payment, because
+/// recording it as made raises the event that tells the buyer - and a UPI refund has no payment to
+/// raise it through.
 /// </summary>
-public sealed class Refund : Entity
+public sealed class Refund : AggregateRoot
 {
     private Refund()
     {
@@ -328,6 +333,8 @@ public sealed class Refund : Entity
         GatewayRefundId = gatewayRefundId.Trim();
         RefundedAtUtc = now;
         RefundedBy = by;
+
+        Raise(new RefundMadeDomainEvent(PublicId, OrderId, OrderNumber, Amount, Currency, Method.ToString(), UpiId));
 
         return Result.Success();
     }
