@@ -8,6 +8,7 @@ import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
 import { CartStore } from '../cart/cart.store';
+import { ProductReviews } from './product-reviews';
 import { ProductThumb, productPhotoUrl } from './product-thumb';
 
 const ORIGIN = 'https://upbazaar.example';
@@ -15,7 +16,7 @@ const ORIGIN = 'https://upbazaar.example';
 /** Public product page: server-rendered, canonicalised, and marked up with JSON-LD. */
 @Component({
   selector: 'upb-product-detail',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, ProductThumb],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, ProductThumb, ProductReviews],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (product(); as item) {
@@ -156,6 +157,8 @@ const ORIGIN = 'https://upbazaar.example';
           </dl>
         </div>
       </div>
+
+      <upb-product-reviews [productId]="item.id" />
     </article>
     }
   `,

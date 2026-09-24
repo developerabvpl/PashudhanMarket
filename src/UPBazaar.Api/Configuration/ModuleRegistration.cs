@@ -49,7 +49,7 @@ public static class ModuleRegistration
             .AddShippingModule(configuration, environment)
             .AddSettlementsModule()
             .AddPromotionsModule()
-            .AddReviewsModule()
+            .AddReviewsModule(configuration, environment)
             .AddCrmModule()
             .AddAcademyModule()
             .AddCmsModule()

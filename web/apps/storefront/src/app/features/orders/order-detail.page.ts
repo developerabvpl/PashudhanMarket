@@ -15,6 +15,7 @@ import { SeoService } from '../../core/seo.service';
 import { OrderPayPanel } from '../payments/order-pay-panel';
 import { orderStatusBadge, partStatusBadge } from './order-labels';
 import { ReturnPanel } from './return-panel';
+import { ReviewPanel } from './review-panel';
 
 /**
  * One of the buyer's orders, and the confirmation page too: checkout lands here with ?placed=1,
@@ -26,7 +27,7 @@ import { ReturnPanel } from './return-panel';
  */
 @Component({
   selector: 'upb-order-detail-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel, ReturnPanel],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel, ReturnPanel, ReviewPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
@@ -79,14 +80,20 @@ import { ReturnPanel } from './return-panel';
           </div>
           <ul class="divide-y divide-border">
             @for (line of part.lines; track line.productId) {
-            <li class="flex justify-between gap-4 px-4 py-3 text-sm">
-              <a class="min-w-0 text-ink hover:text-brand-700" [routerLink]="['/products', line.productId]">
-                {{ line.name }}
-                <span class="text-ink-muted">× {{ line.quantity }}</span>
-              </a>
-              <span class="shrink-0 font-medium text-ink" [class.line-through]="part.status === 'Cancelled'">
-                {{ line.lineTotal | inr: 'symbol' : 'auto' }}
-              </span>
+            <li class="px-4 py-3 text-sm">
+              <div class="flex justify-between gap-4">
+                <a class="min-w-0 text-ink hover:text-brand-700" [routerLink]="['/products', line.productId]">
+                  {{ line.name }}
+                  <span class="text-ink-muted">× {{ line.quantity }}</span>
+                </a>
+                <span class="shrink-0 font-medium text-ink" [class.line-through]="part.status === 'Cancelled'">
+                  {{ line.lineTotal | inr: 'symbol' : 'auto' }}
+                </span>
+              </div>
+              <!-- Once delivered, always reviewable - even if the parcel later went back. -->
+              @if (part.deliveredAtUtc) {
+              <upb-review-panel [productId]="line.productId" />
+              }
             </li>
             }
           </ul>

@@ -493,3 +493,6 @@ web/.nx/
 web/.angular/
 web/test-output/
 web/playwright-report/
+
+# Review photos kept on local disk in Development
+App_Data/

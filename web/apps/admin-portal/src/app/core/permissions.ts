@@ -55,3 +55,9 @@ export const InventoryPermissions = {
   StockRead: 'inventory.stock.read',
   StockWrite: 'inventory.stock.write',
 } as const;
+
+/** Permission names the review moderation screen depends on. */
+export const ReviewsPermissions = {
+  Read: 'reviews.read',
+  Moderate: 'reviews.moderate',
+} as const;

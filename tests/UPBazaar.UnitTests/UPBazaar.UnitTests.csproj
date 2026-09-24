@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Payments\UPBazaar.Modules.Payments.csproj" />
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Shipping\UPBazaar.Modules.Shipping.csproj" />
     <ProjectReference Include="..\..\src\UPBazaar.Modules.Settlements\UPBazaar.Modules.Settlements.csproj" />
+    <ProjectReference Include="..\..\src\UPBazaar.Modules.Reviews\UPBazaar.Modules.Reviews.csproj" />
   </ItemGroup>
 
   <ItemGroup>

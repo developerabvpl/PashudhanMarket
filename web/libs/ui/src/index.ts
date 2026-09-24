@@ -5,3 +5,4 @@ export * from './lib/components/toast-host';
 export * from './lib/components/field-errors';
 export * from './lib/components/page-state';
 export * from './lib/components/language-switcher';
+export * from './lib/components/star-rating';

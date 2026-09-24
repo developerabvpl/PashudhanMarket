@@ -11,6 +11,7 @@ import {
   IdentityPermissions,
   OrderingPermissions,
   PaymentsPermissions,
+  ReviewsPermissions,
   SellersPermissions,
   SettlementsPermissions,
   ShippingPermissions,
@@ -89,6 +90,9 @@ import {
           </a>
         </mat-menu>
       </ng-container>
+      <a *hasPermission="reviewsRead" mat-button routerLink="/reviews">
+        {{ 'nav.buyerReviews' | transloco }}
+      </a>
 
       <upb-language-switcher />
 
@@ -126,6 +130,7 @@ export class App {
   protected readonly productsRead = CatalogPermissions.ProductsRead;
   protected readonly productsWrite = CatalogPermissions.ProductsWrite;
   protected readonly categoriesWrite = CatalogPermissions.CategoriesWrite;
+  protected readonly reviewsRead = ReviewsPermissions.Read;
 
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;

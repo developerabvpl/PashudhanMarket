@@ -36,6 +36,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     private string _connectionString = string.Empty;
     private string? _createdDatabase;
 
+    /// <summary>Where this run keeps review photos.</summary>
+    public string PhotoFolder { get; } = Path.Combine(Path.GetTempPath(), $"upbazaar-review-photos-{Guid.NewGuid():N}");
+
     /// <summary>Intercepts SMS so tests can read the one-time code that was issued.</summary>
     public CapturingSmsSender Sms { get; } = new();
 
@@ -65,6 +68,11 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public new async Task DisposeAsync()
     {
         await base.DisposeAsync();
+
+        if (Directory.Exists(PhotoFolder))
+        {
+            Directory.Delete(PhotoFolder, recursive: true);
+        }
 
         if (_container is not null)
         {
@@ -122,6 +130,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
         // Tests build their own catalogue; the sample import would make counts depend on a file.
         builder.UseSetting("Catalog:SeedFile", string.Empty);
+
+        // Review photos go to a folder of this run's own, removed with the database.
+        builder.UseSetting("Reviews:PhotoFolder", PhotoFolder);
 
         builder.ConfigureTestServices(services =>
         {

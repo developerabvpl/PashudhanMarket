@@ -4,6 +4,7 @@ using UPBazaar.Modules.Identity.Contracts.Permissions;
 using UPBazaar.Modules.Inventory.Contracts.Permissions;
 using UPBazaar.Modules.Orders.Contracts.Permissions;
 using UPBazaar.Modules.Payments.Contracts.Permissions;
+using UPBazaar.Modules.Reviews.Contracts.Permissions;
 using UPBazaar.Modules.Sellers.Contracts.Permissions;
 using UPBazaar.Modules.Settlements.Contracts.Permissions;
 using UPBazaar.Modules.Shipping.Contracts.Permissions;
@@ -38,6 +39,7 @@ public static class PermissionCatalog
         .. ShippingPermissions.All,
         .. SellersPermissions.All,
         .. SettlementsPermissions.All,
+        .. ReviewsPermissions.All,
         PlatformJobsView,
     ];
 
@@ -81,12 +83,14 @@ public static class PermissionCatalog
                 SettlementsPermissions.Read,
                 SettlementsPermissions.PayoutsApprove,
                 SettlementsPermissions.PolicyWrite,
+                ReviewsPermissions.Read,
+                ReviewsPermissions.Moderate,
                 PlatformJobsView,
             ]),
 
         new(
             RoleNames.CatalogModerator,
-            "Reviews and corrects seller listings.",
+            "Reviews and corrects seller listings, and moderates buyers' reviews.",
             [
                 IdentityPermissions.UsersRead,
                 CatalogPermissions.ProductsRead,
@@ -97,6 +101,8 @@ public static class PermissionCatalog
                 // off stays with Admin: that is a loss to account for, not a listing fix.
                 InventoryPermissions.StockRead,
                 InventoryPermissions.StockWrite,
+                ReviewsPermissions.Read,
+                ReviewsPermissions.Moderate,
             ]),
 
         new(
@@ -121,6 +127,9 @@ public static class PermissionCatalog
                 PaymentsPermissions.Read,
                 ShippingPermissions.ShipmentsRead,
                 SellersPermissions.Read,
+
+                // To answer "why is my review not showing?" - approving it stays with moderators.
+                ReviewsPermissions.Read,
             ]),
 
         new(
@@ -151,6 +160,7 @@ public static class PermissionCatalog
                 OrdersPermissions.SellerRead,
                 ShippingPermissions.OwnShipmentsWrite,
                 SettlementsPermissions.OwnRead,
+                ReviewsPermissions.SellerReply,
             ]),
 
         new(
@@ -162,6 +172,7 @@ public static class PermissionCatalog
                 OrdersPermissions.OwnRead,
                 OrdersPermissions.OwnWrite,
                 PaymentsPermissions.OwnWrite,
+                ReviewsPermissions.OwnWrite,
             ]),
     ];
 
