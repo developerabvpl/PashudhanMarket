@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Reviews.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
 using UPBazaar.SharedKernel.Results;
 
@@ -57,6 +58,9 @@ public sealed class Review : AggregateRoot, IAuditable
     public string ProductName { get; private set; } = string.Empty;
 
     public Guid BuyerId { get; private set; }
+
+    /// <summary>The order that delivered the product; its page is where the buyer edits the review.</summary>
+    public Guid OrderId { get; private set; }
 
     /// <summary>The buyer's display name when they last saved the review.</summary>
     public string ReviewerName { get; private set; } = string.Empty;
@@ -121,9 +125,13 @@ public sealed class Review : AggregateRoot, IAuditable
             SellerId = line.SellerId,
             ProductName = line.ProductName,
             BuyerId = line.BuyerId,
+            OrderId = line.OrderId,
         };
 
         review.Edit(reviewerName, rating, title, body, now);
+
+        review.Raise(new ReviewWrittenDomainEvent(
+            review.PublicId, review.SellerId, review.ProductId, review.ProductName, review.Rating, review.HasContent));
 
         return review;
     }
@@ -194,7 +202,14 @@ public sealed class Review : AggregateRoot, IAuditable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(note);
 
-        return Decide(ContentStatus.Rejected, note.Trim(), by, now);
+        var decided = Decide(ContentStatus.Rejected, note.Trim(), by, now);
+
+        if (decided.IsSuccess)
+        {
+            Raise(new ReviewRejectedDomainEvent(PublicId, BuyerId, OrderId, ProductName, ModerationNote!));
+        }
+
+        return decided;
     }
 
     /// <summary>The seller writes or rewrites their one reply.</summary>

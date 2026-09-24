@@ -3,6 +3,7 @@ using UPBazaar.Modules.Catalog.Contracts.Events;
 using UPBazaar.Modules.Notifications.Delivery;
 using UPBazaar.Modules.Orders.Contracts;
 using UPBazaar.Modules.Orders.Contracts.Events;
+using UPBazaar.Modules.Reviews.Contracts.Events;
 using UPBazaar.Modules.Sellers.Contracts;
 using UPBazaar.Modules.Sellers.Contracts.Events;
 using UPBazaar.Modules.Settlements.Contracts.Events;
@@ -179,5 +180,28 @@ internal sealed class PayoutPaidEmail(SellerEmails emails) : IDomainEventHandler
                 ],
                 "See your earnings",
                 emails.Portal("earnings")),
+            cancellationToken);
+}
+
+/// <summary>A buyer reviewed one of the seller's products: they may want to reply.</summary>
+internal sealed class ReviewWrittenSellerEmail(SellerEmails emails) : IDomainEventHandler<ReviewWrittenDomainEvent>
+{
+    public Task HandleAsync(ReviewWrittenDomainEvent e, CancellationToken cancellationToken) =>
+        emails.SendAsync(
+            e.SellerId,
+            "review-written",
+            $"review-written:{e.EventId}",
+            $"New {e.Rating}-star review of \"{e.ProductName}\"",
+            shop => Wording.Email(
+                $"Hello {shop},",
+                [
+                    $"A buyer gave \"{Wording.Html(e.ProductName)}\" {e.Rating} out of 5 stars.",
+                    e.HasContent
+                        ? "They also wrote a review. You will see their words once our staff have checked them."
+                        : "They left stars only.",
+                    "You can reply publicly from the seller portal; your reply is shown under the review.",
+                ],
+                "Read and reply",
+                emails.Portal("reviews")),
             cancellationToken);
 }

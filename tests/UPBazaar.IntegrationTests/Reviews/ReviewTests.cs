@@ -3,12 +3,14 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.IntegrationTests.Infrastructure;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Identity.Contracts.Dtos;
+using UPBazaar.Modules.Notifications.Domain;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Reviews.Contracts.Dtos;
 using UPBazaar.Modules.Sellers.Domain;
@@ -112,6 +114,42 @@ public sealed class ReviewTests(ApiFixture fixture)
         var fixedReview = (await MineAsync(buyer, productId)).Review!;
         fixedReview.ContentStatus.ShouldBe("Pending");
         fixedReview.ModerationNote.ShouldBeNull();
+    }
+
+    [DatabaseFact]
+    public async Task The_seller_hears_of_a_new_review_once_and_the_buyer_of_rejected_words()
+    {
+        var admin = await AdminClientAsync();
+        var (sellerId, _) = await SellerAsync(admin);
+        var (buyer, order) = await DeliveredAsync(admin, sellerId);
+        var productId = order.Parts.Single().Lines.Single().ProductId;
+
+        var review = (await (await SaveAsync(buyer, productId, 2, null, "Call me on 9876543210"))
+            .Content.ReadFromJsonAsync<ReviewDto>())!;
+        (await SaveAsync(buyer, productId, 1, null, "Call me on 9876543210 today")).EnsureSuccessStatusCode();
+        await ProcessOutboxAsync();
+
+        // One email for the review, not one per edit.
+        var written = (await MessagesAsync("review-written", SellerEmail(sellerId))).ShouldHaveSingleItem();
+        written.Status.ShouldBe(NotificationStatus.Sent);
+        written.Subject.ShouldBe("New 2-star review of \"Gobar Diya, pack of 12\"");
+        written.Body.ShouldContain("They also wrote a review.");
+        written.Body.ShouldContain("/reviews");
+
+        (await admin.PostAsJsonAsync(
+                new Uri($"/api/v1/admin/reviews/{review.Id}/reject", UriKind.Relative),
+                new { note = "Please leave out phone numbers." }))
+            .EnsureSuccessStatusCode();
+        await ProcessOutboxAsync();
+
+        using var scope = fixture.CreateScope();
+        var text = await scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>().Set<NotificationMessage>()
+            .AsNoTracking()
+            .SingleAsync(m => m.Template == "review-rejected" && m.Body.Contains(order.Id.ToString()));
+
+        text.Status.ShouldBe(NotificationStatus.Sent);
+        text.Body.ShouldStartWith("UP Bazaar: we could not publish the words of your review of Gobar Diya, pack of 12.");
+        text.Body.ShouldEndWith($"/orders/{order.Id}");
     }
 
     [DatabaseFact]
@@ -259,6 +297,18 @@ public sealed class ReviewTests(ApiFixture fixture)
         (await SellerReviewsAsync(seller)).Single(r => r.Id == review.Id).Reply!.Hidden.ShouldBeTrue();
     }
 
+    private static string SellerEmail(Guid sellerId) => $"seller-{sellerId:N}@upbazaar.test";
+
+    private async Task<IReadOnlyList<NotificationMessage>> MessagesAsync(string template, string recipient)
+    {
+        using var scope = fixture.CreateScope();
+
+        return await scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>().Set<NotificationMessage>()
+            .AsNoTracking()
+            .Where(m => m.Template == template && m.Recipient == recipient)
+            .ToListAsync();
+    }
+
     private static async Task<MyReviewDto> MineAsync(HttpClient buyer, Guid productId) =>
         (await buyer.GetFromJsonAsync<MyReviewDto>(new Uri($"/api/v1/reviews/mine/{productId}", UriKind.Relative)))!;
 
@@ -328,7 +378,7 @@ public sealed class ReviewTests(ApiFixture fixture)
             dbContext.Add(Seller.Seed(
                 id,
                 new SellerApplication(
-                    "Review Gaushala", null, "9000000000", null, "5 Dairy Lane", null, "Lucknow", "Uttar Pradesh",
+                    "Review Gaushala", null, "9000000000", SellerEmail(id), "5 Dairy Lane", null, "Lucknow", "Uttar Pradesh",
                     "226001", "Review Gaushala", null, "AAAAA0000A", "Review Gaushala", "112233445566", "SBIN0001234"),
                 DateTime.UtcNow));
 

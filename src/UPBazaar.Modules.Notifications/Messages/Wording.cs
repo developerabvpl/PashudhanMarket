@@ -29,6 +29,13 @@ internal static class Wording
     /// <summary>Text from a person - a note, a shop name - made safe to put in an email.</summary>
     public static string Html(string text) => WebUtility.HtmlEncode(text);
 
+    /// <summary>
+    /// Text cut to fit, with an ellipsis, so a long product name cannot push a text message into
+    /// a second, separately charged SMS.
+    /// </summary>
+    public static string Short(string text, int max) =>
+        text.Length <= max ? text : text[..(max - 1)].TrimEnd() + "…";
+
     /// <summary>A short HTML email: a greeting, paragraphs, and a link to act on.</summary>
     public static string Email(string greeting, IEnumerable<string> paragraphs, string linkText, string linkUrl) =>
         $"<p>{Html(greeting)}</p>"

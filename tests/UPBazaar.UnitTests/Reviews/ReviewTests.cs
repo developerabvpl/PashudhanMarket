@@ -1,3 +1,4 @@
+using UPBazaar.Modules.Reviews.Contracts.Events;
 using UPBazaar.Modules.Reviews.Domain;
 
 namespace UPBazaar.UnitTests.Reviews;
@@ -102,6 +103,30 @@ public sealed class ReviewTests
 
         review.ReplyHidden.ShouldBeTrue();
         review.RepliedAtUtc.ShouldBe(Now.AddHours(1));
+    }
+
+    [Fact]
+    public void Writing_a_review_tells_the_seller_once_and_rejecting_it_tells_the_buyer()
+    {
+        var review = Write(2, null, "Smaller than shown.");
+
+        var written = review.DomainEvents.OfType<ReviewWrittenDomainEvent>().ShouldHaveSingleItem();
+        written.Rating.ShouldBe(2);
+        written.HasContent.ShouldBeTrue();
+
+        review.ClearDomainEvents();
+        review.Edit("Asha", 1, null, "Much smaller than shown.", Now);
+        review.DomainEvents.ShouldBeEmpty();
+
+        review.Reject("Please describe the product, not the seller.", "staff", Now);
+        var rejected = review.DomainEvents.OfType<ReviewRejectedDomainEvent>().ShouldHaveSingleItem();
+        rejected.OrderId.ShouldBe(review.OrderId);
+        rejected.Note.ShouldBe("Please describe the product, not the seller.");
+
+        // A second decision finds nothing pending and raises nothing.
+        review.ClearDomainEvents();
+        review.Reject("Again.", "staff", Now);
+        review.DomainEvents.ShouldBeEmpty();
     }
 
     [Theory]

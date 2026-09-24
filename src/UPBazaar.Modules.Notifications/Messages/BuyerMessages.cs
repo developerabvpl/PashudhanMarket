@@ -4,6 +4,7 @@ using UPBazaar.Modules.Notifications.Delivery;
 using UPBazaar.Modules.Orders.Contracts;
 using UPBazaar.Modules.Orders.Contracts.Events;
 using UPBazaar.Modules.Payments.Contracts.Events;
+using UPBazaar.Modules.Reviews.Contracts.Events;
 using UPBazaar.Modules.Shipping.Contracts.Events;
 using UPBazaar.SharedKernel.Messaging;
 
@@ -111,4 +112,13 @@ internal sealed class RefundMadeBuyerText(BuyerTexts texts) : IDomainEventHandle
                 ? " to your original payment. It can take a few working days to reach you. "
                 : $" to {e.UpiId}. ")
             + link, cancellationToken);
+}
+
+internal sealed class ReviewRejectedBuyerText(BuyerTexts texts) : IDomainEventHandler<ReviewRejectedDomainEvent>
+{
+    // The staff note stays on the order page: at up to 500 characters it would not fit one SMS.
+    public Task HandleAsync(ReviewRejectedDomainEvent e, CancellationToken cancellationToken) =>
+        texts.SendAsync(e.OrderId, "review-rejected", $"review-rejected:{e.EventId}", (_, link) =>
+            $"UP Bazaar: we could not publish the words of your review of {Wording.Short(e.ProductName, 40)}. "
+            + $"Your stars still count. See why and change it: {link}", cancellationToken);
 }
