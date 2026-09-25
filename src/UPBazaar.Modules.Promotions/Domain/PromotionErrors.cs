@@ -26,6 +26,10 @@ public static class PromotionErrors
         "promotions.coupon.nothing_covered",
         "That coupon does not cover anything in your basket.");
 
+    public static readonly Error DeliveryAlreadyFree = Error.Validation(
+        "promotions.coupon.delivery_already_free",
+        "Delivery is already free on this order, so that coupon takes nothing off.");
+
     public static Error BelowMinimum(decimal minimum) => Error.Validation(
         "promotions.coupon.below_minimum",
         string.Create(CultureInfo.InvariantCulture, $"That coupon needs at least Rs {minimum:0.##} of the goods it covers."));

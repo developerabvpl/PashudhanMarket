@@ -42,7 +42,9 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 o.Parts
                     .Where(p => p.Status != OrderPartStatus.Cancelled && p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
                     .SelectMany(p => p.Lines)
-                    .Sum(l => (l.UnitPrice * l.Quantity) - l.Discount) + o.ShippingFee,
+                    .Sum(l => (l.UnitPrice * l.Quantity) - l.Discount)
+                    + o.ShippingFee
+                    - o.Parts.Where(p => p.FreeDelivery).Sum(p => p.DeliveryFee),
                 o.Currency,
                 o.Parts.SelectMany(p => p.Lines).Sum(l => l.Quantity),
                 o.PlacedAtUtc));
@@ -61,6 +63,7 @@ internal static class OrderMappings
         order.Subtotal,
         order.Discount,
         order.ShippingFee,
+        order.DeliveryDiscount,
         order.Total,
         order.Currency,
         order.DeliveryAddress.ToDto(),

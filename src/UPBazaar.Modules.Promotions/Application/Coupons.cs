@@ -14,8 +14,8 @@ namespace UPBazaar.Modules.Promotions.Application;
 /// <param name="Code">What buyers type: 4 to 20 letters, digits or hyphens.</param>
 /// <param name="Description">What it is for.</param>
 /// <param name="FundedBy">Platform or Seller. A seller's own coupon is always Seller.</param>
-/// <param name="DiscountType">Percent or Flat.</param>
-/// <param name="Value">The percentage (1 to 90), or the rupees off.</param>
+/// <param name="DiscountType">Percent, Flat or FreeDelivery.</param>
+/// <param name="Value">The percentage (1 to 90), or the rupees off; ignored for free delivery.</param>
 /// <param name="MaxDiscount">For a percentage, the most it takes off.</param>
 /// <param name="MinOrderValue">The least the goods it covers must come to.</param>
 /// <param name="StartsAtUtc">When it can first be used; now when null.</param>
@@ -46,8 +46,11 @@ internal sealed class CreateCouponCommandValidator : AbstractValidator<CreateCou
         RuleFor(x => x.FundedBy).Must(f => Enum.TryParse<CouponFunding>(f, ignoreCase: true, out _))
             .WithMessage("FundedBy must be Platform or Seller.");
         RuleFor(x => x.DiscountType).Must(t => Enum.TryParse<DiscountType>(t, ignoreCase: true, out _))
-            .WithMessage("DiscountType must be Percent or Flat.");
-        RuleFor(x => x.Value).GreaterThan(0).PrecisionScale(10, 2, ignoreTrailingZeros: true);
+            .WithMessage("DiscountType must be Percent, Flat or FreeDelivery.");
+
+        // Free delivery takes nothing off the goods, so whatever value comes with it is ignored.
+        RuleFor(x => x.Value).GreaterThan(0).PrecisionScale(10, 2, ignoreTrailingZeros: true)
+            .Unless(x => string.Equals(x.DiscountType, nameof(Domain.DiscountType.FreeDelivery), StringComparison.OrdinalIgnoreCase));
         RuleFor(x => x.Value).LessThanOrEqualTo(90)
             .When(x => string.Equals(x.DiscountType, nameof(Domain.DiscountType.Percent), StringComparison.OrdinalIgnoreCase))
             .WithMessage("A percentage coupon can take at most 90% off.");

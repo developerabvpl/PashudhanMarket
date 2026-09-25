@@ -20,7 +20,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
       <div class="flex items-start justify-between gap-3" role="status">
         <p class="text-ink">
           <span class="font-semibold">{{ c.code }}</span> · {{ c.description }}<br />
-          <span class="text-success">{{ 'checkout.coupon.saves' | transloco: { amount: (c.discount | inr: 'symbol' : 'auto') } }}</span>
+          <span class="text-success">{{ 'checkout.coupon.saves' | transloco: { amount: (c.discount + c.deliveryDiscount | inr: 'symbol' : 'auto') } }}</span>
         </p>
         <button type="button" class="shrink-0 text-ink-muted hover:underline" (click)="remove()">
           {{ 'checkout.coupon.remove' | transloco }}

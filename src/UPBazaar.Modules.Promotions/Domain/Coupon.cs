@@ -22,6 +22,12 @@ public enum DiscountType
 
     /// <summary>A fixed amount off, never more than the goods it covers.</summary>
     Flat = 1,
+
+    /// <summary>
+    /// No delivery charge on the parcels of the goods it covers. Takes nothing off the goods, so it
+    /// has no value.
+    /// </summary>
+    FreeDelivery = 2,
 }
 
 /// <summary>
@@ -125,7 +131,7 @@ public sealed class Coupon : AggregateRoot, IAuditable
             // A seller's own coupon is always theirs to pay for.
             FundedBy = sellerId is null ? fundedBy : CouponFunding.Seller,
             DiscountType = discountType,
-            Value = value,
+            Value = discountType == DiscountType.FreeDelivery ? 0m : value,
             MaxDiscount = discountType == DiscountType.Percent ? maxDiscount : null,
             MinOrderValue = minOrderValue,
             StartsAtUtc = startsAtUtc,
@@ -197,6 +203,13 @@ public sealed class Coupon : AggregateRoot, IAuditable
         if (MinOrderValue is { } minimum && goods < minimum)
         {
             return Result.Failure<CouponDiscountDto>(PromotionErrors.BelowMinimum(minimum));
+        }
+
+        if (DiscountType == DiscountType.FreeDelivery)
+        {
+            // The goods keep their price; the lines say whose parcels travel free.
+            return new CouponDiscountDto(
+                PublicId, Code, FundedBy.ToString(), 0m, [.. covered.Select(l => new CouponLineDiscountDto(l.ProductId, 0m))], FreeDelivery: true);
         }
 
         var discount = DiscountType == DiscountType.Percent

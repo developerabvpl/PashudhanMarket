@@ -131,6 +131,63 @@ public sealed class CouponTests(ApiFixture fixture)
         (await PlaceAsync(buyer, null)).Total.ShouldBe(150m);
     }
 
+    [DatabaseFact]
+    public async Task Platform_free_delivery_lifts_the_charge_and_the_seller_still_earns_it()
+    {
+        using var _ = fixture.WithDeliveryCharge(49m, 499m);
+
+        var admin = await AdminClientAsync();
+        var (sellerId, _) = await SellerAsync(admin);
+        var code = await CreateAsync(admin, "/api/v1/admin/promotions/coupons", new { code = Code(), description = "Free delivery", discountType = "FreeDelivery", value = 0m });
+        var buyer = await BasketAsync(admin, sellerId);
+
+        var preview = (await (await PreviewAsync(buyer, code)).Content.ReadFromJsonAsync<CouponPreviewDto>())!;
+        preview.Discount.ShouldBe(0m);
+        preview.DeliveryDiscount.ShouldBe(49m);
+
+        var order = await PlaceAsync(buyer, code);
+        order.ShippingFee.ShouldBe(49m);
+        order.DeliveryDiscount.ShouldBe(49m);
+        order.Total.ShouldBe(150m);
+
+        (await DeliverAsync(admin, order)).CodAmount.ShouldBe(150m);
+
+        (await EarningsAsync(admin, sellerId)).Single(e => e.Kind == "Delivery").GrossAmount.ShouldBe(49m);
+    }
+
+    [DatabaseFact]
+    public async Task A_seller_s_free_delivery_waives_their_delivery_earning()
+    {
+        using var _ = fixture.WithDeliveryCharge(49m, 499m);
+
+        var admin = await AdminClientAsync();
+        var (sellerId, seller) = await SellerAsync(admin);
+        var code = await CreateAsync(seller, "/api/v1/seller/promotions/coupons", new { code = Code(), description = "Ships free", discountType = "FreeDelivery", value = 0m });
+        var buyer = await BasketAsync(admin, sellerId);
+
+        var order = await PlaceAsync(buyer, code);
+        order.Total.ShouldBe(150m);
+
+        await DeliverAsync(admin, order);
+
+        (await EarningsAsync(admin, sellerId)).ShouldNotContain(e => e.Kind == "Delivery");
+    }
+
+    [DatabaseFact]
+    public async Task Free_delivery_is_refused_when_delivery_is_free_anyway()
+    {
+        var admin = await AdminClientAsync();
+        var (sellerId, _) = await SellerAsync(admin);
+        var code = await CreateAsync(admin, "/api/v1/admin/promotions/coupons", new { code = Code(), description = "Free delivery", discountType = "FreeDelivery", value = 0m });
+        var buyer = await BasketAsync(admin, sellerId);
+
+        var preview = await PreviewAsync(buyer, code);
+        preview.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await preview.Content.ReadAsStringAsync()).ShouldContain("delivery_already_free");
+
+        (await PlaceResponseAsync(buyer, code)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     private static string Code() => $"T{Guid.NewGuid():N}"[..12].ToUpperInvariant();
 
     private static async Task<string> CreateAsync(HttpClient client, string path, object body)

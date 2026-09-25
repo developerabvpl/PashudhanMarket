@@ -10,6 +10,7 @@ const order = {
   status: 'Paid',
   subtotal: 2000,
   shippingFee: 49,
+  deliveryDiscount: 0,
   total: 2049,
   currency: 'INR',
   placedAtUtc: '2026-03-14T10:00:00Z',

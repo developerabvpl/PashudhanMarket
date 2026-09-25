@@ -50,12 +50,15 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
           <mat-select name="discountType" [value]="discountType()" (selectionChange)="discountType.set($event.value)">
             <mat-option value="Percent">{{ 'coupons.types.Percent' | transloco }}</mat-option>
             <mat-option value="Flat">{{ 'coupons.types.Flat' | transloco }}</mat-option>
+            <mat-option value="FreeDelivery">{{ 'coupons.types.FreeDelivery' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
+        @if (discountType() !== 'FreeDelivery') {
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ (discountType() === 'Percent' ? 'coupons.percent' : 'coupons.rupees') | transloco }}</mat-label>
           <input matInput name="value" type="number" min="0" required [value]="amount()" (input)="amount.set(value($event))" />
         </mat-form-field>
+        }
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'coupons.minOrderValue' | transloco }}</mat-label>
           <input matInput name="minOrderValue" type="number" min="0" [value]="minOrderValue()" (input)="minOrderValue.set(value($event))" />
@@ -75,7 +78,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
         </ul>
         }
         <div class="sm:col-span-3">
-          <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !code().trim() || !description().trim() || !amount()">
+          <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !code().trim() || !description().trim() || (discountType() !== 'FreeDelivery' && !amount())">
             {{ 'coupons.create' | transloco }}
           </button>
         </div>
@@ -89,7 +92,11 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
               @if (!c.isActive) { <span class="text-ink-muted">· {{ 'coupons.ended' | transloco }}</span> }
             </p>
             <p class="text-ink-muted">
-              {{ c.discountType === 'Percent' ? ('coupons.percentOff' | transloco: { value: c.value }) : ('coupons.flatOff' | transloco: { amount: (c.value | inr) }) }}
+              @switch (c.discountType) {
+              @case ('Percent') { {{ 'coupons.percentOff' | transloco: { value: c.value } }} }
+              @case ('Flat') { {{ 'coupons.flatOff' | transloco: { amount: (c.value | inr) } }} }
+              @default { {{ 'coupons.types.FreeDelivery' | transloco }} }
+              }
               · {{ 'coupons.uses' | transloco: { uses: c.uses, limit: c.totalLimit ?? '∞' } }}
               @if (c.endsAtUtc) { · {{ 'coupons.until' | transloco: { date: (c.endsAtUtc | dateIst) } }} }
             </p>
@@ -113,7 +120,11 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
           <div>
             <p class="font-medium text-ink"><span class="font-mono">{{ c.code }}</span> · {{ c.description }}</p>
             <p class="text-ink-muted">
-              {{ c.discountType === 'Percent' ? ('coupons.percentOff' | transloco: { value: c.value }) : ('coupons.flatOff' | transloco: { amount: (c.value | inr) }) }}
+              @switch (c.discountType) {
+              @case ('Percent') { {{ 'coupons.percentOff' | transloco: { value: c.value } }} }
+              @case ('Flat') { {{ 'coupons.flatOff' | transloco: { amount: (c.value | inr) } }} }
+              @default { {{ 'coupons.types.FreeDelivery' | transloco }} }
+              }
               @if (c.maxDiscount) { · {{ 'coupons.upTo' | transloco: { amount: (c.maxDiscount | inr) } }} }
               @if (c.endsAtUtc) { · {{ 'coupons.until' | transloco: { date: (c.endsAtUtc | dateIst) } }} }
             </p>
@@ -136,7 +147,7 @@ export class CouponsPage {
   protected readonly campaigns = signal<readonly CouponDto[]>([]);
   protected readonly code = signal('');
   protected readonly description = signal('');
-  protected readonly discountType = signal<'Percent' | 'Flat'>('Percent');
+  protected readonly discountType = signal<'Percent' | 'Flat' | 'FreeDelivery'>('Percent');
   protected readonly amount = signal('');
   protected readonly minOrderValue = signal('');
   protected readonly endsOn = signal('');
@@ -166,7 +177,7 @@ export class CouponsPage {
           code: this.code().trim(),
           description: this.description().trim(),
           discountType: this.discountType(),
-          value: Number(this.amount()),
+          value: this.discountType() === 'FreeDelivery' ? 0 : Number(this.amount()),
           minOrderValue: optionalNumber(this.minOrderValue()),
           endsAtUtc: this.endsOn() ? new Date(`${this.endsOn()}T23:59:59+05:30`).toISOString() : null,
           totalLimit: optionalNumber(this.totalLimit()),

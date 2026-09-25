@@ -70,7 +70,10 @@ public sealed record OrderPartReturnedDomainEvent(
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveredAtUtc">When the courier delivered it.</param>
 /// <param name="ReturnWindowClosesAtUtc">The last moment the buyer may ask to return it.</param>
-/// <param name="DeliveryFee">The part's share of the delivery charge the buyer paid, which the seller earns.</param>
+/// <param name="DeliveryFee">
+/// The part's share of the delivery charge, which the seller earns - even when a free-delivery coupon
+/// the platform paid for lifted it off the buyer, but not when the seller paid for that coupon.
+/// </param>
 /// <param name="SellerDiscount">The coupon discount on the part's goods when the seller bears it: their earning is on the goods less this. Zero when the platform bears the discount, or there was none.</param>
 public sealed record OrderPartDeliveredDomainEvent(
     Guid OrderId,

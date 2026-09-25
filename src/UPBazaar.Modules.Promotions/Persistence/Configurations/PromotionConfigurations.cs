@@ -10,7 +10,9 @@ internal sealed class CouponConfiguration : IEntityTypeConfiguration<Coupon>
     {
         builder.ToTable("Coupons", PromotionsModule.SchemaName, table =>
         {
-            table.HasCheckConstraint("CK_Coupons_Value", "[Value] > 0 AND ([DiscountType] <> 'Percent' OR [Value] <= 100)");
+            table.HasCheckConstraint(
+                "CK_Coupons_Value",
+                "([DiscountType] = 'FreeDelivery' AND [Value] = 0) OR ([DiscountType] <> 'FreeDelivery' AND [Value] > 0 AND ([DiscountType] <> 'Percent' OR [Value] <= 100))");
             table.HasCheckConstraint("CK_Coupons_Uses", "[Uses] >= 0");
         });
 

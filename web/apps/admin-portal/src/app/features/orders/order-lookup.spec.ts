@@ -15,6 +15,7 @@ const order: OrderDto = {
   subtotal: 2000,
   discount: 0,
   shippingFee: 0,
+  deliveryDiscount: 0,
   couponCode: null,
   total: 2000,
   currency: 'INR',

@@ -149,6 +149,12 @@ import { ReviewPanel } from './review-panel';
                 {{ 'checkout.free' | transloco }} }
               </dd>
             </div>
+            @if (o.deliveryDiscount > 0) {
+            <div class="flex justify-between">
+              <dt class="text-ink-muted">{{ 'checkout.coupon.freeDelivery' | transloco: { code: o.couponCode ?? '' } }}</dt>
+              <dd class="text-success">− {{ o.deliveryDiscount | inr: 'symbol' : 'auto' }}</dd>
+            </div>
+            }
             <div class="flex justify-between border-t border-border pt-1.5 font-bold">
               <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
               <dd class="text-ink">{{ o.total | inr: 'symbol' : 'auto' }}</dd>

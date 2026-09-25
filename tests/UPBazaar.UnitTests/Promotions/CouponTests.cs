@@ -108,6 +108,21 @@ public sealed class CouponTests
     }
 
     [Fact]
+    public void Free_delivery_takes_nothing_off_the_goods_and_names_the_lines_it_covers()
+    {
+        var campaign = CouponModel.Create("SHIPFREE", "Free delivery", null, CouponFunding.Seller, DiscountType.FreeDelivery, 25m, 50m, null, Now, null, null, 1);
+        campaign.Join(SellerB, Now);
+
+        var quote = campaign.Quote(Basket, Now).Value;
+
+        campaign.Value.ShouldBe(0m);
+        campaign.MaxDiscount.ShouldBeNull();
+        quote.FreeDelivery.ShouldBeTrue();
+        quote.Discount.ShouldBe(0m);
+        quote.Lines.ShouldHaveSingleItem().ShouldBe(new CouponLineDiscountDto(Basket[2].ProductId, 0m));
+    }
+
+    [Fact]
     public void Codes_are_compared_in_capitals()
     {
         Coupon(DiscountType.Flat, 10m).Code.ShouldBe("WELCOME");

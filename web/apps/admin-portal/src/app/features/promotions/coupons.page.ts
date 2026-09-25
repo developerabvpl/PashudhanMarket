@@ -54,12 +54,15 @@ export function endOfIstDay(date: string): string {
           <mat-select name="discountType" [value]="discountType()" (selectionChange)="discountType.set($event.value)">
             <mat-option value="Percent">{{ 'coupons.types.Percent' | transloco }}</mat-option>
             <mat-option value="Flat">{{ 'coupons.types.Flat' | transloco }}</mat-option>
+            <mat-option value="FreeDelivery">{{ 'coupons.types.FreeDelivery' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
+        @if (discountType() !== 'FreeDelivery') {
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ (discountType() === 'Percent' ? 'coupons.percent' : 'coupons.rupees') | transloco }}</mat-label>
           <input matInput name="value" type="number" min="0" required [value]="amount()" (input)="amount.set(value($event))" />
         </mat-form-field>
+        }
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'coupons.fundedBy' | transloco }}</mat-label>
           <mat-select name="fundedBy" [value]="fundedBy()" (selectionChange)="fundedBy.set($event.value)">
@@ -98,7 +101,7 @@ export function endOfIstDay(date: string): string {
         </ul>
         }
         <div class="sm:col-span-3">
-          <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !code().trim() || !description().trim() || !amount()">
+          <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !code().trim() || !description().trim() || (discountType() !== 'FreeDelivery' && !amount())">
             {{ 'coupons.create' | transloco }}
           </button>
         </div>
@@ -114,9 +117,11 @@ export function endOfIstDay(date: string): string {
               @if (!isRunning(c)) { <span class="text-ink-muted">· {{ 'coupons.ended' | transloco }}</span> }
             </p>
             <p class="text-ink-muted">
-              {{ c.discountType === 'Percent'
-                ? ('coupons.percentOff' | transloco: { value: c.value })
-                : ('coupons.flatOff' | transloco: { amount: (c.value | inr) }) }}
+              @switch (c.discountType) {
+              @case ('Percent') { {{ 'coupons.percentOff' | transloco: { value: c.value } }} }
+              @case ('Flat') { {{ 'coupons.flatOff' | transloco: { amount: (c.value | inr) } }} }
+              @default { {{ 'coupons.types.FreeDelivery' | transloco }} }
+              }
               @if (c.maxDiscount) { · {{ 'coupons.upTo' | transloco: { amount: (c.maxDiscount | inr) } }} }
               @if (c.minOrderValue) { · {{ 'coupons.minimum' | transloco: { amount: (c.minOrderValue | inr) } }} }
               · {{ (c.sellerId ? 'coupons.sellersOwn' : 'coupons.funding.' + c.fundedBy) | transloco }}
@@ -143,7 +148,7 @@ export class CouponsPage {
   protected readonly coupons = signal<readonly CouponDto[]>([]);
   protected readonly code = signal('');
   protected readonly description = signal('');
-  protected readonly discountType = signal<'Percent' | 'Flat'>('Percent');
+  protected readonly discountType = signal<'Percent' | 'Flat' | 'FreeDelivery'>('Percent');
   protected readonly amount = signal('');
   protected readonly fundedBy = signal<'Platform' | 'Seller'>('Platform');
   protected readonly maxDiscount = signal('');
@@ -183,7 +188,7 @@ export class CouponsPage {
           code: this.code().trim(),
           description: this.description().trim(),
           discountType: this.discountType(),
-          value: Number(this.amount()),
+          value: this.discountType() === 'FreeDelivery' ? 0 : Number(this.amount()),
           fundedBy: this.fundedBy(),
           maxDiscount: this.discountType() === 'Percent' ? optionalNumber(this.maxDiscount()) : null,
           minOrderValue: optionalNumber(this.minOrderValue()),

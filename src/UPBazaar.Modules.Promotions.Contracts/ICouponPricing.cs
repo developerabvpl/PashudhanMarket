@@ -42,12 +42,17 @@ public sealed record CouponLineDto(Guid ProductId, Guid SellerId, decimal LineTo
 /// <param name="FundedBy">Platform (sellers are paid as if the buyer paid full price) or Seller (the sellers whose goods it covers bear it).</param>
 /// <param name="Discount">The whole discount.</param>
 /// <param name="Lines">The discount on each line it covers; lines it does not cover are left out.</param>
+/// <param name="FreeDelivery">
+/// A free-delivery coupon: nothing comes off the goods, and the parcels of the sellers whose lines it
+/// covers carry no delivery charge for the buyer.
+/// </param>
 public sealed record CouponDiscountDto(
     Guid CouponId,
     string Code,
     string FundedBy,
     decimal Discount,
-    IReadOnlyList<CouponLineDiscountDto> Lines);
+    IReadOnlyList<CouponLineDiscountDto> Lines,
+    bool FreeDelivery = false);
 
 /// <summary>The part of a discount that falls on one line.</summary>
 public sealed record CouponLineDiscountDto(Guid ProductId, decimal Discount);

@@ -11,6 +11,7 @@ export interface OrderDto {
   couponCode: (string | null);
   currency: string;
   deliveryAddress: DeliveryAddressDto;
+  deliveryDiscount: number;
   discount: number;
   id: string;
   number: string;

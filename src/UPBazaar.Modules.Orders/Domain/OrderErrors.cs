@@ -82,6 +82,10 @@ public static class OrderErrors
         "orders.part.refund_upi_required",
         "This order was paid in cash. Give a UPI id to receive the refund.");
 
+    public static readonly Error DeliveryAlreadyFree = Error.Validation(
+        "orders.coupon.delivery_already_free",
+        "Delivery is already free on this order, so that coupon takes nothing off.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "orders.concurrent_change",
         "The order was changed by someone else at the same time. Reload it and try again.");

@@ -6,8 +6,8 @@ namespace UPBazaar.Modules.Promotions.Contracts.Dtos;
 /// <param name="Description">What it is for, in a line.</param>
 /// <param name="SellerId">The seller who runs it; null for a platform coupon.</param>
 /// <param name="FundedBy">Platform or Seller: who bears the discount.</param>
-/// <param name="DiscountType">Percent or Flat.</param>
-/// <param name="Value">The percentage, or the rupees off.</param>
+/// <param name="DiscountType">Percent, Flat or FreeDelivery.</param>
+/// <param name="Value">The percentage, or the rupees off; 0 for free delivery.</param>
 /// <param name="MaxDiscount">For a percentage, the most it takes off; null for no cap.</param>
 /// <param name="MinOrderValue">The least the goods it covers must come to; null for none.</param>
 /// <param name="StartsAtUtc">When it can first be used.</param>
@@ -41,4 +41,5 @@ public sealed record CouponDto(
 /// <param name="Code">The coupon's code.</param>
 /// <param name="Description">What it is for.</param>
 /// <param name="Discount">What it takes off the goods.</param>
-public sealed record CouponPreviewDto(string Code, string Description, decimal Discount);
+/// <param name="DeliveryDiscount">What a free-delivery coupon takes off the delivery charge; zero for other coupons.</param>
+public sealed record CouponPreviewDto(string Code, string Description, decimal Discount, decimal DeliveryDiscount);

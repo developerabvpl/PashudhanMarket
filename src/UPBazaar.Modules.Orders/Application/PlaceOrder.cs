@@ -142,6 +142,22 @@ internal sealed class PlaceOrderCommandHandler(
 
         var discounts = coupon?.Lines.ToDictionary(l => l.ProductId, l => l.Discount) ?? [];
 
+        // Judged on the goods before the coupon, so money off never costs the buyer delivery.
+        var deliveryFee = options.Value.DeliveryFeeFor(lines.Sum(l => l.UnitPrice * l.Quantity));
+        HashSet<Guid>? freeDeliveryFor = null;
+
+        if (coupon is { FreeDelivery: true })
+        {
+            // Used up for nothing is worse than refused: say delivery is free already.
+            if (deliveryFee == 0m)
+            {
+                return Result.Failure<OrderDto>(OrderErrors.DeliveryAlreadyFree);
+            }
+
+            var covered = coupon.Lines.Select(l => l.ProductId).ToHashSet();
+            freeDeliveryFor = [.. lines.Where(l => covered.Contains(l.ProductId)).Select(l => l.SellerId)];
+        }
+
         // The cart hands over ids, quantities and prices; the name and SKU to freeze into the
         // order come from the catalogue. Cart has just checked every product is on sale.
         var products = await catalog.GetProductsAsync([.. lines.Select(l => l.ProductId)], cancellationToken);
@@ -196,11 +212,11 @@ internal sealed class PlaceOrderCommandHandler(
                 l.Quantity,
                 discounts.GetValueOrDefault(l.ProductId)))],
 
-            // Judged on the goods before the coupon, so money off never costs the buyer delivery.
-            options.Value.DeliveryFeeFor(lines.Sum(l => l.UnitPrice * l.Quantity)),
+            deliveryFee,
             coupon is null ? null : (coupon.Code, coupon.FundedBy),
             reservation.Value,
-            clock.UtcNow);
+            clock.UtcNow,
+            freeDeliveryFor);
 
         dbContext.Set<Order>().Add(order);
 

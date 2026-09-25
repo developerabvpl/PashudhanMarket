@@ -28,7 +28,7 @@ function type(element: HTMLElement, text: string): HTMLInputElement {
 
 describe('CouponField', () => {
   it('applies a code on Enter without submitting the checkout, and shows the saving', async () => {
-    const preview = { code: 'WELCOME10', description: 'Welcome', discount: 15 };
+    const preview = { code: 'WELCOME10', description: 'Welcome', discount: 15, deliveryDiscount: 0 };
     const invoke = vi.fn(async () => preview);
     const { fixture, applied, element } = await render(invoke);
 
@@ -41,6 +41,17 @@ describe('CouponField', () => {
     expect(invoke).toHaveBeenCalledWith(apiV1PromotionsCouponsPreviewPost, { body: { code: 'welcome10' } });
     expect(applied).toHaveBeenCalledWith(preview);
     expect(element.textContent).toContain('You save ₹15');
+  });
+
+  it('counts a free-delivery coupon’s saving', async () => {
+    const { fixture, element } = await render(vi.fn(async () => ({ code: 'SHIPFREE', description: 'Free delivery', discount: 0, deliveryDiscount: 49 })));
+
+    type(element, 'SHIPFREE');
+    await fixture.whenStable();
+    [...element.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Apply')!.click();
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('You save ₹49');
   });
 
   it('says why a code takes nothing off', async () => {
@@ -62,7 +73,7 @@ describe('CouponField', () => {
   });
 
   it('can be taken off again', async () => {
-    const { fixture, applied, element } = await render(vi.fn(async () => ({ code: 'WELCOME10', description: 'Welcome', discount: 15 })));
+    const { fixture, applied, element } = await render(vi.fn(async () => ({ code: 'WELCOME10', description: 'Welcome', discount: 15, deliveryDiscount: 0 })));
 
     type(element, 'WELCOME10');
     await fixture.whenStable();

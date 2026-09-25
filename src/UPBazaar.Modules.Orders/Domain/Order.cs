@@ -89,7 +89,13 @@ public sealed class Order : AggregateRoot, IAuditable
     /// <summary>The coupon discount on what is still coming.</summary>
     public decimal Discount => _parts.Where(p => p.IsComing).Sum(p => p.Discount);
 
-    public decimal Total => Subtotal - Discount + ShippingFee;
+    /// <summary>
+    /// The delivery charge a free-delivery coupon lifts off the buyer: the shares of the parts it
+    /// covers. The sellers still carry those shares - the platform or they themselves pay them.
+    /// </summary>
+    public decimal DeliveryDiscount => _parts.Where(p => p.FreeDelivery).Sum(p => p.DeliveryFee);
+
+    public decimal Total => Subtotal - Discount + ShippingFee - DeliveryDiscount;
 
     /// <summary>
     /// A buyer may cancel until something has shipped. After that the goods are on a truck and
@@ -104,6 +110,8 @@ public sealed class Order : AggregateRoot, IAuditable
     /// Creates an order from checked-out lines. A cash-on-delivery order is confirmed on the spot,
     /// so the caller must already have committed its stock; an online one waits for payment
     /// with its stock held.
+    ///
+    /// A free-delivery coupon names the sellers whose parcels it covers in <paramref name="freeDeliveryFor"/>.
     /// </summary>
     public static Order Place(
         string number,
@@ -115,7 +123,8 @@ public sealed class Order : AggregateRoot, IAuditable
         decimal deliveryFee,
         (string Code, string FundedBy)? coupon,
         Guid reservationId,
-        DateTime now)
+        DateTime now,
+        IReadOnlyCollection<Guid>? freeDeliveryFor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
         ArgumentOutOfRangeException.ThrowIfNegative(deliveryFee);
@@ -156,6 +165,11 @@ public sealed class Order : AggregateRoot, IAuditable
         }
 
         order.ShareDeliveryFee(deliveryFee, order._parts);
+
+        foreach (var part in order._parts.Where(p => freeDeliveryFor?.Contains(p.SellerId) == true))
+        {
+            part.MakeDeliveryFree();
+        }
 
         order.Raise(new OrderPlacedDomainEvent(
             order.PublicId, number, buyerId, paymentMethod.ToString(), order.Total, currency));
@@ -316,7 +330,7 @@ public sealed class Order : AggregateRoot, IAuditable
                 Currency,
                 now,
                 now + returnWindow,
-                part.DeliveryFee,
+                SellerEarnsDelivery(part),
                 SellerDiscount: CouponFundedBy == "Seller" ? part.Discount : 0m));
         }
 
@@ -530,12 +544,17 @@ public sealed class Order : AggregateRoot, IAuditable
     /// amount, and a delivered one has already been earned from, so neither can take more. With
     /// nowhere to go, the share is given back - refunded if paid online, or simply not collected.
     /// Cancelling a whole order therefore gives back the whole charge: nothing ships.
+    ///
+    /// A share moves only between parts alike in whether a free-delivery coupon covers them, so
+    /// the buyer never starts paying delivery a coupon lifted, nor stops paying what they paid.
     /// </summary>
     private void CancelPartInternal(OrderPart part, string reason)
     {
         var share = part.DeliveryFee;
         var takers = _parts
-            .Where(p => p != part && p.Status is OrderPartStatus.AwaitingPayment or OrderPartStatus.Confirmed)
+            .Where(p => p != part
+                && p.FreeDelivery == part.FreeDelivery
+                && p.Status is OrderPartStatus.AwaitingPayment or OrderPartStatus.Confirmed)
             .ToList();
 
         part.SetDeliveryFee(0m);
@@ -550,7 +569,8 @@ public sealed class Order : AggregateRoot, IAuditable
             ShippingFee -= share;
         }
 
-        var refund = PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid + share : 0m;
+        // A share the buyer never paid - lifted by a coupon - is not theirs to have back.
+        var refund = PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid + (part.FreeDelivery ? 0m : share) : 0m;
 
         part.Cancel(reason);
 
@@ -558,12 +578,7 @@ public sealed class Order : AggregateRoot, IAuditable
             PublicId, Number, part.PublicId, part.SellerId, refund, Currency));
     }
 
-    /// <summary>
-    /// Adds <paramref name="amount"/> of delivery charge to <paramref name="parts"/>, in proportion
-    /// to the value of their goods: a seller shipping more of the order carries more of its
-    /// delivery. Rounded to the paisa, with whatever rounding leaves over going to the largest
-    /// part, so the shares always add up to the charge exactly.
-    /// </summary>
+    /// <summary>Adds <paramref name="amount"/> of delivery charge to <paramref name="parts"/>, shared as <see cref="DeliveryShares"/> says.</summary>
     private void ShareDeliveryFee(decimal amount, List<OrderPart> parts)
     {
         if (amount == 0m || parts.Count == 0)
@@ -571,15 +586,7 @@ public sealed class Order : AggregateRoot, IAuditable
             return;
         }
 
-        var weight = parts.Sum(p => p.Subtotal);
-        var shares = parts
-            .Select(p => weight == 0m
-                ? Math.Round(amount / parts.Count, 2, MidpointRounding.ToZero)
-                : Math.Round(amount * p.Subtotal / weight, 2, MidpointRounding.ToZero))
-            .ToArray();
-
-        var largest = parts.Select((p, i) => (p.Subtotal, i)).MaxBy(x => x.Subtotal).i;
-        shares[largest] += amount - shares.Sum();
+        var shares = DeliveryShares.Split(amount, [.. parts.Select(p => p.Subtotal)]);
 
         for (var i = 0; i < parts.Count; i++)
         {
@@ -588,6 +595,13 @@ public sealed class Order : AggregateRoot, IAuditable
 
         ShippingFee = _parts.Sum(p => p.DeliveryFee);
     }
+
+    /// <summary>
+    /// The delivery share the seller is paid for a part: all of it, unless the seller paid for the
+    /// free-delivery coupon that lifted it, in which case they waived it.
+    /// </summary>
+    private decimal SellerEarnsDelivery(OrderPart part) =>
+        part.FreeDelivery && CouponFundedBy == "Seller" ? 0m : part.DeliveryFee;
 
     private void MarkCancelled(string reason, DateTime now)
     {
@@ -682,6 +696,12 @@ public sealed class OrderPart : Entity
     /// <summary>This part's share of the order's delivery charge.</summary>
     public decimal DeliveryFee { get; private set; }
 
+    /// <summary>A free-delivery coupon covers this part: the buyer does not pay its delivery share.</summary>
+    public bool FreeDelivery { get; private set; }
+
+    /// <summary>The delivery the buyer pays for this part.</summary>
+    public decimal DeliveryPaid => FreeDelivery ? 0m : DeliveryFee;
+
     /// <summary>The coupon discount on this part's goods.</summary>
     public decimal Discount => _lines.Sum(l => l.Discount);
 
@@ -689,7 +709,7 @@ public sealed class OrderPart : Entity
     public decimal GoodsPaid => Subtotal - Discount;
 
     /// <summary>What the buyer pays for this part: its goods, less discount, and its share of delivery. Cash on delivery collects this.</summary>
-    public decimal AmountDue => GoodsPaid + DeliveryFee;
+    public decimal AmountDue => GoodsPaid + DeliveryPaid;
 
     internal static OrderPart Create(Guid sellerId, OrderPartStatus status, IEnumerable<OrderLineInput> lines)
     {
@@ -703,6 +723,8 @@ public sealed class OrderPart : Entity
     internal void MoveTo(OrderPartStatus status) => Status = status;
 
     internal void SetDeliveryFee(decimal fee) => DeliveryFee = fee;
+
+    internal void MakeDeliveryFree() => FreeDelivery = true;
 
     internal void RecordDelivered(DateTime now, TimeSpan returnWindow)
     {

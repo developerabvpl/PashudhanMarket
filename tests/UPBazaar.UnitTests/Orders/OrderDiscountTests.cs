@@ -69,6 +69,65 @@ public sealed class OrderDiscountTests
         delivered.SellerDiscount.ShouldBe(sellerDiscount);
     }
 
+    [Fact]
+    public void Free_delivery_lifts_the_delivery_charge_of_the_parcels_it_covers()
+    {
+        var whole = PlaceFreeDelivery(PaymentMethod.CashOnDelivery, "Platform", SellerA, SellerB);
+
+        whole.ShippingFee.ShouldBe(30m);
+        whole.DeliveryDiscount.ShouldBe(30m);
+        whole.Total.ShouldBe(300m);
+        Part(whole, SellerA).AmountDue.ShouldBe(200m);
+
+        var partial = PlaceFreeDelivery(PaymentMethod.CashOnDelivery, "Seller", SellerB);
+
+        partial.DeliveryDiscount.ShouldBe(10m);
+        partial.Total.ShouldBe(320m);
+        Part(partial, SellerA).AmountDue.ShouldBe(220m);
+        Part(partial, SellerB).AmountDue.ShouldBe(100m);
+    }
+
+    [Theory]
+    [InlineData("Platform", 20)]
+    [InlineData("Seller", 0)]
+    public void A_seller_earns_a_lifted_delivery_share_unless_they_paid_for_the_coupon(string fundedBy, decimal earned)
+    {
+        var order = PlaceFreeDelivery(PaymentMethod.CashOnDelivery, fundedBy, SellerA);
+
+        order.AdvancePart(Part(order, SellerA).PublicId, OrderPartStatus.Delivered, Now, Window);
+
+        order.DomainEvents.OfType<OrderPartDeliveredDomainEvent>().Single().DeliveryFee.ShouldBe(earned);
+    }
+
+    [Fact]
+    public void A_delivery_share_never_moves_between_parcels_the_coupon_does_and_does_not_cover()
+    {
+        var order = PlaceFreeDelivery(PaymentMethod.Online, "Seller", SellerB);
+        order.ConfirmPayment(320m, "pay_1", Now).IsSuccess.ShouldBeTrue();
+        order.ClearDomainEvents();
+
+        // A's 20 was paid and has no other charged parcel to go to, so it is refunded.
+        order.CancelPart(Part(order, SellerA).PublicId, "Out of stock.", Now);
+
+        order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().Single().RefundDue.ShouldBe(220m);
+        Part(order, SellerB).DeliveryFee.ShouldBe(10m);
+        order.Total.ShouldBe(100m);
+    }
+
+    [Fact]
+    public void A_parcel_that_travelled_free_refunds_only_its_goods()
+    {
+        var order = PlaceFreeDelivery(PaymentMethod.Online, "Platform", SellerB);
+        order.ConfirmPayment(320m, "pay_1", Now).IsSuccess.ShouldBeTrue();
+        order.ClearDomainEvents();
+
+        order.CancelPart(Part(order, SellerB).PublicId, "Out of stock.", Now);
+
+        order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().Single().RefundDue.ShouldBe(100m);
+        Part(order, SellerA).DeliveryFee.ShouldBe(20m);
+        order.Total.ShouldBe(220m);
+    }
+
     private static OrderPart Part(Order order, Guid seller) => order.Parts.Single(p => p.SellerId == seller);
 
     /// <summary>Seller A: 200 with 20 off. Seller B: 100 with 10 off. Free delivery.</summary>
@@ -87,4 +146,25 @@ public sealed class OrderDiscountTests
             ("WELCOME", fundedBy),
             Guid.NewGuid(),
             Now);
+
+    /// <summary>
+    /// Seller A: 200. Seller B: 100. A delivery charge of 30, shared 20 and 10, with a free-delivery
+    /// coupon covering <paramref name="free"/>.
+    /// </summary>
+    private static Order PlaceFreeDelivery(PaymentMethod method, string fundedBy, params Guid[] free) =>
+        Order.Place(
+            OrderNumber.New(Now),
+            Guid.NewGuid(),
+            method,
+            DeliveryAddress.Create("Asha Devi", "9876543210", "12 Gaushala Road", null, null, "Lucknow", null, "uttar pradesh", "226001"),
+            "INR",
+            [
+                new(SellerA, Guid.NewGuid(), "A-1", "Gobar Diya", 100m, 2),
+                new(SellerB, Guid.NewGuid(), "B-1", "Dhoop Batti", 50m, 2),
+            ],
+            deliveryFee: 30m,
+            ("SHIPFREE", fundedBy),
+            Guid.NewGuid(),
+            Now,
+            free);
 }

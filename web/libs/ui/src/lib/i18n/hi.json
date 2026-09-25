@@ -343,7 +343,8 @@
       "apply": "लगाएँ",
       "remove": "हटाएँ",
       "saves": "आपकी बचत {{amount}}",
-      "discount": "कूपन {{code}}"
+      "discount": "कूपन {{code}}",
+      "freeDelivery": "मुफ़्त डिलीवरी ({{code}})"
     }
   },
   "orders": {
@@ -848,7 +849,8 @@
     "discountType": "छूट",
     "types": {
       "Percent": "प्रतिशत छूट",
-      "Flat": "राशि की छूट"
+      "Flat": "राशि की छूट",
+      "FreeDelivery": "मुफ़्त डिलीवरी"
     },
     "percent": "प्रतिशत छूट",
     "rupees": "रुपये की छूट",

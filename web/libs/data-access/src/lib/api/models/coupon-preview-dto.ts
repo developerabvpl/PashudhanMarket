@@ -3,6 +3,7 @@
 
 export interface CouponPreviewDto {
   code: string;
+  deliveryDiscount: number;
   description: string;
   discount: number;
 }

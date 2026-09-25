@@ -246,10 +246,12 @@ const EMPTY: DeliveryAddressDto = {
               <dd class="text-ink">{{ cart.subtotal() | inr: 'symbol' : 'auto' }}</dd>
             </div>
             @if (coupon(); as c) {
+            @if (c.discount > 0) {
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'checkout.coupon.discount' | transloco: { code: c.code } }}</dt>
               <dd class="text-success">− {{ c.discount | inr: 'symbol' : 'auto' }}</dd>
             </div>
+            }
             }
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
@@ -261,6 +263,12 @@ const EMPTY: DeliveryAddressDto = {
                 }
               </dd>
             </div>
+            @if (coupon()?.deliveryDiscount; as saving) {
+            <div class="flex justify-between">
+              <dt class="text-ink-muted">{{ 'checkout.coupon.freeDelivery' | transloco: { code: coupon()!.code } }}</dt>
+              <dd class="text-success">− {{ saving | inr: 'symbol' : 'auto' }}</dd>
+            </div>
+            }
             <div class="flex justify-between border-t border-border pt-2 text-base font-bold">
               <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
               <dd class="text-ink">{{ total() | inr: 'symbol' : 'auto' }}</dd>
@@ -318,8 +326,15 @@ export class CheckoutPage {
   /** The coupon applied at checkout, as last priced; null for none. */
   protected readonly coupon = signal<CouponPreviewDto | null>(null);
 
-  /** What the buyer will pay: goods less the coupon, plus delivery (judged on the goods before the coupon). */
-  protected readonly total = computed(() => this.cart.subtotal() - (this.coupon()?.discount ?? 0) + (this.fee() ?? 0));
+  /**
+   * What the buyer will pay: goods less the coupon, plus delivery (judged on the goods before the
+   * coupon) less what a free-delivery coupon lifts.
+   */
+  protected readonly total = computed(() => {
+    const coupon = this.coupon();
+
+    return this.cart.subtotal() - (coupon?.discount ?? 0) + (this.fee() ?? 0) - (coupon?.deliveryDiscount ?? 0);
+  });
 
   constructor() {
     void this.delivery.load();

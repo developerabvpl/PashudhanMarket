@@ -343,7 +343,8 @@
       "apply": "Apply",
       "remove": "Remove",
       "saves": "You save {{amount}}",
-      "discount": "Coupon {{code}}"
+      "discount": "Coupon {{code}}",
+      "freeDelivery": "Free delivery ({{code}})"
     }
   },
   "orders": {
@@ -848,7 +849,8 @@
     "discountType": "Discount",
     "types": {
       "Percent": "Percentage off",
-      "Flat": "Amount off"
+      "Flat": "Amount off",
+      "FreeDelivery": "Free delivery"
     },
     "percent": "Percent off",
     "rupees": "Rupees off",

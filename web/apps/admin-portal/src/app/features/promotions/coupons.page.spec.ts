@@ -31,8 +31,9 @@ const campaign: CouponDto = {
   joined: false,
 };
 
-async function render(canWrite: boolean) {
-  const invoke = vi.fn(async (fn: unknown) => (fn === apiV1AdminPromotionsCouponsGet ? [campaign] : campaign));
+async function render(canWrite: boolean, overrides: Partial<CouponDto> = {}) {
+  const listed = { ...campaign, ...overrides };
+  const invoke = vi.fn(async (fn: unknown) => (fn === apiV1AdminPromotionsCouponsGet ? [listed] : listed));
 
   TestBed.configureTestingModule({
     providers: [
@@ -91,6 +92,31 @@ describe('CouponsPage', () => {
       },
     });
     expect(endOfIstDay('2026-10-31')).toBe('2026-10-31T18:29:59.000Z');
+  });
+
+  it('creates a free-delivery coupon without asking for an amount', async () => {
+    const { fixture, invoke, element } = await render(true);
+
+    fixture.componentInstance['discountType'].set('FreeDelivery');
+    await fixture.whenStable();
+    expect(element.querySelector('input[name="value"]')).toBeNull();
+
+    fill(element, 'code', 'SHIPFREE');
+    fill(element, 'description', 'Free delivery');
+    await fixture.whenStable();
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(invoke).toHaveBeenCalledWith(
+      apiV1AdminPromotionsCouponsPost,
+      expect.objectContaining({ body: expect.objectContaining({ discountType: 'FreeDelivery', value: 0, maxDiscount: null }) }),
+    );
+  });
+
+  it('shows a free-delivery coupon as such', async () => {
+    const { element } = await render(true, { discountType: 'FreeDelivery', value: 0, maxDiscount: null });
+
+    expect(element.textContent).toContain('Free delivery');
   });
 
   it('ends a coupon', async () => {

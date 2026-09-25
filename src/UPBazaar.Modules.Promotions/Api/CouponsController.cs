@@ -166,8 +166,8 @@ public sealed record CampaignJoinedRequest(bool Joined);
 
 /// <param name="Code">What buyers type: 4 to 20 letters, digits or hyphens.</param>
 /// <param name="Description">What it is for, in a line.</param>
-/// <param name="DiscountType">Percent or Flat.</param>
-/// <param name="Value">The percentage (up to 90), or the rupees off.</param>
+/// <param name="DiscountType">Percent, Flat or FreeDelivery.</param>
+/// <param name="Value">The percentage (up to 90), or the rupees off; ignored for free delivery.</param>
 /// <param name="FundedBy">Platform or Seller; for staff only - a seller's coupon is always theirs to pay for.</param>
 /// <param name="MaxDiscount">For a percentage, the most it takes off.</param>
 /// <param name="MinOrderValue">The least the goods it covers must come to.</param>

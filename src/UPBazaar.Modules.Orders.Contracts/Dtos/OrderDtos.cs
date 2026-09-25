@@ -17,7 +17,8 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="Subtotal">Sum of the lines in parts that are not cancelled, at full price.</param>
 /// <param name="Discount">What the coupon takes off those lines; zero without one.</param>
 /// <param name="ShippingFee">Delivery charge: zero when the goods reached the free-delivery value, or when it was given back because nothing shipped.</param>
-/// <param name="Total">Subtotal less discount, plus delivery: what the buyer pays for what is still coming.</param>
+/// <param name="DeliveryDiscount">The part of the delivery charge a free-delivery coupon lifts; zero without one.</param>
+/// <param name="Total">Subtotal less discount, plus delivery less its discount: what the buyer pays for what is still coming.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveryAddress">Where it goes, as entered at checkout.</param>
 /// <param name="Parts">One per seller.</param>
@@ -38,6 +39,7 @@ public sealed record OrderDto(
     decimal Subtotal,
     decimal Discount,
     decimal ShippingFee,
+    decimal DeliveryDiscount,
     decimal Total,
     string Currency,
     DeliveryAddressDto DeliveryAddress,

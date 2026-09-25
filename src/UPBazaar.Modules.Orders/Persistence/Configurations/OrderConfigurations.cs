@@ -34,6 +34,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Ignore(x => x.Subtotal);
         builder.Ignore(x => x.Total);
         builder.Ignore(x => x.Discount);
+        builder.Ignore(x => x.DeliveryDiscount);
         builder.Ignore(x => x.CanCancel);
 
         builder.ComplexProperty(x => x.DeliveryAddress, address =>
@@ -85,6 +86,7 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
         builder.Ignore(x => x.Subtotal);
         builder.Ignore(x => x.Discount);
         builder.Ignore(x => x.GoodsPaid);
+        builder.Ignore(x => x.DeliveryPaid);
         builder.Ignore(x => x.AmountDue);
         builder.Ignore(x => x.IsComing);
         builder.Ignore(x => x.IsBuyerReturn);
