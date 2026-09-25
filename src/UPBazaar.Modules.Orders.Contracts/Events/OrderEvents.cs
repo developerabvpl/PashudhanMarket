@@ -66,11 +66,12 @@ public sealed record OrderPartReturnedDomainEvent(
 /// <param name="Number">Its number.</param>
 /// <param name="PartId">The part delivered.</param>
 /// <param name="SellerId">Whose goods.</param>
-/// <param name="Subtotal">What the buyer paid for the part's goods.</param>
+/// <param name="Subtotal">The part's goods at full price, before any coupon.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveredAtUtc">When the courier delivered it.</param>
 /// <param name="ReturnWindowClosesAtUtc">The last moment the buyer may ask to return it.</param>
 /// <param name="DeliveryFee">The part's share of the delivery charge the buyer paid, which the seller earns.</param>
+/// <param name="SellerDiscount">The coupon discount on the part's goods when the seller bears it: their earning is on the goods less this. Zero when the platform bears the discount, or there was none.</param>
 public sealed record OrderPartDeliveredDomainEvent(
     Guid OrderId,
     string Number,
@@ -80,7 +81,8 @@ public sealed record OrderPartDeliveredDomainEvent(
     string Currency,
     DateTime DeliveredAtUtc,
     DateTime ReturnWindowClosesAtUtc,
-    decimal DeliveryFee = 0m) : DomainEvent;
+    decimal DeliveryFee = 0m,
+    decimal SellerDiscount = 0m) : DomainEvent;
 
 /// <summary>
 /// A buyer asked to return a delivered part. Settlements holds the seller's earning from it until

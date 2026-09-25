@@ -7,7 +7,8 @@ using UPBazaar.SharedKernel.Messaging;
 namespace UPBazaar.Modules.Settlements.Application;
 
 /// <summary>
-/// A parcel was delivered: the seller has earned from its goods, and from its share of the
+/// A parcel was delivered: the seller has earned from its goods - less any coupon discount they
+/// bear; one the platform bears leaves them paid in full - and from its share of the
 /// delivery charge if the buyer paid one, at today's rates, payable once the buyer's return
 /// window closes. The outbox may deliver the event twice; the second finds both already there.
 /// </summary>
@@ -26,7 +27,7 @@ internal sealed class OrderPartDeliveredEarningHandler(UPBazaarDbContext dbConte
         if (!existing.Contains(EarningKind.Sale))
         {
             dbContext.Set<Earning>().Add(Earning.Create(
-                e.SellerId, e.OrderId, e.Number, e.PartId, e.Subtotal, e.Currency, e.DeliveredAtUtc, e.ReturnWindowClosesAtUtc, rates));
+                e.SellerId, e.OrderId, e.Number, e.PartId, e.Subtotal - e.SellerDiscount, e.Currency, e.DeliveredAtUtc, e.ReturnWindowClosesAtUtc, rates));
         }
 
         if (e.DeliveryFee > 0 && !existing.Contains(EarningKind.Delivery))

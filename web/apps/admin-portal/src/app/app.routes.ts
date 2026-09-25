@@ -51,6 +51,11 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/reviews/reviews.routes').then((m) => m.reviewRoutes),
   },
   {
+    path: 'promotions',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/promotions/promotions.routes').then((m) => m.promotionRoutes),
+  },
+  {
     path: 'change-password',
     canActivate: [authGuard],
     component: ChangePasswordPage,

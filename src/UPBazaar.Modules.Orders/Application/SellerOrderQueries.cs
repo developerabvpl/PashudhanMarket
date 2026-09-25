@@ -63,7 +63,7 @@ internal sealed class ListSellerOrdersQueryHandler(UPBazaarDbContext dbContext)
                 x.part.PublicId,
                 x.part.Status.ToString(),
                 x.order.PaymentMethod.ToString(),
-                x.order.PaymentMethod == PaymentMethod.CashOnDelivery ? x.part.Lines.Sum(l => l.UnitPrice * l.Quantity) + x.part.DeliveryFee : 0m,
+                x.order.PaymentMethod == PaymentMethod.CashOnDelivery ? x.part.Lines.Sum(l => (l.UnitPrice * l.Quantity) - l.Discount) + x.part.DeliveryFee : 0m,
                 x.part.Lines.Sum(l => l.UnitPrice * l.Quantity),
                 x.order.Currency,
                 x.part.Lines.Sum(l => l.Quantity),

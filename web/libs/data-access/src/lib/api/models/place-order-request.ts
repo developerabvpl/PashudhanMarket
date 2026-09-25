@@ -3,6 +3,7 @@
 
 import { DeliveryAddressDto } from '../models/delivery-address-dto';
 export interface PlaceOrderRequest {
+  couponCode?: (string | null);
   deliveryAddress: DeliveryAddressDto;
   paymentMethod: string;
 }

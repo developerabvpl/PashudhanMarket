@@ -8,6 +8,7 @@ using UPBazaar.Modules.Inventory.Contracts;
 using UPBazaar.Modules.Inventory.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Domain;
+using UPBazaar.Modules.Promotions.Contracts;
 using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
@@ -18,7 +19,8 @@ namespace UPBazaar.Modules.Orders.Application;
 /// <param name="BuyerId">Who is buying; always the caller.</param>
 /// <param name="PaymentMethod">CashOnDelivery or Online.</param>
 /// <param name="Address">Where it goes.</param>
-public sealed record PlaceOrderCommand(Guid BuyerId, string PaymentMethod, DeliveryAddressDto Address)
+/// <param name="CouponCode">A coupon code to use, if the buyer entered one.</param>
+public sealed record PlaceOrderCommand(Guid BuyerId, string PaymentMethod, DeliveryAddressDto Address, string? CouponCode = null)
     : ICommand<OrderDto>;
 
 internal sealed class PlaceOrderCommandValidator : AbstractValidator<PlaceOrderCommand>
@@ -32,6 +34,7 @@ internal sealed class PlaceOrderCommandValidator : AbstractValidator<PlaceOrderC
             .WithMessage("Payment method must be CashOnDelivery or Online.");
 
         RuleFor(x => x.Address).NotNull().SetValidator(new DeliveryAddressValidator());
+        RuleFor(x => x.CouponCode).MaximumLength(20);
     }
 }
 
@@ -69,10 +72,10 @@ internal sealed class DeliveryAddressValidator : AbstractValidator<DeliveryAddre
 }
 
 /// <summary>
-/// Checkout, in one transaction: take the cart's lines at the prices the buyer was shown, add the
-/// delivery charge, hold the stock, write the order, empty the cart. For cash on delivery the held stock is committed there
-/// and then, because the order is confirmed; an online order keeps it held until the payment
-/// arrives or the payment window closes.
+/// Checkout, in one transaction: take the cart's lines at the prices the buyer was shown, take off
+/// any coupon, add the delivery charge, hold the stock, write the order, empty the cart. For cash
+/// on delivery the held stock is committed there and then, because the order is confirmed; an
+/// online order keeps it held until the payment arrives or the payment window closes.
 ///
 /// A cart with any problem - a changed price, a withdrawn product, too little stock - is refused
 /// by Cart before anything happens, so an order is never placed for something the buyer was not
@@ -85,6 +88,7 @@ internal sealed class PlaceOrderCommandHandler(
     ICartService cart,
     IProductCatalog catalog,
     IInventoryService inventory,
+    ICouponPricing coupons,
     IOptions<OrdersModuleOptions> options,
     IClock clock) : ICommandHandler<PlaceOrderCommand, OrderDto>
 {
@@ -120,6 +124,23 @@ internal sealed class PlaceOrderCommandHandler(
         {
             return Result.Failure<OrderDto>(OrderErrors.MixedCurrencies);
         }
+
+        var couponLines = lines.Select(l => new CouponLineDto(l.ProductId, l.SellerId, l.UnitPrice * l.Quantity)).ToList();
+        CouponDiscountDto? coupon = null;
+
+        if (!string.IsNullOrWhiteSpace(command.CouponCode))
+        {
+            var quoted = await coupons.QuoteAsync(command.CouponCode, command.BuyerId, couponLines, cancellationToken);
+
+            if (quoted.IsFailure)
+            {
+                return Result.Failure<OrderDto>(quoted.Error);
+            }
+
+            coupon = quoted.Value;
+        }
+
+        var discounts = coupon?.Lines.ToDictionary(l => l.ProductId, l => l.Discount) ?? [];
 
         // The cart hands over ids, quantities and prices; the name and SKU to freeze into the
         // order come from the catalogue. Cart has just checked every product is on sale.
@@ -172,12 +193,35 @@ internal sealed class PlaceOrderCommandHandler(
                 products[l.ProductId].Sku,
                 products[l.ProductId].Name,
                 l.UnitPrice,
-                l.Quantity))],
+                l.Quantity,
+                discounts.GetValueOrDefault(l.ProductId)))],
+
+            // Judged on the goods before the coupon, so money off never costs the buyer delivery.
             options.Value.DeliveryFeeFor(lines.Sum(l => l.UnitPrice * l.Quantity)),
+            coupon is null ? null : (coupon.Code, coupon.FundedBy),
             reservation.Value,
             clock.UtcNow);
 
         dbContext.Set<Order>().Add(order);
+
+        if (coupon is not null)
+        {
+            // Used, and checked once more, in this transaction: a coupon that ran out or changed
+            // since it was priced fails the checkout, rather than the order going through on a
+            // discount it no longer has.
+            var redeemed = await coupons.RedeemAsync(coupon.Code, command.BuyerId, order.PublicId, couponLines, cancellationToken);
+
+            if (redeemed.IsFailure)
+            {
+                return Result.Failure<OrderDto>(redeemed.Error);
+            }
+
+            if (redeemed.Value.Discount != coupon.Discount)
+            {
+                return Result.Failure<OrderDto>(OrderErrors.ConcurrentChange);
+            }
+        }
+
         await cart.StageClearAsync(command.BuyerId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 

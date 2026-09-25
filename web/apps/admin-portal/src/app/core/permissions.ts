@@ -61,3 +61,9 @@ export const ReviewsPermissions = {
   Read: 'reviews.read',
   Moderate: 'reviews.moderate',
 } as const;
+
+/** Permission names the coupons screen depends on. */
+export const PromotionsPermissions = {
+  CampaignsRead: 'promotions.campaigns.read',
+  CampaignsWrite: 'promotions.campaigns.write',
+} as const;

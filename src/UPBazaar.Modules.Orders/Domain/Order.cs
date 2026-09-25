@@ -61,6 +61,15 @@ public sealed class Order : AggregateRoot, IAuditable
 
     public string? CancellationReason { get; private set; }
 
+    /// <summary>The coupon the order used, as stored; null when none.</summary>
+    public string? CouponCode { get; private set; }
+
+    /// <summary>
+    /// Who bears the coupon's discount: Platform, or Seller. Decides whether sellers are paid on
+    /// the full price or the discounted one.
+    /// </summary>
+    public string? CouponFundedBy { get; private set; }
+
     public IReadOnlyCollection<OrderPart> Parts => _parts.AsReadOnly();
 
     /// <summary>Optimistic concurrency token: a payment and a cancel landing together must not both win.</summary>
@@ -77,7 +86,10 @@ public sealed class Order : AggregateRoot, IAuditable
     /// <summary>What is still coming: cancelled and returned parts drop out, so a refund shows in the total.</summary>
     public decimal Subtotal => _parts.Where(p => p.IsComing).Sum(p => p.Subtotal);
 
-    public decimal Total => Subtotal + ShippingFee;
+    /// <summary>The coupon discount on what is still coming.</summary>
+    public decimal Discount => _parts.Where(p => p.IsComing).Sum(p => p.Discount);
+
+    public decimal Total => Subtotal - Discount + ShippingFee;
 
     /// <summary>
     /// A buyer may cancel until something has shipped. After that the goods are on a truck and
@@ -101,6 +113,7 @@ public sealed class Order : AggregateRoot, IAuditable
         string currency,
         IReadOnlyList<OrderLineInput> lines,
         decimal deliveryFee,
+        (string Code, string FundedBy)? coupon,
         Guid reservationId,
         DateTime now)
     {
@@ -126,6 +139,8 @@ public sealed class Order : AggregateRoot, IAuditable
             Currency = currency,
             DeliveryAddress = deliveryAddress,
             ReservationId = reservationId,
+            CouponCode = coupon?.Code,
+            CouponFundedBy = coupon?.FundedBy,
             PlacedAtUtc = now,
             PaymentDueAtUtc = isCod ? null : now + PaymentWindow,
         };
@@ -293,7 +308,16 @@ public sealed class Order : AggregateRoot, IAuditable
             part.RecordDelivered(now, returnWindow);
 
             Raise(new OrderPartDeliveredDomainEvent(
-                PublicId, Number, part.PublicId, part.SellerId, part.Subtotal, Currency, now, now + returnWindow, part.DeliveryFee));
+                PublicId,
+                Number,
+                part.PublicId,
+                part.SellerId,
+                part.Subtotal,
+                Currency,
+                now,
+                now + returnWindow,
+                part.DeliveryFee,
+                SellerDiscount: CouponFundedBy == "Seller" ? part.Discount : 0m));
         }
 
         CompleteIfDone();
@@ -459,7 +483,7 @@ public sealed class Order : AggregateRoot, IAuditable
             Number,
             part.PublicId,
             part.SellerId,
-            byBuyer || PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m,
+            byBuyer || PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid : 0m,
             Currency,
             RequestedByBuyer: byBuyer,
             RefundUpiId: part.ReturnRequest?.RefundUpiId));
@@ -526,7 +550,7 @@ public sealed class Order : AggregateRoot, IAuditable
             ShippingFee -= share;
         }
 
-        var refund = PaymentStatus == PaymentStatus.Paid ? part.Subtotal + share : 0m;
+        var refund = PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid + share : 0m;
 
         part.Cancel(reason);
 
@@ -604,7 +628,8 @@ public sealed record OrderLineInput(
     string Sku,
     string Name,
     decimal UnitPrice,
-    int Quantity);
+    int Quantity,
+    decimal Discount = 0m);
 
 /// <summary>One seller's share of an order, fulfilled and cancelled on its own.</summary>
 public sealed class OrderPart : Entity
@@ -657,8 +682,14 @@ public sealed class OrderPart : Entity
     /// <summary>This part's share of the order's delivery charge.</summary>
     public decimal DeliveryFee { get; private set; }
 
-    /// <summary>What the buyer pays for this part: its goods and its share of delivery. Cash on delivery collects this.</summary>
-    public decimal AmountDue => Subtotal + DeliveryFee;
+    /// <summary>The coupon discount on this part's goods.</summary>
+    public decimal Discount => _lines.Sum(l => l.Discount);
+
+    /// <summary>What the buyer pays for the goods: what is refunded if they come back.</summary>
+    public decimal GoodsPaid => Subtotal - Discount;
+
+    /// <summary>What the buyer pays for this part: its goods, less discount, and its share of delivery. Cash on delivery collects this.</summary>
+    public decimal AmountDue => GoodsPaid + DeliveryFee;
 
     internal static OrderPart Create(Guid sellerId, OrderPartStatus status, IEnumerable<OrderLineInput> lines)
     {
@@ -715,6 +746,9 @@ public sealed class OrderLine : Entity
 
     public int Quantity { get; private set; }
 
+    /// <summary>The coupon discount on this line; zero when no coupon covered it.</summary>
+    public decimal Discount { get; private set; }
+
     public decimal LineTotal => UnitPrice * Quantity;
 
     internal static OrderLine Create(OrderLineInput input) => new()
@@ -724,5 +758,6 @@ public sealed class OrderLine : Entity
         Name = input.Name,
         UnitPrice = input.UnitPrice,
         Quantity = input.Quantity,
+        Discount = input.Discount,
     };
 }

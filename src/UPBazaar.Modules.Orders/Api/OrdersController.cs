@@ -63,7 +63,7 @@ public sealed class OrdersController(
         }
 
         return (await dispatcher.SendAsync(
-                new PlaceOrderCommand(buyerId, request.PaymentMethod, request.DeliveryAddress),
+                new PlaceOrderCommand(buyerId, request.PaymentMethod, request.DeliveryAddress, request.CouponCode),
                 cancellationToken))
             .ToCreatedResult(OrdersRoutes.GetMine, order => new { orderId = order.Id });
     }
@@ -360,7 +360,8 @@ public sealed class AdminOrdersController(IDispatcher dispatcher) : ControllerBa
 
 /// <param name="PaymentMethod">CashOnDelivery or Online.</param>
 /// <param name="DeliveryAddress">Where the order goes.</param>
-public sealed record PlaceOrderRequest(string PaymentMethod, DeliveryAddressDto DeliveryAddress);
+/// <param name="CouponCode">A coupon code, if the buyer has one. Priced again now; a coupon that no longer applies fails the checkout.</param>
+public sealed record PlaceOrderRequest(string PaymentMethod, DeliveryAddressDto DeliveryAddress, string? CouponCode = null);
 
 /// <param name="Reason">Why. Optional for a buyer; required for staff.</param>
 public sealed record CancelOrderRequest(string? Reason);

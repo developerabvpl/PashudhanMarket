@@ -45,6 +45,7 @@ import { SellerAccess } from './core/seller-access';
       <a mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
       <a mat-button routerLink="/earnings" routerLinkActive="!bg-white/10">{{ 'nav.earnings' | transloco }}</a>
       <a mat-button routerLink="/reviews" routerLinkActive="!bg-white/10">{{ 'nav.reviews' | transloco }}</a>
+      <a mat-button routerLink="/coupons" routerLinkActive="!bg-white/10">{{ 'nav.coupons' | transloco }}</a>
       <a mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
       } @else {
       <a mat-button routerLink="/apply">{{ 'sellerPortal.applyTitle' | transloco }}</a>

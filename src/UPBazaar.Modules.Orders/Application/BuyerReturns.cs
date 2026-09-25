@@ -214,7 +214,7 @@ internal sealed class ListReturnRequestsQueryHandler(UPBazaarDbContext dbContext
                 x.part.ReturnRequest.Reason.ToString(),
                 x.part.ReturnRequest.Comment,
                 x.order.PaymentMethod.ToString(),
-                x.part.Lines.Sum(l => l.UnitPrice * l.Quantity),
+                x.part.Lines.Sum(l => (l.UnitPrice * l.Quantity) - l.Discount),
                 x.order.Currency,
                 x.part.ReturnRequest.RequestedAtUtc))
             .ToListAsync(cancellationToken);

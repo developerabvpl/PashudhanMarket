@@ -6,6 +6,7 @@ import { ReturnRequestDto } from '../models/return-request-dto';
 export interface OrderPartDto {
   cancellationReason: (string | null);
   deliveredAtUtc: (string | null);
+  discount: number;
   id: string;
   lines: Array<OrderLineDto>;
   returnCondition: (string | null);

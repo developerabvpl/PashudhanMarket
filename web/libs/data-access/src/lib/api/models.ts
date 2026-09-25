@@ -7,6 +7,7 @@ export type { AdvanceOrderPartRequest } from './models/advance-order-part-reques
 export type { AssignRolesRequest } from './models/assign-roles-request';
 export type { AuthResultDto } from './models/auth-result-dto';
 export type { AuthTokensDto } from './models/auth-tokens-dto';
+export type { CampaignJoinedRequest } from './models/campaign-joined-request';
 export type { CancelOrderRequest } from './models/cancel-order-request';
 export type { CartDto } from './models/cart-dto';
 export type { CartLineDto } from './models/cart-line-dto';
@@ -20,6 +21,10 @@ export type { CheckoutSessionDto } from './models/checkout-session-dto';
 export type { ConfirmTotpRequest } from './models/confirm-totp-request';
 export type { CorrectChargeRequest } from './models/correct-charge-request';
 export type { CountStockRequest } from './models/count-stock-request';
+export type { CouponCodeRequest } from './models/coupon-code-request';
+export type { CouponDto } from './models/coupon-dto';
+export type { CouponPreviewDto } from './models/coupon-preview-dto';
+export type { CreateCouponRequest } from './models/create-coupon-request';
 export type { CreateProductCommand } from './models/create-product-command';
 export type { CreateProductRequest } from './models/create-product-request';
 export type { CreateStaffUserRequest } from './models/create-staff-user-request';

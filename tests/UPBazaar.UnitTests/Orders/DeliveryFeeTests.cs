@@ -117,6 +117,7 @@ public sealed class DeliveryFeeTests
                 new(SellerA, Guid.NewGuid(), "A-2", "Panchgavya Sabun", 50m, 1),
             ],
             deliveryFee,
+            coupon: null,
             Guid.NewGuid(),
             Now);
 }

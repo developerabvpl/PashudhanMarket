@@ -8,8 +8,10 @@ export interface OrderDto {
   canCancel: boolean;
   cancellationReason: (string | null);
   cancelledAtUtc: (string | null);
+  couponCode: (string | null);
   currency: string;
   deliveryAddress: DeliveryAddressDto;
+  discount: number;
   id: string;
   number: string;
   parts: Array<OrderPartDto>;

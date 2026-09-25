@@ -29,7 +29,8 @@
     "settlementRates": "Commission and tax",
     "earnings": "Earnings",
     "reviews": "Reviews",
-    "buyerReviews": "Buyer reviews"
+    "buyerReviews": "Buyer reviews",
+    "coupons": "Coupons"
   },
   "state": {
     "loading": "Loading",
@@ -336,7 +337,14 @@
     "place": "Place order",
     "placing": "Placing your order...",
     "onlineNote": "UPI, cards, net banking and wallets, through Razorpay.",
-    "placeAndPay": "Place order and pay"
+    "placeAndPay": "Place order and pay",
+    "coupon": {
+      "label": "Coupon code",
+      "apply": "Apply",
+      "remove": "Remove",
+      "saves": "You save {{amount}}",
+      "discount": "Coupon {{code}}"
+    }
   },
   "orders": {
     "title": "My orders",
@@ -831,5 +839,55 @@
     "rejectedBecause": "Rejected: {{note}}",
     "hideReply": "Hide reply",
     "replyHiddenToast": "Reply hidden."
+  },
+  "coupons": {
+    "title": "Coupons",
+    "subtitle": "Codes buyers type at checkout. The platform pays for its own, or sellers who join a campaign pay for it on their goods. Coupons cannot be edited, only ended.",
+    "code": "Code",
+    "description": "What it is for",
+    "discountType": "Discount",
+    "types": {
+      "Percent": "Percentage off",
+      "Flat": "Amount off"
+    },
+    "percent": "Percent off",
+    "rupees": "Rupees off",
+    "fundedBy": "Who pays",
+    "funding": {
+      "Platform": "platform pays",
+      "Seller": "sellers who join pay"
+    },
+    "maxDiscount": "Most it takes off (₹)",
+    "minOrderValue": "Minimum order (₹)",
+    "endsOn": "Ends on",
+    "totalLimit": "Uses in all",
+    "perBuyerLimit": "Uses per buyer",
+    "campaignHint": "A campaign only covers the products of sellers who join it from their seller portal, and they are paid on the discounted price.",
+    "create": "Create coupon",
+    "created": "Coupon created.",
+    "ended": "ended",
+    "percentOff": "{{value}}% off",
+    "flatOff": "{{amount}} off",
+    "upTo": "up to {{amount}}",
+    "minimum": "on {{amount}} or more",
+    "sellersOwn": "seller's own",
+    "joined": "{{count}} sellers joined",
+    "uses": "used {{uses}} of {{limit}}",
+    "perBuyer": "{{limit}} per buyer",
+    "until": "until {{date}}",
+    "end": "End",
+    "endedToast": "Coupon ended.",
+    "none": "No coupons yet.",
+    "sellerTitle": "Coupons",
+    "sellerSubtitle": "Codes for money off your products, and platform campaigns you can join. Both come out of what you are paid.",
+    "youPay": "You pay for the discount: you are paid on the discounted price.",
+    "noneOwn": "You have no coupons yet.",
+    "campaignsTitle": "Platform campaigns",
+    "campaignsSubtitle": "Join one and its discount applies to your products while you are in it. You pay for it, as with your own coupons.",
+    "join": "Join",
+    "leave": "Leave",
+    "joinedToast": "You have joined the campaign.",
+    "leftToast": "You have left the campaign.",
+    "noCampaigns": "No campaigns to join right now."
   }
 }

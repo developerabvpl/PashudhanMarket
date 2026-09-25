@@ -67,6 +67,9 @@ internal sealed partial class ShiprocketGateway(
             // The buyer's delivery charge: Shiprocket adds it to the sub-total for what it
             // collects on a cash-on-delivery parcel.
             shipping_charges = request.ShippingCharges,
+
+            // A coupon's discount, which Shiprocket takes off what it collects.
+            total_discount = request.Discount,
             length = request.LengthCm,
             breadth = request.BreadthCm,
             height = request.HeightCm,

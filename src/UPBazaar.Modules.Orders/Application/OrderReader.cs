@@ -42,7 +42,7 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 o.Parts
                     .Where(p => p.Status != OrderPartStatus.Cancelled && p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
                     .SelectMany(p => p.Lines)
-                    .Sum(l => l.UnitPrice * l.Quantity) + o.ShippingFee,
+                    .Sum(l => (l.UnitPrice * l.Quantity) - l.Discount) + o.ShippingFee,
                 o.Currency,
                 o.Parts.SelectMany(p => p.Lines).Sum(l => l.Quantity),
                 o.PlacedAtUtc));
@@ -59,6 +59,7 @@ internal static class OrderMappings
         order.PaymentMethod.ToString(),
         order.PaymentStatus.ToString(),
         order.Subtotal,
+        order.Discount,
         order.ShippingFee,
         order.Total,
         order.Currency,
@@ -69,15 +70,17 @@ internal static class OrderMappings
         order.PaymentReference,
         order.CancelledAtUtc,
         order.CancellationReason,
-        order.CanCancel);
+        order.CanCancel,
+        order.CouponCode);
 
     private static OrderPartDto ToDto(OrderPart part) => new(
         part.PublicId,
         part.SellerId,
         part.Status.ToString(),
         part.Subtotal,
+        part.Discount,
         [.. part.Lines.OrderBy(l => l.Id).Select(l =>
-            new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal))],
+            new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal, l.Discount))],
         part.CancellationReason,
         part.ReturnCondition?.ToString(),
         part.DeliveredAtUtc,

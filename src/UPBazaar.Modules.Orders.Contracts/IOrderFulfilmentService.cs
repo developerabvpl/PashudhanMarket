@@ -33,6 +33,7 @@ public interface IOrderFulfilmentService
 /// <param name="CodAmount">What the courier collects at the door: the part's goods and its share of delivery for cash on delivery, else zero.</param>
 /// <param name="Subtotal">Value of the goods in the part, for the courier's declared value.</param>
 /// <param name="DeliveryFee">The part's share of the delivery charge the buyer pays.</param>
+/// <param name="Discount">The coupon discount on the part's goods, for the courier to take off what it collects.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="PlacedAtUtc">When the order was placed.</param>
 /// <param name="DeliveryAddress">Where it goes.</param>
@@ -53,6 +54,7 @@ public sealed record ShippablePartDto(
     decimal CodAmount,
     decimal Subtotal,
     decimal DeliveryFee,
+    decimal Discount,
     string Currency,
     DateTime PlacedAtUtc,
     DeliveryAddressDto DeliveryAddress,

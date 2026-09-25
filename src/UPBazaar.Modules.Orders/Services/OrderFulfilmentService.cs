@@ -44,6 +44,7 @@ internal sealed class OrderFulfilmentService(
             order.PaymentMethod == PaymentMethod.CashOnDelivery ? part.AmountDue : 0m,
             part.Subtotal,
             part.DeliveryFee,
+            part.Discount,
             order.Currency,
             order.PlacedAtUtc,
             dto.DeliveryAddress,

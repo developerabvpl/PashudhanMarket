@@ -13,7 +13,9 @@ const order: OrderDto = {
   paymentMethod: 'Online',
   paymentStatus: 'Paid',
   subtotal: 2000,
+  discount: 0,
   shippingFee: 0,
+  couponCode: null,
   total: 2000,
   currency: 'INR',
   deliveryAddress: {
@@ -33,6 +35,7 @@ const order: OrderDto = {
       sellerId: 's1',
       status: 'Confirmed',
       subtotal: 2000,
+      discount: 0,
       cancellationReason: null,
       returnCondition: null,
       deliveredAtUtc: null,

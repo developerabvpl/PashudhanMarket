@@ -104,6 +104,7 @@ public sealed record CourierOrderRequest(
     bool CashOnDelivery,
     decimal SubTotal,
     decimal ShippingCharges,
+    decimal Discount,
     int WeightGrams,
     decimal LengthCm,
     decimal BreadthCm,

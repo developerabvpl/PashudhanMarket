@@ -11,6 +11,7 @@ import {
   IdentityPermissions,
   OrderingPermissions,
   PaymentsPermissions,
+  PromotionsPermissions,
   ReviewsPermissions,
   SellersPermissions,
   SettlementsPermissions,
@@ -93,6 +94,9 @@ import {
       <a *hasPermission="reviewsRead" mat-button routerLink="/reviews">
         {{ 'nav.buyerReviews' | transloco }}
       </a>
+      <a *hasPermission="couponsRead" mat-button routerLink="/promotions/coupons">
+        {{ 'nav.coupons' | transloco }}
+      </a>
 
       <upb-language-switcher />
 
@@ -131,6 +135,7 @@ export class App {
   protected readonly productsWrite = CatalogPermissions.ProductsWrite;
   protected readonly categoriesWrite = CatalogPermissions.CategoriesWrite;
   protected readonly reviewsRead = ReviewsPermissions.Read;
+  protected readonly couponsRead = PromotionsPermissions.CampaignsRead;
 
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;

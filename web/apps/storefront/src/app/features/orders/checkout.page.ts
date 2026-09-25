@@ -5,6 +5,7 @@ import { CurrentUserStore } from '@upbazaar/auth';
 import {
   Api,
   ApiProblem,
+  CouponPreviewDto,
   DeliveryAddressDto,
   apiV1OrdersDeliveryStatesGet,
   apiV1OrdersPost,
@@ -17,6 +18,7 @@ import { DeliveryCharge } from '../../core/delivery-charge';
 import { SeoService } from '../../core/seo.service';
 import { CartStore } from '../cart/cart.store';
 import { OrderPayment } from '../payments/order-payment';
+import { CouponField } from './coupon-field';
 import { LastAddress } from './last-address';
 
 type AddressField = keyof DeliveryAddressDto;
@@ -48,7 +50,7 @@ const EMPTY: DeliveryAddressDto = {
  */
 @Component({
   selector: 'upb-checkout-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, FieldErrors],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, FieldErrors, CouponField],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-5xl px-4 py-8 sm:py-12">
@@ -236,11 +238,19 @@ const EMPTY: DeliveryAddressDto = {
             }
           </ul>
 
+          <upb-coupon-field (applied)="coupon.set($event)" />
+
           <dl class="mt-4 space-y-2 border-t border-border pt-4 text-sm">
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'cart.subtotal' | transloco }}</dt>
               <dd class="text-ink">{{ cart.subtotal() | inr: 'symbol' : 'auto' }}</dd>
             </div>
+            @if (coupon(); as c) {
+            <div class="flex justify-between">
+              <dt class="text-ink-muted">{{ 'checkout.coupon.discount' | transloco: { code: c.code } }}</dt>
+              <dd class="text-success">− {{ c.discount | inr: 'symbol' : 'auto' }}</dd>
+            </div>
+            }
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
               <dd class="text-ink">
@@ -253,7 +263,7 @@ const EMPTY: DeliveryAddressDto = {
             </div>
             <div class="flex justify-between border-t border-border pt-2 text-base font-bold">
               <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
-              <dd class="text-ink">{{ cart.subtotal() + (fee() ?? 0) | inr: 'symbol' : 'auto' }}</dd>
+              <dd class="text-ink">{{ total() | inr: 'symbol' : 'auto' }}</dd>
             </div>
           </dl>
 
@@ -304,6 +314,12 @@ export class CheckoutPage {
 
   /** The delivery charge on this basket, or null while the rule is loading. */
   protected readonly fee = computed(() => this.delivery.feeFor(this.cart.subtotal()));
+
+  /** The coupon applied at checkout, as last priced; null for none. */
+  protected readonly coupon = signal<CouponPreviewDto | null>(null);
+
+  /** What the buyer will pay: goods less the coupon, plus delivery (judged on the goods before the coupon). */
+  protected readonly total = computed(() => this.cart.subtotal() - (this.coupon()?.discount ?? 0) + (this.fee() ?? 0));
 
   constructor() {
     void this.delivery.load();
@@ -363,7 +379,7 @@ export class CheckoutPage {
 
     try {
       const order = await this.api.invoke(apiV1OrdersPost, {
-        body: { paymentMethod: this.method(), deliveryAddress: address },
+        body: { paymentMethod: this.method(), deliveryAddress: address, couponCode: this.coupon()?.code ?? null },
       });
 
       const id = this.userId();

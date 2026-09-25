@@ -1,12 +1,15 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure;
+using UPBazaar.Modules.Promotions.Contracts;
+using UPBazaar.Modules.Promotions.Services;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Promotions;
 
 /// <summary>
-/// Coupons, campaigns and price rules, and the record of which order used which.
+/// Coupon codes - the platform's and sellers' own - the campaigns sellers join, and the record of
+/// which order used which.
 /// </summary>
 public sealed class PromotionsModule : IModule
 {
@@ -26,12 +29,16 @@ public sealed class PromotionsModule : IModule
 /// <summary>Registration entry point for the Promotions module.</summary>
 public static class PromotionsModuleExtensions
 {
-    /// <summary>
-    /// Registers the module's schema, validators and handlers. Add module-specific services
-    /// here as the module grows; everything discovered by convention needs no change.
-    /// </summary>
+    /// <summary>Registers the module's schema, handlers, and the coupon pricing checkout uses.</summary>
     /// <param name="services">Service collection.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddPromotionsModule(this IServiceCollection services) =>
+    public static IServiceCollection AddPromotionsModule(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddModule<PromotionsModule>();
+        services.AddScoped<ICouponPricing, CouponPricing>();
+
+        return services;
+    }
 }

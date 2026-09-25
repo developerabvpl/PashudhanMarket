@@ -307,6 +307,7 @@ internal sealed class PackPartCommandHandler(
             shipment.CodAmount > 0,
             part.Subtotal,
             part.DeliveryFee,
+            part.Discount,
             shipment.WeightGrams,
             shipment.LengthCm,
             shipment.BreadthCm,

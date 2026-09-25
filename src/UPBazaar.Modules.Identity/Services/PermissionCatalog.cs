@@ -4,6 +4,7 @@ using UPBazaar.Modules.Identity.Contracts.Permissions;
 using UPBazaar.Modules.Inventory.Contracts.Permissions;
 using UPBazaar.Modules.Orders.Contracts.Permissions;
 using UPBazaar.Modules.Payments.Contracts.Permissions;
+using UPBazaar.Modules.Promotions.Contracts.Permissions;
 using UPBazaar.Modules.Reviews.Contracts.Permissions;
 using UPBazaar.Modules.Sellers.Contracts.Permissions;
 using UPBazaar.Modules.Settlements.Contracts.Permissions;
@@ -40,6 +41,7 @@ public static class PermissionCatalog
         .. SellersPermissions.All,
         .. SettlementsPermissions.All,
         .. ReviewsPermissions.All,
+        .. PromotionsPermissions.All,
         PlatformJobsView,
     ];
 
@@ -85,6 +87,8 @@ public static class PermissionCatalog
                 SettlementsPermissions.PolicyWrite,
                 ReviewsPermissions.Read,
                 ReviewsPermissions.Moderate,
+                PromotionsPermissions.CampaignsRead,
+                PromotionsPermissions.CampaignsWrite,
                 PlatformJobsView,
             ]),
 
@@ -161,6 +165,7 @@ public static class PermissionCatalog
                 ShippingPermissions.OwnShipmentsWrite,
                 SettlementsPermissions.OwnRead,
                 ReviewsPermissions.SellerReply,
+                PromotionsPermissions.OwnWrite,
             ]),
 
         new(

@@ -14,9 +14,10 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="PaymentStatus">
 /// Pending (online, not paid yet), Paid (online), or CashOnDelivery (to be collected at the door).
 /// </param>
-/// <param name="Subtotal">Sum of the lines in parts that are not cancelled.</param>
+/// <param name="Subtotal">Sum of the lines in parts that are not cancelled, at full price.</param>
+/// <param name="Discount">What the coupon takes off those lines; zero without one.</param>
 /// <param name="ShippingFee">Delivery charge: zero when the goods reached the free-delivery value, or when it was given back because nothing shipped.</param>
-/// <param name="Total">Subtotal plus shipping: what the buyer pays for what is still coming.</param>
+/// <param name="Total">Subtotal less discount, plus delivery: what the buyer pays for what is still coming.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveryAddress">Where it goes, as entered at checkout.</param>
 /// <param name="Parts">One per seller.</param>
@@ -26,6 +27,7 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="CancelledAtUtc">When the whole order was cancelled, if it was.</param>
 /// <param name="CancellationReason">Why, if it was.</param>
 /// <param name="CanCancel">True while the buyer may still cancel: nothing has shipped yet.</param>
+/// <param name="CouponCode">The coupon the order used, if any.</param>
 public sealed record OrderDto(
     Guid Id,
     string Number,
@@ -34,6 +36,7 @@ public sealed record OrderDto(
     string PaymentMethod,
     string PaymentStatus,
     decimal Subtotal,
+    decimal Discount,
     decimal ShippingFee,
     decimal Total,
     string Currency,
@@ -44,13 +47,15 @@ public sealed record OrderDto(
     string? PaymentReference,
     DateTime? CancelledAtUtc,
     string? CancellationReason,
-    bool CanCancel);
+    bool CanCancel,
+    string? CouponCode);
 
 /// <summary>One seller's share of an order.</summary>
 /// <param name="Id">Public id.</param>
 /// <param name="SellerId">Public id of the selling account.</param>
 /// <param name="Status">AwaitingPayment, Confirmed, Packed, Shipped, Delivered, Cancelled, Returning or Returned.</param>
-/// <param name="Subtotal">Sum of this part's lines.</param>
+/// <param name="Subtotal">Sum of this part's lines, at full price.</param>
+/// <param name="Discount">What the coupon takes off them: the subtotal less this is what is refunded if they come back.</param>
 /// <param name="Lines">What this seller is sending.</param>
 /// <param name="CancellationReason">Why it was cancelled, if it was.</param>
 /// <param name="ReturnCondition">For a part that came back: Good or Damaged once inspected, else null.</param>
@@ -64,6 +69,7 @@ public sealed record OrderPartDto(
     Guid SellerId,
     string Status,
     decimal Subtotal,
+    decimal Discount,
     IReadOnlyList<OrderLineDto> Lines,
     string? CancellationReason,
     string? ReturnCondition,
@@ -122,7 +128,8 @@ public sealed record ReturnRequestSummaryDto(
 
 /// <summary>
 /// One product in an order, frozen as it was bought. Name, SKU and price are copied in so the
-/// order still reads correctly after the listing is edited or withdrawn.
+/// order still reads correctly after the listing is edited or withdrawn. A coupon's discount on it
+/// is kept separately, so the price paid can always be told from the listed price.
 /// </summary>
 public sealed record OrderLineDto(
     Guid ProductId,
@@ -130,7 +137,8 @@ public sealed record OrderLineDto(
     string Name,
     decimal UnitPrice,
     int Quantity,
-    decimal LineTotal);
+    decimal LineTotal,
+    decimal Discount = 0m);
 
 /// <summary>A delivery address as entered at checkout.</summary>
 /// <param name="FullName">Who receives it.</param>

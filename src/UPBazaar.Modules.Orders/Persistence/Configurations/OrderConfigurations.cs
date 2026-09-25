@@ -27,10 +27,13 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.Property(x => x.PaymentReference).HasMaxLength(100);
         builder.Property(x => x.CancellationReason).HasMaxLength(500);
+        builder.Property(x => x.CouponCode).HasMaxLength(20);
+        builder.Property(x => x.CouponFundedBy).HasMaxLength(16);
         builder.Property(x => x.RowVersion).IsRowVersion();
 
         builder.Ignore(x => x.Subtotal);
         builder.Ignore(x => x.Total);
+        builder.Ignore(x => x.Discount);
         builder.Ignore(x => x.CanCancel);
 
         builder.ComplexProperty(x => x.DeliveryAddress, address =>
@@ -80,6 +83,8 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
         builder.Property(x => x.ReturnInspectedBy).HasMaxLength(64);
 
         builder.Ignore(x => x.Subtotal);
+        builder.Ignore(x => x.Discount);
+        builder.Ignore(x => x.GoodsPaid);
         builder.Ignore(x => x.AmountDue);
         builder.Ignore(x => x.IsComing);
         builder.Ignore(x => x.IsBuyerReturn);

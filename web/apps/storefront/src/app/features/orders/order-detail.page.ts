@@ -136,6 +136,12 @@ import { ReviewPanel } from './review-panel';
               <dt class="text-ink-muted">{{ 'cart.subtotal' | transloco }}</dt>
               <dd class="text-ink">{{ o.subtotal | inr: 'symbol' : 'auto' }}</dd>
             </div>
+            @if (o.discount > 0) {
+            <div class="flex justify-between">
+              <dt class="text-ink-muted">{{ 'checkout.coupon.discount' | transloco: { code: o.couponCode ?? '' } }}</dt>
+              <dd class="text-success">− {{ o.discount | inr: 'symbol' : 'auto' }}</dd>
+            </div>
+            }
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
               <dd class="text-ink">
