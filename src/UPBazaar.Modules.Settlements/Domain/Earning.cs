@@ -2,6 +2,19 @@ using UPBazaar.SharedKernel.Primitives;
 
 namespace UPBazaar.Modules.Settlements.Domain;
 
+/// <summary>What an earning is for. A delivered parcel can make one of each.</summary>
+public enum EarningKind
+{
+    /// <summary>The goods: commission is taken, and a return undoes it.</summary>
+    Sale = 0,
+
+    /// <summary>
+    /// The seller's share of the buyer's delivery charge. No commission, and a return leaves it
+    /// alone: the delivery was made, and the buyer is not refunded for it.
+    /// </summary>
+    Delivery = 1,
+}
+
 /// <summary>Where a seller's earning from one parcel stands.</summary>
 public enum EarningStatus
 {
@@ -41,12 +54,14 @@ public sealed class Earning : Entity
 
     public string OrderNumber { get; private set; } = string.Empty;
 
-    /// <summary>The parcel earned from; one earning per parcel.</summary>
+    /// <summary>The parcel earned from; one earning of each kind per parcel.</summary>
     public Guid OrderPartId { get; private set; }
+
+    public EarningKind Kind { get; private set; }
 
     public string Currency { get; private set; } = string.Empty;
 
-    /// <summary>What the buyer paid for the parcel's goods.</summary>
+    /// <summary>What the buyer paid for the parcel's goods, or for its delivery.</summary>
     public decimal GrossAmount { get; private set; }
 
     public decimal CommissionPercent { get; private set; }
@@ -77,6 +92,7 @@ public sealed class Earning : Entity
     /// <summary>Optimistic concurrency: a return landing while a payout run takes the earning must not both win.</summary>
     public byte[] RowVersion { get; private set; } = [];
 
+    /// <summary>The sale of a parcel's goods, less commission and the taxes withheld.</summary>
     public static Earning Create(
         Guid sellerId,
         Guid orderId,
@@ -90,12 +106,59 @@ public sealed class Earning : Entity
     {
         ArgumentNullException.ThrowIfNull(rates);
 
+        return Make(EarningKind.Sale, sellerId, orderId, orderNumber, orderPartId, grossAmount, currency, deliveredAtUtc, payableFromUtc, rates);
+    }
+
+    /// <summary>
+    /// The seller's share of the delivery charge. Commission is on goods only, so none is taken
+    /// here; the taxes are withheld as on any other amount paid to the seller through the
+    /// platform - to be confirmed by the accountant.
+    /// </summary>
+    public static Earning ForDelivery(
+        Guid sellerId,
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        decimal deliveryAmount,
+        string currency,
+        DateTime deliveredAtUtc,
+        DateTime payableFromUtc,
+        EarningRates rates)
+    {
+        ArgumentNullException.ThrowIfNull(rates);
+
+        return Make(
+            EarningKind.Delivery,
+            sellerId,
+            orderId,
+            orderNumber,
+            orderPartId,
+            deliveryAmount,
+            currency,
+            deliveredAtUtc,
+            payableFromUtc,
+            rates with { CommissionPercent = 0m });
+    }
+
+    private static Earning Make(
+        EarningKind kind,
+        Guid sellerId,
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        decimal grossAmount,
+        string currency,
+        DateTime deliveredAtUtc,
+        DateTime payableFromUtc,
+        EarningRates rates)
+    {
         var commission = Paise(grossAmount * rates.CommissionPercent / 100m);
         var tcs = Paise(grossAmount * rates.TcsPercent / 100m);
         var tds = Paise(grossAmount * rates.TdsPercent / 100m);
 
         return new Earning
         {
+            Kind = kind,
             SellerId = sellerId,
             OrderId = orderId,
             OrderNumber = orderNumber,

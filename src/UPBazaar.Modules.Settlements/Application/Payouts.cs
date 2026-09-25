@@ -195,6 +195,7 @@ internal sealed class ListEarningsQueryHandler(UPBazaarDbContext dbContext)
                 x.earning.OrderId,
                 x.earning.OrderNumber,
                 x.earning.OrderPartId,
+                x.earning.Kind.ToString(),
                 x.earning.GrossAmount,
                 x.earning.CommissionPercent,
                 x.earning.CommissionAmount,

@@ -8,10 +8,12 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using UPBazaar.Api.Configuration;
 using Testcontainers.MsSql;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Notifications.Contracts;
+using UPBazaar.Modules.Orders;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.IntegrationTests.Infrastructure;
@@ -86,6 +88,26 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
     public IServiceScope CreateScope() => Services.CreateScope();
 
+    /// <summary>
+    /// Charges for delivery until disposed. The options object is shared by the host, which is
+    /// safe only because the tests in the collection run one at a time.
+    /// </summary>
+    public IDisposable WithDeliveryCharge(decimal fee, decimal freeFrom)
+    {
+        var options = Services.GetRequiredService<IOptions<OrdersModuleOptions>>().Value;
+        var (oldFee, oldFreeFrom) = (options.DeliveryFee, options.FreeDeliveryFrom);
+
+        options.DeliveryFee = fee;
+        options.FreeDeliveryFrom = freeFrom;
+
+        return new Restore(() => (options.DeliveryFee, options.FreeDeliveryFrom) = (oldFee, oldFreeFrom));
+    }
+
+    private sealed class Restore(Action undo) : IDisposable
+    {
+        public void Dispose() => undo();
+    }
+
     /// <summary>A client carrying a bearer token.</summary>
     public HttpClient CreateAuthenticatedClient(string accessToken)
     {
@@ -130,6 +152,10 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
         // Tests build their own catalogue; the sample import would make counts depend on a file.
         builder.UseSetting("Catalog:SeedFile", string.Empty);
+
+        // Free delivery by default, so the totals every other test checks are the goods alone. The
+        // delivery tests switch the charge on for themselves with WithDeliveryCharge.
+        builder.UseSetting("Orders:DeliveryFee", "0");
 
         // Review photos go to a folder of this run's own, removed with the database.
         builder.UseSetting("Reviews:PhotoFolder", PhotoFolder);

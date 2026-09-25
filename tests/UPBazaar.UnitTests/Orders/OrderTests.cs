@@ -351,7 +351,7 @@ public sealed class OrderTests
         number[11..].ShouldNotContain('I');
     }
 
-    private static Order Place(PaymentMethod method) =>
+    private static Order Place(PaymentMethod method, decimal deliveryFee = 0m) =>
         Order.Place(
             OrderNumber.New(Now),
             Guid.NewGuid(),
@@ -363,6 +363,7 @@ public sealed class OrderTests
                 new(SellerB, Guid.NewGuid(), "B-1", "Dhoop Batti", 20m, 3),
                 new(SellerA, Guid.NewGuid(), "A-2", "Panchgavya Sabun", 50m, 1),
             ],
+            deliveryFee,
             Guid.NewGuid(),
             Now);
 }

@@ -66,6 +66,7 @@ public sealed record CourierOrderRequest(
     IReadOnlyList<CourierOrderItem> Items,
     bool CashOnDelivery,
     decimal SubTotal,
+    decimal ShippingCharges,
     int WeightGrams,
     decimal LengthCm,
     decimal BreadthCm,

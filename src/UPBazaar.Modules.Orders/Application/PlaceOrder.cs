@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Cart.Contracts;
 using UPBazaar.Modules.Catalog.Contracts;
@@ -68,8 +69,8 @@ internal sealed class DeliveryAddressValidator : AbstractValidator<DeliveryAddre
 }
 
 /// <summary>
-/// Checkout, in one transaction: take the cart's lines at the prices the buyer was shown, hold the
-/// stock, write the order, empty the cart. For cash on delivery the held stock is committed there
+/// Checkout, in one transaction: take the cart's lines at the prices the buyer was shown, add the
+/// delivery charge, hold the stock, write the order, empty the cart. For cash on delivery the held stock is committed there
 /// and then, because the order is confirmed; an online order keeps it held until the payment
 /// arrives or the payment window closes.
 ///
@@ -84,6 +85,7 @@ internal sealed class PlaceOrderCommandHandler(
     ICartService cart,
     IProductCatalog catalog,
     IInventoryService inventory,
+    IOptions<OrdersModuleOptions> options,
     IClock clock) : ICommandHandler<PlaceOrderCommand, OrderDto>
 {
     /// <summary>
@@ -171,6 +173,7 @@ internal sealed class PlaceOrderCommandHandler(
                 products[l.ProductId].Name,
                 l.UnitPrice,
                 l.Quantity))],
+            options.Value.DeliveryFeeFor(lines.Sum(l => l.UnitPrice * l.Quantity)),
             reservation.Value,
             clock.UtcNow);
 

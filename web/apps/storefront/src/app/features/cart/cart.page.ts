@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
+import { DeliveryCharge } from '../../core/delivery-charge';
 import { SeoService } from '../../core/seo.service';
 import { ProductThumb } from '../products/product-thumb';
 import { CartStore, MAX_QUANTITY } from './cart.store';
@@ -132,7 +133,24 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
             {{ cart.subtotal() | inr: 'symbol' : 'auto' }}
           </p>
         </div>
+        @switch (delivery.feeFor(cart.subtotal())) {
+        @case (null) {
         <p class="mt-1 text-sm text-ink-muted">{{ 'cart.subtotalNote' | transloco }}</p>
+        }
+        @case (0) {
+        <p class="mt-1 text-sm font-medium text-success">{{ 'cart.freeDelivery' | transloco }}</p>
+        }
+        @default {
+        <p class="mt-1 text-sm text-ink-muted">
+          {{ 'cart.deliveryCharge' | transloco: { amount: (delivery.feeFor(cart.subtotal()) | inr: 'symbol' : 'auto') } }}
+        </p>
+        @if (delivery.shortOfFree(cart.subtotal()); as short) {
+        <p class="mt-1 text-sm text-ink">
+          {{ 'cart.addForFreeDelivery' | transloco: { amount: (short | inr: 'symbol' : 'auto') } }}
+        </p>
+        }
+        }
+        }
 
         @if (cart.canCheckOut()) {
         <a
@@ -173,6 +191,7 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
 })
 export class CartPage {
   protected readonly cart = inject(CartStore);
+  protected readonly delivery = inject(DeliveryCharge);
   protected readonly maxQuantity = MAX_QUANTITY;
 
   private readonly seo = inject(SeoService);
@@ -180,6 +199,8 @@ export class CartPage {
   private readonly toast = inject(ToastService);
 
   constructor() {
+    void this.delivery.load();
+
     effect(() => {
       this.seo.apply({
         title: this.transloco.translate('cart.title'),

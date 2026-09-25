@@ -39,6 +39,10 @@ public sealed class Order : AggregateRoot, IAuditable
 
     public string Currency { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The delivery charge the buyer pays: the sum of the parts' shares. It falls only when a
+    /// cancelled part's share has nowhere to go and is given back.
+    /// </summary>
     public decimal ShippingFee { get; private set; }
 
     public DeliveryAddress DeliveryAddress { get; private set; } = null!;
@@ -96,10 +100,12 @@ public sealed class Order : AggregateRoot, IAuditable
         DeliveryAddress deliveryAddress,
         string currency,
         IReadOnlyList<OrderLineInput> lines,
+        decimal deliveryFee,
         Guid reservationId,
         DateTime now)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
+        ArgumentOutOfRangeException.ThrowIfNegative(deliveryFee);
         ArgumentNullException.ThrowIfNull(deliveryAddress);
         ArgumentNullException.ThrowIfNull(lines);
 
@@ -133,6 +139,8 @@ public sealed class Order : AggregateRoot, IAuditable
                 isCod ? OrderPartStatus.Confirmed : OrderPartStatus.AwaitingPayment,
                 seller));
         }
+
+        order.ShareDeliveryFee(deliveryFee, order._parts);
 
         order.Raise(new OrderPlacedDomainEvent(
             order.PublicId, number, buyerId, paymentMethod.ToString(), order.Total, currency));
@@ -285,7 +293,7 @@ public sealed class Order : AggregateRoot, IAuditable
             part.RecordDelivered(now, returnWindow);
 
             Raise(new OrderPartDeliveredDomainEvent(
-                PublicId, Number, part.PublicId, part.SellerId, part.Subtotal, Currency, now, now + returnWindow));
+                PublicId, Number, part.PublicId, part.SellerId, part.Subtotal, Currency, now, now + returnWindow, part.DeliveryFee));
         }
 
         CompleteIfDone();
@@ -492,14 +500,69 @@ public sealed class Order : AggregateRoot, IAuditable
     /// <summary>Why an order ends when every part came back undelivered. Shown to the buyer.</summary>
     public const string CouldNotDeliver = "The courier could not deliver it, and it went back to the seller.";
 
+    /// <summary>
+    /// Cancels a part. Its share of the delivery charge moves to the parts not yet packed, since
+    /// the order still ships; a packed part is already booked with the courier at a fixed cash
+    /// amount, and a delivered one has already been earned from, so neither can take more. With
+    /// nowhere to go, the share is given back - refunded if paid online, or simply not collected.
+    /// Cancelling a whole order therefore gives back the whole charge: nothing ships.
+    /// </summary>
     private void CancelPartInternal(OrderPart part, string reason)
     {
-        var refund = PaymentStatus == PaymentStatus.Paid ? part.Subtotal : 0m;
+        var share = part.DeliveryFee;
+        var takers = _parts
+            .Where(p => p != part && p.Status is OrderPartStatus.AwaitingPayment or OrderPartStatus.Confirmed)
+            .ToList();
+
+        part.SetDeliveryFee(0m);
+
+        if (takers.Count > 0)
+        {
+            ShareDeliveryFee(share, takers);
+            share = 0m;
+        }
+        else
+        {
+            ShippingFee -= share;
+        }
+
+        var refund = PaymentStatus == PaymentStatus.Paid ? part.Subtotal + share : 0m;
 
         part.Cancel(reason);
 
         Raise(new OrderPartCancelledDomainEvent(
             PublicId, Number, part.PublicId, part.SellerId, refund, Currency));
+    }
+
+    /// <summary>
+    /// Adds <paramref name="amount"/> of delivery charge to <paramref name="parts"/>, in proportion
+    /// to the value of their goods: a seller shipping more of the order carries more of its
+    /// delivery. Rounded to the paisa, with whatever rounding leaves over going to the largest
+    /// part, so the shares always add up to the charge exactly.
+    /// </summary>
+    private void ShareDeliveryFee(decimal amount, List<OrderPart> parts)
+    {
+        if (amount == 0m || parts.Count == 0)
+        {
+            return;
+        }
+
+        var weight = parts.Sum(p => p.Subtotal);
+        var shares = parts
+            .Select(p => weight == 0m
+                ? Math.Round(amount / parts.Count, 2, MidpointRounding.ToZero)
+                : Math.Round(amount * p.Subtotal / weight, 2, MidpointRounding.ToZero))
+            .ToArray();
+
+        var largest = parts.Select((p, i) => (p.Subtotal, i)).MaxBy(x => x.Subtotal).i;
+        shares[largest] += amount - shares.Sum();
+
+        for (var i = 0; i < parts.Count; i++)
+        {
+            parts[i].SetDeliveryFee(parts[i].DeliveryFee + shares[i]);
+        }
+
+        ShippingFee = _parts.Sum(p => p.DeliveryFee);
     }
 
     private void MarkCancelled(string reason, DateTime now)
@@ -591,6 +654,12 @@ public sealed class OrderPart : Entity
 
     public decimal Subtotal => _lines.Sum(l => l.LineTotal);
 
+    /// <summary>This part's share of the order's delivery charge.</summary>
+    public decimal DeliveryFee { get; private set; }
+
+    /// <summary>What the buyer pays for this part: its goods and its share of delivery. Cash on delivery collects this.</summary>
+    public decimal AmountDue => Subtotal + DeliveryFee;
+
     internal static OrderPart Create(Guid sellerId, OrderPartStatus status, IEnumerable<OrderLineInput> lines)
     {
         var part = new OrderPart { SellerId = sellerId, Status = status };
@@ -601,6 +670,8 @@ public sealed class OrderPart : Entity
     }
 
     internal void MoveTo(OrderPartStatus status) => Status = status;
+
+    internal void SetDeliveryFee(decimal fee) => DeliveryFee = fee;
 
     internal void RecordDelivered(DateTime now, TimeSpan returnWindow)
     {

@@ -45,6 +45,7 @@ internal static class SettlementMappings
         earning.OrderId,
         earning.OrderNumber,
         earning.OrderPartId,
+        earning.Kind.ToString(),
         earning.GrossAmount,
         earning.CommissionPercent,
         earning.CommissionAmount,

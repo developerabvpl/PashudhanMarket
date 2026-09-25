@@ -30,8 +30,9 @@ public interface IOrderFulfilmentService
 /// <param name="SellerId">Whose goods these are; decides the pickup location.</param>
 /// <param name="Status">The part's status: AwaitingPayment, Confirmed, Packed, Shipped, Delivered or Cancelled.</param>
 /// <param name="PaymentMethod">CashOnDelivery or Online.</param>
-/// <param name="CodAmount">What the courier collects at the door: the part's subtotal for cash on delivery, else zero.</param>
+/// <param name="CodAmount">What the courier collects at the door: the part's goods and its share of delivery for cash on delivery, else zero.</param>
 /// <param name="Subtotal">Value of the goods in the part, for the courier's declared value.</param>
+/// <param name="DeliveryFee">The part's share of the delivery charge the buyer pays.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="PlacedAtUtc">When the order was placed.</param>
 /// <param name="DeliveryAddress">Where it goes.</param>
@@ -50,6 +51,7 @@ public sealed record ShippablePartDto(
     string PaymentMethod,
     decimal CodAmount,
     decimal Subtotal,
+    decimal DeliveryFee,
     string Currency,
     DateTime PlacedAtUtc,
     DeliveryAddressDto DeliveryAddress,

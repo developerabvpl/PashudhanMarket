@@ -8,6 +8,7 @@ export interface EarningDto {
   deliveredAtUtc: string;
   grossAmount: number;
   id: string;
+  kind: string;
   netAmount: number;
   orderId: string;
   orderNumber: string;

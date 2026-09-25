@@ -111,6 +111,8 @@ export type { ApiV1SellerInventoryStockProductIdGet$Params as ApiV1SellerInvento
 export { apiV1SellerInventoryStockProductIdGet as apiV1SellerInventoryStockProductIdGet } from './fn/seller-inventory/api-v-1-seller-inventory-stock-product-id-get';
 export type { ApiV1SellerInventoryStockProductIdPut$Params as ApiV1SellerInventoryStockProductIdPut$Params } from './fn/seller-inventory/api-v-1-seller-inventory-stock-product-id-put';
 export { apiV1SellerInventoryStockProductIdPut as apiV1SellerInventoryStockProductIdPut } from './fn/seller-inventory/api-v-1-seller-inventory-stock-product-id-put';
+export type { ApiV1OrdersDeliveryChargeGet$Params as ApiV1OrdersDeliveryChargeGet$Params } from './fn/orders/api-v-1-orders-delivery-charge-get';
+export { apiV1OrdersDeliveryChargeGet as apiV1OrdersDeliveryChargeGet } from './fn/orders/api-v-1-orders-delivery-charge-get';
 export type { ApiV1OrdersGet$Params as ApiV1OrdersGet$Params } from './fn/orders/api-v-1-orders-get';
 export { apiV1OrdersGet as apiV1OrdersGet } from './fn/orders/api-v-1-orders-get';
 export type { ApiV1OrdersPost$Params as ApiV1OrdersPost$Params } from './fn/orders/api-v-1-orders-post';

@@ -258,6 +258,7 @@ internal sealed class PackPartCommandHandler(
             [.. part.Lines.Select(l => new CourierOrderItem(l.Name, l.Sku, l.Quantity, l.UnitPrice))],
             shipment.CodAmount > 0,
             part.Subtotal,
+            part.DeliveryFee,
             shipment.WeightGrams,
             shipment.LengthCm,
             shipment.BreadthCm,

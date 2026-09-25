@@ -285,7 +285,7 @@
     "increase": "मात्रा बढ़ाएँ",
     "remove": "हटाएँ",
     "subtotal": "उप-योग",
-    "subtotalNote": "डिलीवरी और कर चेकआउट पर जोड़े जाएँगे।",
+    "subtotalNote": "डिलीवरी चेकआउट पर जोड़ी जाती है।",
     "checkout": "चेकआउट करें",
     "keepShopping": "ख़रीदारी जारी रखें",
     "clear": "टोकरी खाली करें",
@@ -305,7 +305,10 @@
       "PriceChanged": "दाम बदल गया है।"
     },
     "signInToCheckOut": "पहले आपसे साइन इन करने को कहा जाएगा।",
-    "fixToCheckOut": "चेकआउट के लिए ऊपर चिह्नित वस्तुएँ ठीक करें।"
+    "fixToCheckOut": "चेकआउट के लिए ऊपर चिह्नित वस्तुएँ ठीक करें।",
+    "deliveryCharge": "डिलीवरी: {{amount}}, चेकआउट पर जोड़ा जाएगा।",
+    "freeDelivery": "इस ऑर्डर पर डिलीवरी मुफ़्त है।",
+    "addForFreeDelivery": "मुफ़्त डिलीवरी के लिए {{amount}} का सामान और जोड़ें।"
   },
   "checkout": {
     "title": "चेकआउट",
@@ -644,7 +647,8 @@
     "balancePending": "ट्रांसफ़र हो रहा है",
     "balancePaid": "अब तक मिला",
     "youGet": "आपको मिलेगा",
-    "noEarnings": "अभी कोई कमाई नहीं।"
+    "noEarnings": "अभी कोई कमाई नहीं।",
+    "kindDelivery": "डिलीवरी शुल्क"
   },
   "catalogAdmin": {
     "title": "उत्पाद",

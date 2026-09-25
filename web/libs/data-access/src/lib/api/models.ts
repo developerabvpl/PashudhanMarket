@@ -24,6 +24,7 @@ export type { CreateProductRequest } from './models/create-product-request';
 export type { CreateStaffUserRequest } from './models/create-staff-user-request';
 export type { DecideReturnRequest } from './models/decide-return-request';
 export type { DeliveryAddressDto } from './models/delivery-address-dto';
+export type { DeliveryChargeDto } from './models/delivery-charge-dto';
 export type { EarningDto } from './models/earning-dto';
 export type { ForgotPasswordRequest } from './models/forgot-password-request';
 export type { IFormFile } from './models/i-form-file';

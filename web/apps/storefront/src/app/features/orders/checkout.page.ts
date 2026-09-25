@@ -13,6 +13,7 @@ import {
 } from '@upbazaar/data-access';
 import { FieldErrors } from '@upbazaar/ui';
 import { InrCurrencyPipe, isMobile, isPincode, normalizeMobile } from '@upbazaar/util';
+import { DeliveryCharge } from '../../core/delivery-charge';
 import { SeoService } from '../../core/seo.service';
 import { CartStore } from '../cart/cart.store';
 import { OrderPayment } from '../payments/order-payment';
@@ -242,11 +243,17 @@ const EMPTY: DeliveryAddressDto = {
             </div>
             <div class="flex justify-between">
               <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
-              <dd class="text-ink">{{ 'checkout.free' | transloco }}</dd>
+              <dd class="text-ink">
+                @switch (fee()) {
+                @case (null) { — }
+                @case (0) { {{ 'checkout.free' | transloco }} }
+                @default { {{ fee() | inr: 'symbol' : 'auto' }} }
+                }
+              </dd>
             </div>
             <div class="flex justify-between border-t border-border pt-2 text-base font-bold">
               <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
-              <dd class="text-ink">{{ cart.subtotal() | inr: 'symbol' : 'auto' }}</dd>
+              <dd class="text-ink">{{ cart.subtotal() + (fee() ?? 0) | inr: 'symbol' : 'auto' }}</dd>
             </div>
           </dl>
 
@@ -293,7 +300,14 @@ export class CheckoutPage {
 
   private readonly userId = computed(() => this.user.user()?.id ?? null);
 
+  private readonly delivery = inject(DeliveryCharge);
+
+  /** The delivery charge on this basket, or null while the rule is loading. */
+  protected readonly fee = computed(() => this.delivery.feeFor(this.cart.subtotal()));
+
   constructor() {
+    void this.delivery.load();
+
     inject(SeoService).apply({
       title: 'Checkout',
       description: 'Place your UP Bazaar order.',

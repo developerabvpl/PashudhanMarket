@@ -63,6 +63,10 @@ internal sealed partial class ShiprocketGateway(
             }),
             payment_method = request.CashOnDelivery ? "COD" : "Prepaid",
             sub_total = request.SubTotal,
+
+            // The buyer's delivery charge: Shiprocket adds it to the sub-total for what it
+            // collects on a cash-on-delivery parcel.
+            shipping_charges = request.ShippingCharges,
             length = request.LengthCm,
             breadth = request.BreadthCm,
             height = request.HeightCm,

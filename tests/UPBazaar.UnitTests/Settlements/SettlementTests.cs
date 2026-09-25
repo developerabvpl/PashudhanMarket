@@ -20,6 +20,19 @@ public sealed class SettlementTests
     }
 
     [Fact]
+    public void A_delivery_share_pays_no_commission_but_has_the_taxes_withheld()
+    {
+        var earning = Earning.ForDelivery(
+            Seller, Guid.NewGuid(), "UPB-1", Guid.NewGuid(), 49m, "INR", Now, Now.AddDays(7), new EarningRates(10m, 1m, 1m));
+
+        earning.Kind.ShouldBe(EarningKind.Delivery);
+        earning.CommissionAmount.ShouldBe(0m);
+        earning.TcsAmount.ShouldBe(0.49m);
+        earning.TdsAmount.ShouldBe(0.49m);
+        earning.NetAmount.ShouldBe(48.02m);
+    }
+
+    [Fact]
     public void An_earning_is_payable_only_once_the_return_window_has_closed()
     {
         var earning = Earn(100m, new EarningRates(10m, 0m, 0m));

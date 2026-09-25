@@ -80,6 +80,7 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
         builder.Property(x => x.ReturnInspectedBy).HasMaxLength(64);
 
         builder.Ignore(x => x.Subtotal);
+        builder.Ignore(x => x.AmountDue);
         builder.Ignore(x => x.IsComing);
         builder.Ignore(x => x.IsBuyerReturn);
 

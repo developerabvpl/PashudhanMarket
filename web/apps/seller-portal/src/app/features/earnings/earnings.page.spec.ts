@@ -26,6 +26,7 @@ describe('EarningsPage', () => {
                 orderId: 'o1',
                 orderNumber: 'UPB-260923-ABCDEF',
                 orderPartId: 'part1',
+                kind: 'Sale',
                 grossAmount: 150,
                 commissionPercent: 10,
                 commissionAmount: 15,

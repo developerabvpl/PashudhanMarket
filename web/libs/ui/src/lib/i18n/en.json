@@ -285,7 +285,7 @@
     "increase": "Increase quantity",
     "remove": "Remove",
     "subtotal": "Subtotal",
-    "subtotalNote": "Delivery and taxes are worked out at checkout.",
+    "subtotalNote": "Delivery is worked out at checkout.",
     "checkout": "Proceed to checkout",
     "keepShopping": "Keep shopping",
     "clear": "Empty the basket",
@@ -305,7 +305,10 @@
       "PriceChanged": "The price has changed."
     },
     "signInToCheckOut": "You'll be asked to sign in first.",
-    "fixToCheckOut": "Fix the items marked above to check out."
+    "fixToCheckOut": "Fix the items marked above to check out.",
+    "deliveryCharge": "Delivery: {{amount}}, added at checkout.",
+    "freeDelivery": "Delivery is free on this order.",
+    "addForFreeDelivery": "Add {{amount}} more for free delivery."
   },
   "checkout": {
     "title": "Checkout",
@@ -644,7 +647,8 @@
     "balancePending": "Being transferred",
     "balancePaid": "Paid so far",
     "youGet": "You get",
-    "noEarnings": "No earnings yet."
+    "noEarnings": "No earnings yet.",
+    "kindDelivery": "delivery charge"
   },
   "catalogAdmin": {
     "title": "Products",

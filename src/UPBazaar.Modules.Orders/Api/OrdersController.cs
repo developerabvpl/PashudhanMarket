@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using UPBazaar.Infrastructure.Api;
 using UPBazaar.Modules.Orders.Application;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
@@ -21,8 +22,26 @@ namespace UPBazaar.Modules.Orders.Api;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/orders")]
 [Produces("application/json")]
-public sealed class OrdersController(IDispatcher dispatcher, ICurrentUser currentUser) : ControllerBase
+public sealed class OrdersController(
+    IDispatcher dispatcher,
+    ICurrentUser currentUser,
+    IOptions<OrdersModuleOptions> options) : ControllerBase
 {
+    /// <summary>Returns the delivery charge rule.</summary>
+    [HttpGet("delivery-charge")]
+    [AllowAnonymous]
+    [EndpointSummary("Get the delivery charge")]
+    [EndpointDescription(
+        "The flat charge on an order, and the value of goods from which delivery is free, so the "
+        + "cart and checkout can show what the buyer will pay. Checkout applies the same rule.")]
+    [ProducesResponseType<DeliveryChargeDto>(StatusCodes.Status200OK)]
+    public ActionResult<DeliveryChargeDto> DeliveryCharge()
+    {
+        var rule = options.Value;
+
+        return Ok(new DeliveryChargeDto(rule.DeliveryFee, rule.FreeDeliveryFrom > 0 ? rule.FreeDeliveryFrom : null, "INR"));
+    }
+
     /// <summary>Places an order from the cart.</summary>
     [HttpPost]
     [Authorize(OrdersPermissions.OwnWrite)]

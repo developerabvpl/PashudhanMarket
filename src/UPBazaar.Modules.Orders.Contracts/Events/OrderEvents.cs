@@ -25,7 +25,8 @@ public sealed record OrderConfirmedDomainEvent(
 
 /// <summary>
 /// One seller's part was cancelled. <see cref="RefundDue"/> is what Payments owes the buyer for
-/// it: the part's subtotal if the order was paid online, otherwise zero.
+/// it if the order was paid online, otherwise zero: the part's subtotal, plus its share of the
+/// delivery charge when no other part is left to carry that share.
 /// </summary>
 public sealed record OrderPartCancelledDomainEvent(
     Guid OrderId,
@@ -69,6 +70,7 @@ public sealed record OrderPartReturnedDomainEvent(
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveredAtUtc">When the courier delivered it.</param>
 /// <param name="ReturnWindowClosesAtUtc">The last moment the buyer may ask to return it.</param>
+/// <param name="DeliveryFee">The part's share of the delivery charge the buyer paid, which the seller earns.</param>
 public sealed record OrderPartDeliveredDomainEvent(
     Guid OrderId,
     string Number,
@@ -77,7 +79,8 @@ public sealed record OrderPartDeliveredDomainEvent(
     decimal Subtotal,
     string Currency,
     DateTime DeliveredAtUtc,
-    DateTime ReturnWindowClosesAtUtc) : DomainEvent;
+    DateTime ReturnWindowClosesAtUtc,
+    decimal DeliveryFee = 0m) : DomainEvent;
 
 /// <summary>
 /// A buyer asked to return a delivered part. Settlements holds the seller's earning from it until

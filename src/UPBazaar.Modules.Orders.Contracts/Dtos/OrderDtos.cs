@@ -15,7 +15,7 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// Pending (online, not paid yet), Paid (online), or CashOnDelivery (to be collected at the door).
 /// </param>
 /// <param name="Subtotal">Sum of the lines in parts that are not cancelled.</param>
-/// <param name="ShippingFee">Delivery charge. Zero until Shipping prices deliveries.</param>
+/// <param name="ShippingFee">Delivery charge: zero when the goods reached the free-delivery value, or when it was given back because nothing shipped.</param>
 /// <param name="Total">Subtotal plus shipping: what the buyer pays for what is still coming.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="DeliveryAddress">Where it goes, as entered at checkout.</param>
@@ -179,3 +179,9 @@ public sealed record PayableOrderDto(
     decimal Amount,
     string Currency,
     DateTime PaymentDueAtUtc);
+
+/// <summary>How the delivery charge is worked out.</summary>
+/// <param name="Fee">The charge on an order, whatever the number of sellers' parcels.</param>
+/// <param name="FreeFrom">Orders whose goods come to at least this much are delivered free; null when none are.</param>
+/// <param name="Currency">ISO currency code.</param>
+public sealed record DeliveryChargeDto(decimal Fee, decimal? FreeFrom, string Currency);

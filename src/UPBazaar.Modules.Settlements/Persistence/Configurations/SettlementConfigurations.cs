@@ -43,14 +43,15 @@ internal sealed class EarningConfiguration : IEntityTypeConfiguration<Earning>
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
 
-        // One earning per parcel, however many times its delivery is reported.
-        builder.HasIndex(x => x.OrderPartId).IsUnique();
+        // One earning of each kind per parcel, however many times its delivery is reported.
+        builder.HasIndex(x => new { x.OrderPartId, x.Kind }).IsUnique();
 
         // The payout run's scan, and a seller's statement.
         builder.HasIndex(x => new { x.Status, x.PayableFromUtc });
         builder.HasIndex(x => new { x.SellerId, x.DeliveredAtUtc });
 
         builder.Property(x => x.OrderNumber).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Kind).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.CommissionPercent).HasPrecision(5, 2);

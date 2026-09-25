@@ -67,7 +67,10 @@ import { SettlementsPermissions } from '../../core/permissions';
         <tbody>
           @for (e of payout.earnings; track e.id) {
           <tr>
-            <td class="py-1 font-mono text-xs">{{ e.orderNumber }}</td>
+            <td class="py-1 font-mono text-xs">
+              {{ e.orderNumber }}
+              @if (e.kind === 'Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+            </td>
             <td class="py-1">{{ e.deliveredAtUtc | dateIst }}</td>
             <td class="py-1 text-right">{{ e.grossAmount | inr }}</td>
             <td class="py-1 text-right">{{ e.netAmount | inr }}</td>

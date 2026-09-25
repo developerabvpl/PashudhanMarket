@@ -25,7 +25,8 @@ public sealed record SellerCommissionDto(Guid SellerId, string? ShopName, decima
 /// <param name="OrderId">The order.</param>
 /// <param name="OrderNumber">Its number.</param>
 /// <param name="OrderPartId">The parcel.</param>
-/// <param name="GrossAmount">What the buyer paid for its goods.</param>
+/// <param name="Kind">Sale (the goods) or Delivery (the seller's share of the delivery charge, without commission).</param>
+/// <param name="GrossAmount">What the buyer paid for its goods, or for its delivery.</param>
 /// <param name="CommissionPercent">Commission rate it was worked out at.</param>
 /// <param name="CommissionAmount">Commission taken.</param>
 /// <param name="TcsAmount">GST TCS withheld.</param>
@@ -42,6 +43,7 @@ public sealed record EarningDto(
     Guid OrderId,
     string OrderNumber,
     Guid OrderPartId,
+    string Kind,
     decimal GrossAmount,
     decimal CommissionPercent,
     decimal CommissionAmount,

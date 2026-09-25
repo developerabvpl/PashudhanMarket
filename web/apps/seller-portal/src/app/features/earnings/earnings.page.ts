@@ -56,7 +56,10 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
           <tbody class="divide-y divide-border">
             @for (e of earnings(); track e.id) {
             <tr>
-              <td class="p-3 font-mono text-xs">{{ e.orderNumber }}</td>
+              <td class="p-3 font-mono text-xs">
+                {{ e.orderNumber }}
+                @if (e.kind === 'Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+              </td>
               <td class="p-3">{{ e.deliveredAtUtc | dateIst }}</td>
               <td class="p-3 text-right">{{ e.grossAmount | inr }}</td>
               <td class="p-3 text-right">{{ e.commissionAmount | inr }} ({{ e.commissionPercent }}%)</td>
