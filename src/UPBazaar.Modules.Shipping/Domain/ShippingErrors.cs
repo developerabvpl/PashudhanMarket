@@ -49,6 +49,14 @@ public static class ShippingErrors
         "shipping.return.no_address",
         "The seller has no registered address to send the return to.");
 
+    public static readonly Error ShipmentNotFound = Error.NotFound(
+        "shipping.shipment.not_found",
+        "Shipment not found.");
+
+    public static readonly Error TripNotOnShipment = Error.Validation(
+        "shipping.charge.wrong_trip",
+        "That trip is not one this shipment makes: a delivery can be charged for its delivery and its RTO, a return for its pickup.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "shipping.concurrent_change",
         "The shipment was updated at the same time by something else. Try again.");

@@ -49,9 +49,13 @@ public sealed class Payout : AggregateRoot, IAuditable
 
     public decimal TdsAmount { get; private set; }
 
+    /// <summary>Courier charges taken off, net of any corrections that gave money back.</summary>
+    public decimal CourierCostAmount { get; private set; }
+
     /// <summary>What is transferred.</summary>
     public decimal NetAmount { get; private set; }
 
+    /// <summary>Parcels it covers: sales, delivery shares and courier costs are counted by parcel.</summary>
     public int EarningCount { get; private set; }
 
     public PayoutStatus Status { get; private set; }
@@ -93,6 +97,13 @@ public sealed class Payout : AggregateRoot, IAuditable
             throw new ArgumentException("A payout needs at least one earning, all the seller's own.", nameof(earnings));
         }
 
+        if (earnings.Sum(e => e.NetAmount) <= 0)
+        {
+            throw new ArgumentException("A payout must pay something; courier costs larger than the earnings wait for the next run.", nameof(earnings));
+        }
+
+        var sales = earnings.Where(e => e.Kind != EarningKind.CourierCost).ToList();
+
         var payout = new Payout
         {
             SellerId = sellerId,
@@ -101,12 +112,13 @@ public sealed class Payout : AggregateRoot, IAuditable
             AccountNumber = accountNumber,
             Ifsc = ifsc,
             Currency = earnings.First().Currency,
-            GrossAmount = earnings.Sum(e => e.GrossAmount),
+            GrossAmount = sales.Sum(e => e.GrossAmount),
             CommissionAmount = earnings.Sum(e => e.CommissionAmount),
             TcsAmount = earnings.Sum(e => e.TcsAmount),
             TdsAmount = earnings.Sum(e => e.TdsAmount),
+            CourierCostAmount = -earnings.Where(e => e.Kind == EarningKind.CourierCost).Sum(e => e.NetAmount),
             NetAmount = earnings.Sum(e => e.NetAmount),
-            EarningCount = earnings.Count,
+            EarningCount = earnings.Select(e => e.OrderPartId).Distinct().Count(),
             Status = PayoutStatus.Pending,
         };
 

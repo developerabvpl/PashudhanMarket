@@ -52,6 +52,9 @@ import { SettlementsPermissions } from '../../core/permissions';
         <dt class="text-ink-muted">{{ 'settlements.commission' | transloco }}</dt><dd>− {{ payout.commissionAmount | inr }}</dd>
         <dt class="text-ink-muted">{{ 'settlements.tcs' | transloco }}</dt><dd>− {{ payout.tcsAmount | inr }}</dd>
         <dt class="text-ink-muted">{{ 'settlements.tds' | transloco }}</dt><dd>− {{ payout.tdsAmount | inr }}</dd>
+        @if (payout.courierCostAmount !== 0) {
+        <dt class="text-ink-muted">{{ 'settlements.courierCosts' | transloco }}</dt><dd>− {{ payout.courierCostAmount | inr }}</dd>
+        }
         <dt class="font-medium text-ink">{{ 'settlements.net' | transloco }}</dt><dd class="font-semibold">{{ payout.netAmount | inr }}</dd>
       </dl>
 
@@ -69,7 +72,10 @@ import { SettlementsPermissions } from '../../core/permissions';
           <tr>
             <td class="py-1 font-mono text-xs">
               {{ e.orderNumber }}
-              @if (e.kind === 'Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+              @switch (e.kind) {
+              @case ('Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+              @case ('CourierCost') { <span class="font-sans text-ink-muted">· {{ 'settlements.courier.' + e.detail | transloco }}</span> }
+              }
             </td>
             <td class="py-1">{{ e.deliveredAtUtc | dateIst }}</td>
             <td class="py-1 text-right">{{ e.grossAmount | inr }}</td>

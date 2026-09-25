@@ -1,5 +1,6 @@
 using UPBazaar.Modules.Shipping.Contracts.Events;
 using UPBazaar.SharedKernel.Primitives;
+using UPBazaar.SharedKernel.Results;
 
 namespace UPBazaar.Modules.Shipping.Domain;
 
@@ -47,6 +48,7 @@ public enum ShipmentDirection
 public sealed class Shipment : AggregateRoot, IAuditable
 {
     private readonly List<ShipmentEvent> _events = [];
+    private readonly List<ShipmentCharge> _charges = [];
 
     private Shipment()
     {
@@ -105,7 +107,25 @@ public sealed class Shipment : AggregateRoot, IAuditable
     /// <summary>Why the last booking step failed, for whoever packs it again.</summary>
     public string? LastError { get; private set; }
 
+    /// <summary>
+    /// The courier Shiprocket quoted for, and was then asked to assign, so that what is charged is
+    /// the price that was quoted. Null when no quote was had and Shiprocket chose the courier.
+    /// </summary>
+    public string? QuotedCourierId { get; private set; }
+
+    /// <summary>The quoted freight alone, without any cash-on-delivery charge: what an RTO is charged at.</summary>
+    public decimal? QuotedFreight { get; private set; }
+
+    /// <summary>Why the courier charge could not be quoted; staff enter it instead.</summary>
+    public string? QuoteError { get; private set; }
+
+    /// <summary>For a buyer's return, why they sent it back.</summary>
+    public string? ReturnReason { get; private set; }
+
     public IReadOnlyCollection<ShipmentEvent> Events => _events.AsReadOnly();
+
+    /// <summary>What each trip this shipment made, or may make, costs.</summary>
+    public IReadOnlyCollection<ShipmentCharge> Charges => _charges.AsReadOnly();
 
     /// <summary>Optimistic concurrency: a courier update and a cancellation must not both win.</summary>
     public byte[] RowVersion { get; private set; } = [];
@@ -136,6 +156,23 @@ public sealed class Shipment : AggregateRoot, IAuditable
         string carrier,
         string pickupLocation,
         (int WeightGrams, decimal LengthCm, decimal BreadthCm, decimal HeightCm) parcel,
+        decimal codAmount)
+    {
+        var shipment = NewForward(orderId, orderNumber, orderPartId, buyerId, sellerId, carrier, pickupLocation, parcel, codAmount);
+        shipment._charges.Add(ShipmentCharge.For(CourierTrip.Delivery, amount: null));
+
+        return shipment;
+    }
+
+    private static Shipment NewForward(
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        Guid buyerId,
+        Guid sellerId,
+        string carrier,
+        string pickupLocation,
+        (int WeightGrams, decimal LengthCm, decimal BreadthCm, decimal HeightCm) parcel,
         decimal codAmount) => new()
     {
         OrderId = orderId,
@@ -158,8 +195,26 @@ public sealed class Shipment : AggregateRoot, IAuditable
 
     /// <summary>
     /// A buyer's return of a delivered part. Always prepaid: the buyer pays nothing to send it back.
+    /// The buyer's reason travels with it, because it decides who pays for the pickup.
     /// </summary>
     public static Shipment CreateReturn(
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        Guid buyerId,
+        Guid sellerId,
+        string carrier,
+        (int WeightGrams, decimal LengthCm, decimal BreadthCm, decimal HeightCm) parcel,
+        string? returnReason)
+    {
+        var shipment = NewReturn(orderId, orderNumber, orderPartId, buyerId, sellerId, carrier, parcel);
+        shipment.ReturnReason = returnReason;
+        shipment._charges.Add(ShipmentCharge.For(CourierTrip.ReturnPickup, amount: null));
+
+        return shipment;
+    }
+
+    private static Shipment NewReturn(
         Guid orderId,
         string orderNumber,
         Guid orderPartId,
@@ -214,6 +269,48 @@ public sealed class Shipment : AggregateRoot, IAuditable
     public void RecordBookingError(string error) => LastError = error.Length > 500 ? error[..500] : error;
 
     /// <summary>
+    /// Records Shiprocket's price for the trip this shipment is booked for: freight, plus the
+    /// cash-on-delivery charge when there is money to collect.
+    /// </summary>
+    public void RecordQuote(string courierId, decimal freight, decimal codCharge)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(courierId);
+
+        QuotedCourierId = courierId;
+        QuotedFreight = freight;
+        QuoteError = null;
+
+        var trip = Direction == ShipmentDirection.Forward ? CourierTrip.Delivery : CourierTrip.ReturnPickup;
+        Charge(trip).Quote(Direction == ShipmentDirection.Forward ? freight + codCharge : freight);
+    }
+
+    public void RecordQuoteError(string error) => QuoteError = error.Length > 500 ? error[..500] : error;
+
+    /// <summary>
+    /// Staff set what a trip really cost, from the courier's invoice. If the trip has happened, the
+    /// difference is charged at once; if not, it is what will be charged when it does.
+    /// </summary>
+    public Result CorrectCharge(CourierTrip trip, decimal amount, string? by, string? note, DateTime now)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(amount);
+
+        var fits = Direction == ShipmentDirection.Forward
+            ? trip is CourierTrip.Delivery or CourierTrip.Rto
+            : trip == CourierTrip.ReturnPickup;
+
+        if (!fits)
+        {
+            return Result.Failure(ShippingErrors.TripNotOnShipment);
+        }
+
+        var charge = Charge(trip);
+        charge.Correct(amount, by, note, now);
+        Bill(charge);
+
+        return Result.Success();
+    }
+
+    /// <summary>
     /// Applies a courier update and says whether the shipment moved. Updates only ever move a
     /// shipment forward along one of its two roads - to the buyer, or back to the seller - so a late
     /// "in transit" after "delivered" is recorded but changes nothing.
@@ -235,9 +332,63 @@ public sealed class Shipment : AggregateRoot, IAuditable
             Raise(new ShipmentDispatchedDomainEvent(PublicId, OrderId, OrderNumber, OrderPartId, BuyerId, CourierName, Awb));
         }
 
+        var collected = Status is ShipmentStatus.Booking or ShipmentStatus.PickupRequested && next != ShipmentStatus.Cancelled;
+        var goingBack = Status is not (ShipmentStatus.ReturnInTransit or ShipmentStatus.Returned)
+            && next is ShipmentStatus.ReturnInTransit or ShipmentStatus.Returned;
+
         Status = next;
 
+        // A trip costs money from the moment the courier has the parcel; a booking cancelled before
+        // collection costs nothing. An RTO is charged at the forward freight unless staff say
+        // otherwise, which is how couriers bill it.
+        if (collected)
+        {
+            Incur(Direction == ShipmentDirection.Forward ? CourierTrip.Delivery : CourierTrip.ReturnPickup, now);
+        }
+
+        if (goingBack && Direction == ShipmentDirection.Forward)
+        {
+            if (Charge(CourierTrip.Rto) is { Amount: null } rto && QuotedFreight is { } freight)
+            {
+                rto.Quote(freight);
+            }
+
+            Incur(CourierTrip.Rto, now);
+        }
+
         return true;
+    }
+
+    private void Incur(CourierTrip trip, DateTime now)
+    {
+        var charge = Charge(trip);
+        charge.Incur(now);
+        Bill(charge);
+    }
+
+    /// <summary>Passes on whatever of a trip's charge has not been yet.</summary>
+    private void Bill(ShipmentCharge charge)
+    {
+        var due = charge.TakeUnbilled();
+
+        if (due != 0m)
+        {
+            Raise(new ShipmentChargedDomainEvent(
+                PublicId, OrderId, OrderNumber, OrderPartId, SellerId, charge.Trip.ToString(), due, "INR", charge.BillCount, ReturnReason));
+        }
+    }
+
+    private ShipmentCharge Charge(CourierTrip trip)
+    {
+        var charge = _charges.FirstOrDefault(c => c.Trip == trip);
+
+        if (charge is null)
+        {
+            charge = ShipmentCharge.For(trip, amount: null);
+            _charges.Add(charge);
+        }
+
+        return charge;
     }
 
     public void Cancel() => Status = ShipmentStatus.Cancelled;
@@ -285,8 +436,9 @@ public sealed class ShipmentEvent : Entity
 /// Where a courier collects from: a seller's own address, or - with no seller - the platform
 /// warehouse that every seller without one of their own ships through.
 ///
-/// Only the name is kept. The address itself is registered in the Shiprocket dashboard, which
-/// verifies it; Shiprocket bookings refer to a pickup location by that name alone.
+/// The address itself is registered in the Shiprocket dashboard, which verifies it; bookings refer
+/// to a pickup location by that name alone. Only its PIN code is kept here as well, because
+/// Shiprocket prices a parcel by where it is collected from, and the quote is asked before booking.
 /// </summary>
 public sealed class PickupLocation : Entity
 {
@@ -301,18 +453,26 @@ public sealed class PickupLocation : Entity
 
     public string Name { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The PIN code of the address registered under <see cref="Name"/>. Without it parcels still
+    /// book, but unpriced: their courier charge waits for staff to enter it.
+    /// </summary>
+    public string? Pincode { get; private set; }
+
     public DateTime UpdatedAtUtc { get; private set; }
 
-    public static PickupLocation Create(Guid? sellerId, string name, DateTime now) => new()
+    public static PickupLocation Create(Guid? sellerId, string name, string? pincode, DateTime now) => new()
     {
         SellerId = sellerId,
         Name = name.Trim(),
+        Pincode = string.IsNullOrWhiteSpace(pincode) ? null : pincode.Trim(),
         UpdatedAtUtc = now,
     };
 
-    public void Rename(string name, DateTime now)
+    public void Update(string name, string? pincode, DateTime now)
     {
         Name = name.Trim();
+        Pincode = string.IsNullOrWhiteSpace(pincode) ? null : pincode.Trim();
         UpdatedAtUtc = now;
     }
 }

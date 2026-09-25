@@ -13,6 +13,13 @@ public enum EarningKind
     /// alone: the delivery was made, and the buyer is not refunded for it.
     /// </summary>
     Delivery = 1,
+
+    /// <summary>
+    /// What a courier trip cost, taken off what the seller is paid: a negative amount, or positive
+    /// when a correction gives some back. Owed at once, whatever happens to the goods, and carried
+    /// into later payouts when there is not enough to take it from yet.
+    /// </summary>
+    CourierCost = 2,
 }
 
 /// <summary>Where a seller's earning from one parcel stands.</summary>
@@ -58,6 +65,15 @@ public sealed class Earning : Entity
     public Guid OrderPartId { get; private set; }
 
     public EarningKind Kind { get; private set; }
+
+    /// <summary>For a courier cost, which trip: Delivery, Rto or ReturnPickup.</summary>
+    public string? Detail { get; private set; }
+
+    /// <summary>
+    /// For a courier cost, the shipment's charge it came from, so a redelivered event is not
+    /// charged twice. Null for sales and delivery shares, which are one per parcel anyway.
+    /// </summary>
+    public string? Reference { get; private set; }
 
     public string Currency { get; private set; } = string.Empty;
 
@@ -138,6 +154,50 @@ public sealed class Earning : Entity
             deliveredAtUtc,
             payableFromUtc,
             rates with { CommissionPercent = 0m });
+    }
+
+    /// <summary>
+    /// A courier charge taken off the seller's pay: no commission or tax on it, and payable - that
+    /// is, deducted - from the next payout run.
+    /// </summary>
+    /// <param name="sellerId">Who pays it.</param>
+    /// <param name="orderId">The order the parcel belongs to.</param>
+    /// <param name="orderNumber">Its number.</param>
+    /// <param name="orderPartId">The parcel.</param>
+    /// <param name="trip">Delivery, Rto or ReturnPickup.</param>
+    /// <param name="amount">What the courier charged; negative when a correction gives some back.</param>
+    /// <param name="currency">ISO currency code.</param>
+    /// <param name="now">When it was charged; it is deducted from the next payout run.</param>
+    /// <param name="reference">The shipment charge it came from, unique per charge.</param>
+    public static Earning ForCourierCost(
+        Guid sellerId,
+        Guid orderId,
+        string orderNumber,
+        Guid orderPartId,
+        string trip,
+        decimal amount,
+        string currency,
+        DateTime now,
+        string reference)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reference);
+
+        var earning = Make(
+            EarningKind.CourierCost,
+            sellerId,
+            orderId,
+            orderNumber,
+            orderPartId,
+            -amount,
+            currency,
+            now,
+            now,
+            new EarningRates(0m, 0m, 0m));
+
+        earning.Detail = trip;
+        earning.Reference = reference;
+
+        return earning;
     }
 
     private static Earning Make(

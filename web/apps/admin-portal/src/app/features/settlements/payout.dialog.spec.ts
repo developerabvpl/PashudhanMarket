@@ -17,6 +17,7 @@ const payout: PayoutDto = {
   commissionAmount: 15,
   tcsAmount: 0,
   tdsAmount: 0,
+  courierCostAmount: 0,
   netAmount: 135,
   currency: 'INR',
   status: 'Pending',

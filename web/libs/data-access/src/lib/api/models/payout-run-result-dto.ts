@@ -4,5 +4,6 @@
 export interface PayoutRunResultDto {
   earningsSettled: number;
   payoutsCreated: number;
+  sellersCarriedForward: number;
   sellersSkipped: number;
 }

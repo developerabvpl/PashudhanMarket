@@ -80,10 +80,52 @@ internal sealed partial class ShiprocketGateway(
             : Result.Failure<CarrierOrder>(ShippingErrors.CourierUnavailable);
     }
 
-    public async Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, CancellationToken cancellationToken)
+    /// <remarks>
+    /// Serviceability lists every courier that can carry the parcel, with Shiprocket's recommendation
+    /// among them. The recommended one is taken - it is the one Shiprocket would assign anyway -
+    /// falling back to the cheapest when there is no recommendation.
+    /// </remarks>
+    public async Task<Result<CourierQuote>> QuoteAsync(CourierQuoteRequest request, CancellationToken cancellationToken)
     {
-        var response = await SendAsync<AssignAwbResponse>(
-            HttpMethod.Post, "courier/assign/awb", new { shipment_id = long.Parse(carrierShipmentId, CultureInfo.InvariantCulture) }, cancellationToken);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var query = string.Join(
+            "&",
+            $"pickup_postcode={request.PickupPincode}",
+            $"delivery_postcode={request.DeliveryPincode}",
+            $"weight={(request.WeightGrams / 1000m).ToString(CultureInfo.InvariantCulture)}",
+            $"length={request.LengthCm.ToString(CultureInfo.InvariantCulture)}",
+            $"breadth={request.BreadthCm.ToString(CultureInfo.InvariantCulture)}",
+            $"height={request.HeightCm.ToString(CultureInfo.InvariantCulture)}",
+            $"cod={(request.CashOnDelivery ? 1 : 0)}",
+            $"declared_value={request.DeclaredValue.ToString(CultureInfo.InvariantCulture)}",
+            $"is_return={(request.IsReturn ? 1 : 0)}");
+
+        var response = await SendAsync<ServiceabilityResponse>(HttpMethod.Get, $"courier/serviceability/?{query}", body: null, cancellationToken);
+
+        if (response.IsFailure || response.Value?.Data is not { Couriers.Count: > 0 } data)
+        {
+            return Result.Failure<CourierQuote>(ShippingErrors.CourierUnavailable);
+        }
+
+        var chosen = data.Couriers.FirstOrDefault(c => c.CourierCompanyId == data.RecommendedCourierCompanyId)
+            ?? data.Couriers.MinBy(c => c.FreightCharge + c.CodCharges)!;
+
+        return new CourierQuote(
+            chosen.CourierCompanyId.ToString(CultureInfo.InvariantCulture),
+            chosen.CourierName ?? "Courier",
+            chosen.FreightCharge,
+            request.CashOnDelivery ? chosen.CodCharges : 0m);
+    }
+
+    public async Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken)
+    {
+        var shipmentId = long.Parse(carrierShipmentId, CultureInfo.InvariantCulture);
+        object body = courierId is null
+            ? new { shipment_id = shipmentId }
+            : new { shipment_id = shipmentId, courier_id = long.Parse(courierId, CultureInfo.InvariantCulture) };
+
+        var response = await SendAsync<AssignAwbResponse>(HttpMethod.Post, "courier/assign/awb", body, cancellationToken);
 
         return response.IsSuccess && response.Value?.Response?.Data is { AwbCode.Length: > 0 } data
             ? new CarrierAwb(data.AwbCode, data.CourierName ?? "Courier")
@@ -158,13 +200,14 @@ internal sealed partial class ShiprocketGateway(
             : Result.Failure<CarrierOrder>(ShippingErrors.CourierUnavailable);
     }
 
-    public async Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken)
+    public async Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken)
     {
-        var response = await SendAsync<AssignAwbResponse>(
-            HttpMethod.Post,
-            "courier/assign/awb",
-            new { shipment_id = long.Parse(carrierShipmentId, CultureInfo.InvariantCulture), is_return = 1 },
-            cancellationToken);
+        var shipmentId = long.Parse(carrierShipmentId, CultureInfo.InvariantCulture);
+        object body = courierId is null
+            ? new { shipment_id = shipmentId, is_return = 1 }
+            : new { shipment_id = shipmentId, is_return = 1, courier_id = long.Parse(courierId, CultureInfo.InvariantCulture) };
+
+        var response = await SendAsync<AssignAwbResponse>(HttpMethod.Post, "courier/assign/awb", body, cancellationToken);
 
         return response.IsSuccess && response.Value?.Response?.Data is { AwbCode.Length: > 0 } data
             ? new CarrierAwb(data.AwbCode, data.CourierName ?? "Courier")
@@ -186,7 +229,7 @@ internal sealed partial class ShiprocketGateway(
     public string TrackingUrl(string awb) => $"https://shiprocket.co/tracking/{Uri.EscapeDataString(awb)}";
 
     /// <summary>One authenticated call, signing in again once if Shiprocket says the token has lapsed.</summary>
-    private async Task<Result<T?>> SendAsync<T>(HttpMethod method, string path, object body, CancellationToken cancellationToken)
+    private async Task<Result<T?>> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= 2; attempt++)
         {
@@ -197,7 +240,7 @@ internal sealed partial class ShiprocketGateway(
                 return Result.Failure<T?>(ShippingErrors.CourierUnavailable);
             }
 
-            using var request = new HttpRequestMessage(method, path) { Content = JsonContent.Create(body) };
+            using var request = new HttpRequestMessage(method, path) { Content = body is null ? null : JsonContent.Create(body) };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             try
@@ -266,6 +309,18 @@ internal sealed partial class ShiprocketGateway(
     private sealed record AssignAwbData(
         [property: JsonPropertyName("awb_code")] string? AwbCode,
         [property: JsonPropertyName("courier_name")] string? CourierName);
+
+    private sealed record ServiceabilityResponse([property: JsonPropertyName("data")] ServiceabilityData? Data);
+
+    private sealed record ServiceabilityData(
+        [property: JsonPropertyName("available_courier_companies")] List<CourierRate> Couriers,
+        [property: JsonPropertyName("recommended_courier_company_id")] long? RecommendedCourierCompanyId);
+
+    private sealed record CourierRate(
+        [property: JsonPropertyName("courier_company_id")] long CourierCompanyId,
+        [property: JsonPropertyName("courier_name")] string? CourierName,
+        [property: JsonPropertyName("freight_charge")] decimal FreightCharge,
+        [property: JsonPropertyName("cod_charges")] decimal CodCharges);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Shiprocket sign-in failed: HTTP {Status}")]
     private static partial void LogSignInFailed(ILogger logger, int status);

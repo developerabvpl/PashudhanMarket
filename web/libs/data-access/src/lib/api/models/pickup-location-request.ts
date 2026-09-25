@@ -3,5 +3,6 @@
 
 export interface PickupLocationRequest {
   name: string;
+  pincode?: (string | null);
   sellerId: (string | null);
 }

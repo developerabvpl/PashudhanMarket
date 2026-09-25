@@ -23,8 +23,10 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * Where couriers collect from: the platform warehouse, and any seller with a pickup address of
  * their own. A seller not listed ships from the warehouse.
  *
- * Only names are kept here. Each must match a pickup location already registered - and so
- * address-verified - in the Shiprocket dashboard, because Shiprocket books by that name alone.
+ * Names are kept here, and each must match a pickup location already registered - and so
+ * address-verified - in the Shiprocket dashboard, because Shiprocket books by that name alone. The
+ * PIN code is kept too, because parcels are priced by where they are collected from; without it
+ * they still ship, but their courier charge waits for staff to enter it.
  * Keyed by seller id until the Sellers module gives sellers names to pick from.
  */
 @Component({
@@ -40,7 +42,14 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         @for (location of locations(); track location.sellerId) {
         <li class="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
           <div>
-            <p class="font-medium text-ink">{{ location.name }}</p>
+            <p class="font-medium text-ink">
+              {{ location.name }}
+              @if (location.pincode) {
+              <span class="font-normal text-ink-muted">· {{ location.pincode }}</span>
+              } @else {
+              <span class="font-normal text-warning">· {{ 'shipping.noPincode' | transloco }}</span>
+              }
+            </p>
             <p class="text-ink-muted">
               @if (location.sellerId) {
               {{ 'shipping.forSeller' | transloco }} <span class="font-mono text-xs">{{ location.sellerId }}</span>
@@ -61,7 +70,7 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         }
       </ul>
 
-      <form *hasPermission="shipmentsWrite" class="upb-card mt-6 grid gap-3 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-start" (submit)="save($event)">
+      <form *hasPermission="shipmentsWrite" class="upb-card mt-6 grid gap-3 p-4 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-start" (submit)="save($event)">
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'shipping.sellerIdOptional' | transloco }}</mat-label>
           <input matInput name="sellerId" [value]="sellerId()" (input)="sellerId.set(value($event))" />
@@ -69,6 +78,10 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'shipping.pickupName' | transloco }}</mat-label>
           <input matInput name="name" required maxlength="36" [value]="name()" (input)="name.set(value($event))" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'shipping.pincode' | transloco }}</mat-label>
+          <input matInput name="pincode" inputmode="numeric" maxlength="6" [value]="pincode()" (input)="pincode.set(value($event))" />
         </mat-form-field>
         <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !name().trim()">
           {{ 'common.save' | transloco }}
@@ -86,6 +99,7 @@ export class PickupLocationsPage {
   protected readonly locations = signal<readonly PickupLocationDto[]>([]);
   protected readonly sellerId = signal('');
   protected readonly name = signal('');
+  protected readonly pincode = signal('');
   protected readonly busy = signal(false);
   protected readonly errors = signal<readonly string[]>([]);
 
@@ -115,17 +129,22 @@ export class PickupLocationsPage {
 
     try {
       await this.api.invoke(apiV1AdminShippingPickupLocationsPut, {
-        body: { sellerId: seller || null, name: this.name().trim() },
+        body: { sellerId: seller || null, name: this.name().trim(), pincode: this.pincode().trim() || null },
       });
 
       this.toast.success('shipping.pickupSaved');
       this.sellerId.set('');
       this.name.set('');
+      this.pincode.set('');
       await this.load();
     } catch (error) {
       const problem = toApiProblem(error);
 
-      this.errors.set([...fieldErrorsFor(problem, 'name'), ...fieldErrorsFor(problem, 'sellerId')]);
+      this.errors.set([
+        ...fieldErrorsFor(problem, 'name'),
+        ...fieldErrorsFor(problem, 'pincode'),
+        ...fieldErrorsFor(problem, 'sellerId'),
+      ]);
     } finally {
       this.busy.set(false);
     }

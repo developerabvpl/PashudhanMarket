@@ -100,6 +100,8 @@ internal sealed class ReturnPickupBooker(
 
         var shipment = await dbContext.Set<Shipment>()
             .Include(s => s.Events)
+            .Include(s => s.Charges)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 s => s.OrderPartId == part.PartId && s.Direction == ShipmentDirection.Return && s.Status != ShipmentStatus.Cancelled,
                 cancellationToken);
@@ -160,7 +162,8 @@ internal sealed class ReturnPickupBooker(
             part.BuyerId,
             part.SellerId,
             courier.Name,
-            (parcel.WeightGrams, parcel.LengthCm, parcel.BreadthCm, parcel.HeightCm));
+            (parcel.WeightGrams, parcel.LengthCm, parcel.BreadthCm, parcel.HeightCm),
+            part.ReturnReason);
 
         dbContext.Set<Shipment>().Add(shipment);
 
@@ -197,9 +200,38 @@ internal sealed class ReturnPickupBooker(
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
+        if (shipment.Awb is null && shipment.QuotedCourierId is null)
+        {
+            // Priced from the buyer to the seller, as a return. A return that cannot be priced
+            // is still collected; staff enter its charge from the invoice.
+            var quote = await courier.QuoteAsync(
+                new CourierQuoteRequest(
+                    part.DeliveryAddress.Pincode,
+                    returnTo.Address.Pincode,
+                    shipment.WeightGrams,
+                    shipment.LengthCm,
+                    shipment.BreadthCm,
+                    shipment.HeightCm,
+                    CashOnDelivery: false,
+                    part.Subtotal,
+                    IsReturn: true),
+                cancellationToken);
+
+            if (quote.IsSuccess)
+            {
+                shipment.RecordQuote(quote.Value.CourierId, quote.Value.Freight, quote.Value.CodCharge);
+            }
+            else
+            {
+                shipment.RecordQuoteError("The courier could not quote a charge for this return.");
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         if (shipment.Awb is null)
         {
-            var awb = await courier.AssignReturnAwbAsync(shipment.CarrierShipmentId!, cancellationToken);
+            var awb = await courier.AssignReturnAwbAsync(shipment.CarrierShipmentId!, shipment.QuotedCourierId, cancellationToken);
 
             if (awb.IsFailure)
             {

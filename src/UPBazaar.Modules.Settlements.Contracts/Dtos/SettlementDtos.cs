@@ -25,8 +25,12 @@ public sealed record SellerCommissionDto(Guid SellerId, string? ShopName, decima
 /// <param name="OrderId">The order.</param>
 /// <param name="OrderNumber">Its number.</param>
 /// <param name="OrderPartId">The parcel.</param>
-/// <param name="Kind">Sale (the goods) or Delivery (the seller's share of the delivery charge, without commission).</param>
-/// <param name="GrossAmount">What the buyer paid for its goods, or for its delivery.</param>
+/// <param name="Kind">
+/// Sale (the goods), Delivery (the seller's share of the delivery charge, without commission) or
+/// CourierCost (a courier trip charged to the seller, taken off their pay).
+/// </param>
+/// <param name="Detail">For a courier cost, the trip: Delivery, Rto or ReturnPickup.</param>
+/// <param name="GrossAmount">What the buyer paid for its goods, or for its delivery; negative for a courier cost.</param>
 /// <param name="CommissionPercent">Commission rate it was worked out at.</param>
 /// <param name="CommissionAmount">Commission taken.</param>
 /// <param name="TcsAmount">GST TCS withheld.</param>
@@ -34,8 +38,8 @@ public sealed record SellerCommissionDto(Guid SellerId, string? ShopName, decima
 /// <param name="NetAmount">What the seller is paid for it.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="Status">Accruing (payable after <paramref name="PayableFromUtc"/>), OnHold (a return is asked for), Cancelled (returned) or Settled (in a payout).</param>
-/// <param name="DeliveredAtUtc">When the parcel was delivered.</param>
-/// <param name="PayableFromUtc">When the buyer's return window closes.</param>
+/// <param name="DeliveredAtUtc">When the parcel was delivered, or the courier trip made.</param>
+/// <param name="PayableFromUtc">When the buyer's return window closes; for a courier cost, at once.</param>
 /// <param name="PayoutId">The payout it was paid in, once settled.</param>
 public sealed record EarningDto(
     Guid Id,
@@ -44,6 +48,7 @@ public sealed record EarningDto(
     string OrderNumber,
     Guid OrderPartId,
     string Kind,
+    string? Detail,
     decimal GrossAmount,
     decimal CommissionPercent,
     decimal CommissionAmount,
@@ -95,6 +100,7 @@ public sealed record PayoutSummaryDto(
 /// <param name="CommissionAmount">Commission taken.</param>
 /// <param name="TcsAmount">GST TCS withheld.</param>
 /// <param name="TdsAmount">Income-tax TDS withheld.</param>
+/// <param name="CourierCostAmount">Courier charges taken off.</param>
 /// <param name="NetAmount">What is transferred.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="Status">Pending or Paid.</param>
@@ -114,6 +120,7 @@ public sealed record PayoutDto(
     decimal CommissionAmount,
     decimal TcsAmount,
     decimal TdsAmount,
+    decimal CourierCostAmount,
     decimal NetAmount,
     string Currency,
     string Status,
@@ -142,4 +149,5 @@ public sealed record SellerBalanceDto(
 /// <param name="PayoutsCreated">Payouts made, one per seller with anything payable.</param>
 /// <param name="EarningsSettled">Earnings those payouts cover.</param>
 /// <param name="SellersSkipped">Sellers owed money but with no seller record to pay to; their earnings wait.</param>
-public sealed record PayoutRunResultDto(int PayoutsCreated, int EarningsSettled, int SellersSkipped);
+/// <param name="SellersCarriedForward">Sellers whose courier costs came to as much as they had earned; it all waits for their next earnings.</param>
+public sealed record PayoutRunResultDto(int PayoutsCreated, int EarningsSettled, int SellersSkipped, int SellersCarriedForward);

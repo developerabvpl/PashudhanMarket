@@ -19,6 +19,9 @@ public sealed class FakeCourierGateway : ICourierGateway
 
     public const string FailingPickupMarker = "fail-awb";
 
+    /// <summary>The only courier the fake quotes for.</summary>
+    public const string FakeCourierId = "1";
+
     private readonly HashSet<string> _failingShipments = [];
 
     public string Name => GatewayName;
@@ -40,7 +43,23 @@ public sealed class FakeCourierGateway : ICourierGateway
         return Task.FromResult(Result.Success(new CarrierOrder($"9{shipmentId}", shipmentId)));
     }
 
-    public Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, CancellationToken cancellationToken)
+    /// <summary>
+    /// A simple, predictable price list, so tests can say what a parcel should cost: Rs 40 for the
+    /// first 500 g and Rs 20 for each 500 g after, plus Rs 30 or 2% of the value (whichever is more)
+    /// to collect cash on delivery.
+    /// </summary>
+    public Task<Result<CourierQuote>> QuoteAsync(CourierQuoteRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var halfKilos = Math.Max(1, (request.WeightGrams + 499) / 500);
+        var freight = 40m + (20m * (halfKilos - 1));
+        var cod = request.CashOnDelivery ? Math.Max(30m, Math.Round(request.DeclaredValue * 0.02m, 2)) : 0m;
+
+        return Task.FromResult(Result.Success(new CourierQuote(FakeCourierId, "Fake Express", freight, cod)));
+    }
+
+    public Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken)
     {
         bool fails;
 
@@ -65,7 +84,7 @@ public sealed class FakeCourierGateway : ICourierGateway
         return Task.FromResult(Result.Success(new CarrierOrder($"8{shipmentId}", shipmentId)));
     }
 
-    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
+    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Success(new CarrierAwb($"FAKER{carrierShipmentId}", "Fake Express Reverse")));
 
     public Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken) =>
@@ -86,7 +105,10 @@ internal sealed class UnconfiguredCourierGateway : ICourierGateway
     public Task<Result<CarrierOrder>> CreateOrderAsync(CourierOrderRequest request, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure<CarrierOrder>(ShippingErrors.CourierDisabled));
 
-    public Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
+    public Task<Result<CourierQuote>> QuoteAsync(CourierQuoteRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Failure<CourierQuote>(ShippingErrors.CourierDisabled));
+
+    public Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure<CarrierAwb>(ShippingErrors.CourierDisabled));
 
     public Task<Result> RequestPickupAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
@@ -95,7 +117,7 @@ internal sealed class UnconfiguredCourierGateway : ICourierGateway
     public Task<Result<CarrierOrder>> CreateReturnOrderAsync(CourierReturnRequest request, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure<CarrierOrder>(ShippingErrors.CourierDisabled));
 
-    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken) =>
+    public Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Failure<CarrierAwb>(ShippingErrors.CourierDisabled));
 
     public Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken) =>

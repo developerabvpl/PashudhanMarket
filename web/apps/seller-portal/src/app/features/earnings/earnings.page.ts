@@ -58,7 +58,10 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
             <tr>
               <td class="p-3 font-mono text-xs">
                 {{ e.orderNumber }}
-                @if (e.kind === 'Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+                @switch (e.kind) {
+                @case ('Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
+                @case ('CourierCost') { <span class="font-sans text-ink-muted">· {{ 'settlements.courier.' + e.detail | transloco }}</span> }
+                }
               </td>
               <td class="p-3">{{ e.deliveredAtUtc | dateIst }}</td>
               <td class="p-3 text-right">{{ e.grossAmount | inr }}</td>

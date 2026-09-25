@@ -38,13 +38,16 @@ internal sealed class EarningConfiguration : IEntityTypeConfiguration<Earning>
     public void Configure(EntityTypeBuilder<Earning> builder)
     {
         builder.ToTable("Earnings", SettlementsModule.SchemaName, table =>
-            table.HasCheckConstraint("CK_Earnings_NetAmount", "[NetAmount] >= 0"));
+            // A courier cost is the one kind that takes money away.
+            table.HasCheckConstraint("CK_Earnings_NetAmount", "[NetAmount] >= 0 OR [Kind] = 'CourierCost'"));
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
 
-        // One earning of each kind per parcel, however many times its delivery is reported.
-        builder.HasIndex(x => new { x.OrderPartId, x.Kind }).IsUnique();
+        // One sale and one delivery share per parcel, however many times its delivery is reported;
+        // one courier cost per shipment charge. The filter is cleared so the NULL reference that
+        // sales and delivery shares carry counts as a value, as it must for them to stay single.
+        builder.HasIndex(x => new { x.OrderPartId, x.Kind, x.Reference }).IsUnique().HasFilter(null);
 
         // The payout run's scan, and a seller's statement.
         builder.HasIndex(x => new { x.Status, x.PayableFromUtc });
@@ -52,6 +55,8 @@ internal sealed class EarningConfiguration : IEntityTypeConfiguration<Earning>
 
         builder.Property(x => x.OrderNumber).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Kind).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.Detail).HasMaxLength(16);
+        builder.Property(x => x.Reference).HasMaxLength(64);
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.CommissionPercent).HasPrecision(5, 2);

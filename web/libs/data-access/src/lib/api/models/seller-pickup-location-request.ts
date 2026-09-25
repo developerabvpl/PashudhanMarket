@@ -3,4 +3,5 @@
 
 export interface SellerPickupLocationRequest {
   name: string;
+  pincode?: (string | null);
 }

@@ -275,6 +275,8 @@ export type { ApiV1AdminShippingOrdersOrderIdShipmentsGet$Params as ApiV1AdminSh
 export { apiV1AdminShippingOrdersOrderIdShipmentsGet as apiV1AdminShippingOrdersOrderIdShipmentsGet } from './fn/admin-shipping/api-v-1-admin-shipping-orders-order-id-shipments-get';
 export type { ApiV1AdminShippingShipmentsGet$Params as ApiV1AdminShippingShipmentsGet$Params } from './fn/admin-shipping/api-v-1-admin-shipping-shipments-get';
 export { apiV1AdminShippingShipmentsGet as apiV1AdminShippingShipmentsGet } from './fn/admin-shipping/api-v-1-admin-shipping-shipments-get';
+export type { ApiV1AdminShippingShipmentsShipmentIdChargesTripPut$Params as ApiV1AdminShippingShipmentsShipmentIdChargesTripPut$Params } from './fn/admin-shipping/api-v-1-admin-shipping-shipments-shipment-id-charges-trip-put';
+export { apiV1AdminShippingShipmentsShipmentIdChargesTripPut as apiV1AdminShippingShipmentsShipmentIdChargesTripPut } from './fn/admin-shipping/api-v-1-admin-shipping-shipments-shipment-id-charges-trip-put';
 export type { ApiV1AdminShippingPickupLocationsGet$Params as ApiV1AdminShippingPickupLocationsGet$Params } from './fn/admin-shipping/api-v-1-admin-shipping-pickup-locations-get';
 export { apiV1AdminShippingPickupLocationsGet as apiV1AdminShippingPickupLocationsGet } from './fn/admin-shipping/api-v-1-admin-shipping-pickup-locations-get';
 export type { ApiV1AdminShippingPickupLocationsPut$Params as ApiV1AdminShippingPickupLocationsPut$Params } from './fn/admin-shipping/api-v-1-admin-shipping-pickup-locations-put';

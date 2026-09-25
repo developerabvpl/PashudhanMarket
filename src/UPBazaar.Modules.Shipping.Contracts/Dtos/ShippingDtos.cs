@@ -35,6 +35,8 @@ public sealed record ParcelSuggestionDto(ParcelDto? Parcel, IReadOnlyList<string
 /// <param name="LastError">Why the last booking step failed, if it did; packing again resumes from there.</param>
 /// <param name="Events">What the courier has reported, oldest first.</param>
 /// <param name="CreatedAtUtc">When it was booked.</param>
+/// <param name="QuoteError">Why the courier charge could not be quoted; staff enter it from the invoice.</param>
+/// <param name="Charges">What each courier trip costs the seller, or will.</param>
 public sealed record ShipmentDto(
     Guid Id,
     Guid OrderId,
@@ -54,7 +56,9 @@ public sealed record ShipmentDto(
     string? TrackingUrl,
     string? LastError,
     IReadOnlyList<ShipmentEventDto> Events,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    string? QuoteError,
+    IReadOnlyList<ShipmentChargeDto> Charges);
 
 /// <summary>One courier update.</summary>
 /// <param name="Status">The courier's own wording, such as IN TRANSIT.</param>
@@ -64,5 +68,21 @@ public sealed record ShipmentEventDto(string Status, DateTime OccurredAtUtc);
 /// <summary>Where a courier collects parcels from.</summary>
 /// <param name="SellerId">The seller it belongs to, or null for the platform warehouse every other seller ships from.</param>
 /// <param name="Name">The pickup location's name exactly as registered in Shiprocket.</param>
+/// <param name="Pincode">The PIN code of that address, used to price parcels; null if not recorded.</param>
 /// <param name="UpdatedAtUtc">When it was last set.</param>
-public sealed record PickupLocationDto(Guid? SellerId, string Name, DateTime UpdatedAtUtc);
+public sealed record PickupLocationDto(Guid? SellerId, string Name, string? Pincode, DateTime UpdatedAtUtc);
+
+/// <summary>What one courier trip of a shipment costs.</summary>
+/// <param name="Trip">Delivery, Rto (brought back undelivered) or ReturnPickup (collecting a buyer's return).</param>
+/// <param name="Amount">The charge, as quoted or corrected; null while unknown.</param>
+/// <param name="Charged">How much has been charged so far: nothing until the trip happens.</param>
+/// <param name="IncurredAtUtc">When the trip happened; null until it does.</param>
+/// <param name="CorrectedAtUtc">When staff last corrected the amount.</param>
+/// <param name="Note">Why it was corrected.</param>
+public sealed record ShipmentChargeDto(
+    string Trip,
+    decimal? Amount,
+    decimal Charged,
+    DateTime? IncurredAtUtc,
+    DateTime? CorrectedAtUtc,
+    string? Note);

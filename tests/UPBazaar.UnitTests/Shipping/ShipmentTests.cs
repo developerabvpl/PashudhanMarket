@@ -112,7 +112,7 @@ public sealed class ShipmentTests
     public void A_return_is_prepaid_and_delivered_means_back_with_the_seller()
     {
         var shipment = Shipment.CreateReturn(
-            Guid.NewGuid(), "UPB-260922-ABCDEF", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Fake", (500, 20m, 15m, 10m));
+            Guid.NewGuid(), "UPB-260922-ABCDEF", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Fake", (500, 20m, 15m, 10m), "Damaged");
 
         shipment.Direction.ShouldBe(ShipmentDirection.Return);
         shipment.PaymentMode.ShouldBe("Prepaid");

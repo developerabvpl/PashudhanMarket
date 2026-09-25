@@ -26,11 +26,16 @@ internal sealed class GetOrderShipmentsQueryHandler(UPBazaarDbContext dbContext,
         var shipments = await dbContext.Set<Shipment>()
             .AsNoTracking()
             .Include(s => s.Events)
+            .Include(s => s.Charges)
+            .AsSplitQuery()
             .Where(s => s.OrderId == query.OrderId && (query.BuyerId == null || s.BuyerId == query.BuyerId))
             .OrderBy(s => s.Id)
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<ShipmentDto>>([.. shipments.Select(s => s.ToDto(courier))]);
+        // What the courier charges the seller is between the seller and the platform.
+        var forBuyer = query.BuyerId is not null;
+
+        return Result.Success<IReadOnlyList<ShipmentDto>>([.. shipments.Select(s => s.ToDto(courier, withCharges: !forBuyer))]);
     }
 }
 
@@ -75,6 +80,8 @@ internal sealed class ListShipmentsQueryHandler(UPBazaarDbContext dbContext, ICo
 
         var page = await shipments
             .Include(s => s.Events)
+            .Include(s => s.Charges)
+            .AsSplitQuery()
             .OrderByDescending(s => s.Id)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
@@ -98,7 +105,7 @@ internal sealed class ListPickupLocationsQueryHandler(UPBazaarDbContext dbContex
             .AsNoTracking()
             .OrderBy(l => l.SellerId != null)
             .ThenBy(l => l.Name)
-            .Select(l => new PickupLocationDto(l.SellerId, l.Name, l.UpdatedAtUtc))
+            .Select(l => new PickupLocationDto(l.SellerId, l.Name, l.Pincode, l.UpdatedAtUtc))
             .ToListAsync(cancellationToken);
 
         return locations;
@@ -106,7 +113,7 @@ internal sealed class ListPickupLocationsQueryHandler(UPBazaarDbContext dbContex
 }
 
 /// <summary>Sets a seller's pickup location, or the platform warehouse's when the seller is null.</summary>
-public sealed record SetPickupLocationCommand(Guid? SellerId, string Name) : ICommand<PickupLocationDto>;
+public sealed record SetPickupLocationCommand(Guid? SellerId, string Name, string? Pincode = null) : ICommand<PickupLocationDto>;
 
 internal sealed class SetPickupLocationCommandValidator : AbstractValidator<SetPickupLocationCommand>
 {
@@ -114,6 +121,10 @@ internal sealed class SetPickupLocationCommandValidator : AbstractValidator<SetP
     {
         RuleFor(x => x.SellerId).NotEqual(Guid.Empty);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(PickupLocation.NameMaxLength);
+        RuleFor(x => x.Pincode)
+            .Matches("^[1-9][0-9]{5}$")
+            .When(x => !string.IsNullOrWhiteSpace(x.Pincode))
+            .WithMessage("Enter the 6-digit PIN code of the pickup address.");
     }
 }
 
@@ -129,17 +140,17 @@ internal sealed class SetPickupLocationCommandHandler(UPBazaarDbContext dbContex
 
         if (location is null)
         {
-            location = PickupLocation.Create(command.SellerId, command.Name, clock.UtcNow);
+            location = PickupLocation.Create(command.SellerId, command.Name, command.Pincode, clock.UtcNow);
             dbContext.Set<PickupLocation>().Add(location);
         }
         else
         {
-            location.Rename(command.Name, clock.UtcNow);
+            location.Update(command.Name, command.Pincode, clock.UtcNow);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new PickupLocationDto(location.SellerId, location.Name, location.UpdatedAtUtc);
+        return new PickupLocationDto(location.SellerId, location.Name, location.Pincode, location.UpdatedAtUtc);
     }
 }
 

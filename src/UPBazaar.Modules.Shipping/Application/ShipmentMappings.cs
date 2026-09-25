@@ -4,10 +4,13 @@ using UPBazaar.Modules.Shipping.Gateway;
 
 namespace UPBazaar.Modules.Shipping.Application;
 
-/// <summary>Maps shipments to the DTO the API shows. Requires the events to be loaded.</summary>
+/// <summary>Maps shipments to the DTO the API shows. Requires the events and charges to be loaded.</summary>
 internal static class ShipmentMappings
 {
-    public static ShipmentDto ToDto(this Shipment shipment, ICourierGateway courier) => new(
+    /// <param name="shipment">The shipment.</param>
+    /// <param name="courier">For the tracking link.</param>
+    /// <param name="withCharges">Include what the courier charges; false for buyers.</param>
+    public static ShipmentDto ToDto(this Shipment shipment, ICourierGateway courier, bool withCharges = true) => new(
         shipment.PublicId,
         shipment.OrderId,
         shipment.OrderNumber,
@@ -26,5 +29,10 @@ internal static class ShipmentMappings
         shipment.Awb is { } awb && courier.IsEnabled ? courier.TrackingUrl(awb) : null,
         shipment.LastError,
         [.. shipment.Events.OrderBy(e => e.Id).Select(e => new ShipmentEventDto(e.Status, e.OccurredAtUtc))],
-        shipment.CreatedAtUtc);
+        shipment.CreatedAtUtc,
+        withCharges ? shipment.QuoteError : null,
+        [.. shipment.Charges
+            .Where(_ => withCharges)
+            .OrderBy(c => c.Trip)
+            .Select(c => new ShipmentChargeDto(c.Trip.ToString(), c.Amount, c.Billed, c.IncurredAtUtc, c.CorrectedAtUtc, c.Note))]);
 }

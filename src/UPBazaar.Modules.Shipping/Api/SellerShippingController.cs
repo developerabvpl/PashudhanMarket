@@ -112,7 +112,7 @@ public sealed class SellerShippingController(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return AsSeller(seller => dispatcher.SendAsync(new SetPickupLocationCommand(seller, request.Name), cancellationToken), cancellationToken);
+        return AsSeller(seller => dispatcher.SendAsync(new SetPickupLocationCommand(seller, request.Name, request.Pincode), cancellationToken), cancellationToken);
     }
 
     private async Task<ActionResult<T>> ForOwnPart<T>(
@@ -142,4 +142,5 @@ public sealed class SellerShippingController(
 }
 
 /// <param name="Name">The pickup location's name exactly as registered in Shiprocket.</param>
-public sealed record SellerPickupLocationRequest(string Name);
+/// <param name="Pincode">Its 6-digit PIN code, so parcels can be priced when booked.</param>
+public sealed record SellerPickupLocationRequest(string Name, string? Pincode = null);

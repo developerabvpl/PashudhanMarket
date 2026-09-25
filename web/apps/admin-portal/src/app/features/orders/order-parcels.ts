@@ -16,6 +16,7 @@ import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
 import { OrderingPermissions, ShippingPermissions } from '../../core/permissions';
 import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
+import { ShipmentCharges } from './shipment-charges';
 
 /**
  * One row per seller's parcel: its status, its courier booking, and "Pack and book" for a part
@@ -24,7 +25,7 @@ import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
  */
 @Component({
   selector: 'upb-order-parcels',
-  imports: [MatButtonModule, TranslocoPipe, InrCurrencyPipe, HasPermissionDirective],
+  imports: [MatButtonModule, TranslocoPipe, InrCurrencyPipe, HasPermissionDirective, ShipmentCharges],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3 class="mt-6 font-medium text-ink">{{ 'shipping.parcels' | transloco }}</h3>
@@ -46,7 +47,9 @@ import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
           </p>
           @if (shipment.lastError) {
           <p class="mt-1 text-danger">{{ shipment.lastError }}</p>
-          } }
+          }
+          <upb-shipment-charges [shipment]="shipment" (changed)="replace($event)" />
+          }
         </div>
 
         @if (part.returnRequest; as request) {
@@ -78,6 +81,7 @@ import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
             {{ 'shipping.statuses.' + pickup.status | transloco }}
           </p>
           @if (pickup.lastError) { <p class="mt-1 text-danger">{{ 'returns.pickupFailed' | transloco: { error: pickup.lastError } }}</p> }
+          <upb-shipment-charges [shipment]="pickup" (changed)="replace($event)" />
           }
           @if (!returnFor(part.id) || returnFor(part.id)?.status === 'Booking') {
           <button *hasPermission="shipmentsWrite" class="mt-2" mat-stroked-button type="button" (click)="bookReturnPickup(part.id)">
@@ -125,6 +129,11 @@ export class OrderParcels {
       const id = this.order().id;
       untracked(() => void this.load(id));
     });
+  }
+
+  /** Shows a shipment as it is after a charge was corrected, without reloading the order. */
+  protected replace(updated: ShipmentDto): void {
+    this.shipments.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
   }
 
   /** The live booking that took the part to the buyer. */

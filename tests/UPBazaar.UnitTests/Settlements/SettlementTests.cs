@@ -96,6 +96,35 @@ public sealed class SettlementTests
     }
 
     [Fact]
+    public void Courier_costs_come_off_a_payout_as_their_own_line()
+    {
+        var sale = Earn(300m, new EarningRates(10m, 0m, 0m));
+        var courier = Earning.ForCourierCost(
+            Seller, sale.OrderId, sale.OrderNumber, sale.OrderPartId, "Delivery", 90m, "INR", Now, "s1:Delivery:1");
+
+        courier.NetAmount.ShouldBe(-90m);
+        courier.CommissionAmount.ShouldBe(0m);
+
+        var payout = Payout.Create(Seller, "UP Gaushala", "UP Gaushala Collective", "123456789012", "SBIN0001234", [sale, courier]);
+
+        payout.GrossAmount.ShouldBe(300m);
+        payout.CommissionAmount.ShouldBe(30m);
+        payout.CourierCostAmount.ShouldBe(90m);
+        payout.NetAmount.ShouldBe(180m);
+        payout.EarningCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public void Nothing_is_paid_out_when_courier_costs_outweigh_the_earnings()
+    {
+        var sale = Earn(50m, new EarningRates(10m, 0m, 0m));
+        var courier = Earning.ForCourierCost(
+            Seller, Guid.NewGuid(), "UPB-1", Guid.NewGuid(), "Rto", 60m, "INR", Now, "s2:Rto:1");
+
+        Should.Throw<ArgumentException>(() => Payout.Create(Seller, "Shop", "Holder", "1234", "SBIN0001234", [sale, courier]));
+    }
+
+    [Fact]
     public void The_default_rates_cannot_leave_a_seller_nothing()
     {
         var policy = SettlementPolicy.CreateDefault();

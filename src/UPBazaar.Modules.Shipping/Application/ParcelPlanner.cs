@@ -38,14 +38,21 @@ internal sealed class ParcelPlanner(UPBazaarDbContext dbContext, IProductCatalog
             units.Sum(u => u.Package.HeightCm * u.Quantity)), []);
     }
 
-    /// <summary>The seller's own pickup location, else the platform warehouse, else none.</summary>
-    public async Task<string?> PickupLocationForAsync(Guid sellerId, CancellationToken cancellationToken)
+    /// <summary>The name of the seller's own pickup location, else the platform warehouse's, else none.</summary>
+    public async Task<string?> PickupLocationForAsync(Guid sellerId, CancellationToken cancellationToken) =>
+        (await PickupFromAsync(sellerId, cancellationToken))?.Name;
+
+    /// <summary>The PIN code of the same place, for pricing the parcel; null when none was recorded.</summary>
+    public async Task<string?> PickupPincodeForAsync(Guid sellerId, CancellationToken cancellationToken) =>
+        (await PickupFromAsync(sellerId, cancellationToken))?.Pincode;
+
+    private async Task<PickupLocation?> PickupFromAsync(Guid sellerId, CancellationToken cancellationToken)
     {
         var locations = await dbContext.Set<PickupLocation>()
             .AsNoTracking()
             .Where(l => l.SellerId == sellerId || l.SellerId == null)
             .ToListAsync(cancellationToken);
 
-        return (locations.FirstOrDefault(l => l.SellerId == sellerId) ?? locations.FirstOrDefault())?.Name;
+        return locations.FirstOrDefault(l => l.SellerId == sellerId) ?? locations.FirstOrDefault();
     }
 }

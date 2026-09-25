@@ -67,6 +67,10 @@ import { SellerAccess } from '../../core/seller-access';
             <mat-label>{{ 'shipping.pickupName' | transloco }}</mat-label>
             <input matInput name="pickup" maxlength="36" [value]="pickupName()" (input)="pickupName.set(value($event))" />
           </mat-form-field>
+          <mat-form-field class="w-32" subscriptSizing="dynamic">
+            <mat-label>{{ 'shipping.pincode' | transloco }}</mat-label>
+            <input matInput name="pickupPincode" inputmode="numeric" maxlength="6" [value]="pickupPincode()" (input)="pickupPincode.set(value($event))" />
+          </mat-form-field>
           <button mat-stroked-button type="submit" [disabled]="busy() || !pickupName().trim()">{{ 'common.save' | transloco }}</button>
         </div>
       </form>
@@ -80,6 +84,7 @@ export class SettingsPage implements OnInit {
   protected readonly email = signal('');
   protected readonly pickup = signal<PickupLocationDto | null>(null);
   protected readonly pickupName = signal('');
+  protected readonly pickupPincode = signal('');
   protected readonly busy = signal(false);
   protected readonly profileError = signal<string | null>(null);
 
@@ -132,8 +137,9 @@ export class SettingsPage implements OnInit {
     this.busy.set(true);
 
     try {
-      this.pickup.set(await this.api.invoke(apiV1SellerShippingPickupLocationPut, { body: { name: this.pickupName().trim() } }));
-      this.pickupName.set('');
+      this.showPickup(await this.api.invoke(apiV1SellerShippingPickupLocationPut, {
+        body: { name: this.pickupName().trim(), pincode: this.pickupPincode().trim() || null },
+      }));
       this.toast.success('shipping.pickupSaved');
     } catch {
       // Reported by the interceptor.
@@ -142,9 +148,22 @@ export class SettingsPage implements OnInit {
     }
   }
 
+  /**
+   * Shows where parcels are collected from, and fills the form with the seller's own location so
+   * saving it again keeps its PIN code rather than clearing it.
+   */
+  private showPickup(pickup: PickupLocationDto | null): void {
+    this.pickup.set(pickup);
+
+    if (pickup?.sellerId) {
+      this.pickupName.set(pickup.name);
+      this.pickupPincode.set(pickup.pincode ?? '');
+    }
+  }
+
   private async loadPickup(): Promise<void> {
     try {
-      this.pickup.set(await this.api.invoke(apiV1SellerShippingPickupLocationGet, {}));
+      this.showPickup(await this.api.invoke(apiV1SellerShippingPickupLocationGet, {}));
     } catch {
       this.pickup.set(null);
     }

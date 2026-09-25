@@ -20,8 +20,17 @@ public interface ICourierGateway
     /// <summary>Creates the carrier's order for one consignment.</summary>
     Task<Result<CarrierOrder>> CreateOrderAsync(CourierOrderRequest request, CancellationToken cancellationToken);
 
-    /// <summary>Asks the carrier to pick a courier and issue an AWB.</summary>
-    Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, CancellationToken cancellationToken);
+    /// <summary>
+    /// Asks what the carrier's recommended courier would charge to carry a parcel, before it is
+    /// booked, so the seller can be charged the price the courier is then asked for.
+    /// </summary>
+    Task<Result<CourierQuote>> QuoteAsync(CourierQuoteRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Issues an AWB: with the quoted courier when <paramref name="courierId"/> is given, otherwise
+    /// with whichever courier the carrier picks.
+    /// </summary>
+    Task<Result<CarrierAwb>> AssignAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken);
 
     /// <summary>Asks the courier to come and collect.</summary>
     Task<Result> RequestPickupAsync(string carrierShipmentId, CancellationToken cancellationToken);
@@ -33,7 +42,7 @@ public interface ICourierGateway
     Task<Result<CarrierOrder>> CreateReturnOrderAsync(CourierReturnRequest request, CancellationToken cancellationToken);
 
     /// <summary>Issues an AWB for a return order.</summary>
-    Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, CancellationToken cancellationToken);
+    Task<Result<CarrierAwb>> AssignReturnAwbAsync(string carrierShipmentId, string? courierId, CancellationToken cancellationToken);
 
     /// <summary>Cancels a consignment the courier has not collected yet.</summary>
     Task<Result> CancelAsync(string carrierOrderId, CancellationToken cancellationToken);
@@ -44,6 +53,34 @@ public interface ICourierGateway
     /// <summary>A public page where the buyer can follow the parcel.</summary>
     string TrackingUrl(string awb);
 }
+
+/// <summary>What a parcel is to be priced for.</summary>
+/// <param name="PickupPincode">Where it is collected from.</param>
+/// <param name="DeliveryPincode">Where it is taken to.</param>
+/// <param name="WeightGrams">Packed weight.</param>
+/// <param name="LengthCm">Box length.</param>
+/// <param name="BreadthCm">Box breadth.</param>
+/// <param name="HeightCm">Box height.</param>
+/// <param name="CashOnDelivery">The courier collects money at the door, which costs extra.</param>
+/// <param name="DeclaredValue">What the goods are worth.</param>
+/// <param name="IsReturn">A buyer's return, which couriers price separately.</param>
+public sealed record CourierQuoteRequest(
+    string PickupPincode,
+    string DeliveryPincode,
+    int WeightGrams,
+    decimal LengthCm,
+    decimal BreadthCm,
+    decimal HeightCm,
+    bool CashOnDelivery,
+    decimal DeclaredValue,
+    bool IsReturn);
+
+/// <summary>The recommended courier and its price.</summary>
+/// <param name="CourierId">The carrier's id for the courier, to ask for it when assigning the AWB.</param>
+/// <param name="CourierName">Its name.</param>
+/// <param name="Freight">The charge for carrying the parcel.</param>
+/// <param name="CodCharge">The extra charge for collecting cash on delivery; zero for a prepaid parcel.</param>
+public sealed record CourierQuote(string CourierId, string CourierName, decimal Freight, decimal CodCharge);
 
 /// <summary>The carrier's ids for a booked consignment.</summary>
 public sealed record CarrierOrder(string CarrierOrderId, string CarrierShipmentId);

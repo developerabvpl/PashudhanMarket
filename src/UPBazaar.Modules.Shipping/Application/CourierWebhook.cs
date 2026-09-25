@@ -58,7 +58,11 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
             return Result.Success();
         }
 
-        var shipment = await dbContext.Set<Shipment>().Include(s => s.Events).FirstOrDefaultAsync(s => s.Awb == awb, cancellationToken);
+        var shipment = await dbContext.Set<Shipment>()
+            .Include(s => s.Events)
+            .Include(s => s.Charges)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(s => s.Awb == awb, cancellationToken);
 
         if (shipment is null)
         {

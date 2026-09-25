@@ -41,6 +41,7 @@ public interface IOrderFulfilmentService
 /// True when the part is going back because the buyer's return was approved: a courier must
 /// collect it from the delivery address. False for an RTO, which the courier brings back itself.
 /// </param>
+/// <param name="ReturnReason">Why the buyer asked to return it, when they did: Damaged, WrongItem, NotAsDescribed, QualityIssue, NoLongerNeeded or Other.</param>
 public sealed record ShippablePartDto(
     Guid OrderId,
     string OrderNumber,
@@ -56,4 +57,5 @@ public sealed record ShippablePartDto(
     DateTime PlacedAtUtc,
     DeliveryAddressDto DeliveryAddress,
     IReadOnlyList<OrderLineDto> Lines,
-    bool BuyerReturnApproved);
+    bool BuyerReturnApproved,
+    string? ReturnReason = null);

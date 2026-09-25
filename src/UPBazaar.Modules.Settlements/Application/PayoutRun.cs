@@ -43,7 +43,7 @@ internal sealed partial class PayoutRunner(
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        int payouts = 0, settled = 0, skipped = 0;
+        int payouts = 0, settled = 0, skipped = 0, carried = 0;
 
         foreach (var sellerId in sellerIds)
         {
@@ -60,6 +60,16 @@ internal sealed partial class PayoutRunner(
             var earnings = await dbContext.Set<Earning>()
                 .Where(e => e.SellerId == sellerId && e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now)
                 .ToListAsync(cancellationToken);
+
+            // Courier costs can outweigh what a seller has earned so far - a returned parcel's
+            // sale is cancelled but its courier trips are still owed. Then nothing is paid, and
+            // everything waits to be set against the seller's next earnings.
+            if (earnings.Sum(e => e.NetAmount) <= 0)
+            {
+                carried++;
+
+                continue;
+            }
 
             var payout = Payout.Create(sellerId, account.ShopName, account.AccountHolder, account.AccountNumber, account.Ifsc, earnings);
             dbContext.Set<Payout>().Add(payout);
@@ -79,7 +89,7 @@ internal sealed partial class PayoutRunner(
             }
         }
 
-        return new PayoutRunResultDto(payouts, settled, skipped);
+        return new PayoutRunResultDto(payouts, settled, skipped, carried);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Seller {SellerId} is owed money but has no seller record to pay to")]

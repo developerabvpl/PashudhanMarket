@@ -93,6 +93,8 @@ internal sealed class PackPartCommandHandler(
 
         var shipment = await dbContext.Set<Shipment>()
             .Include(s => s.Events)
+            .Include(s => s.Charges)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 s => s.OrderPartId == part.PartId && s.Direction == ShipmentDirection.Forward && s.Status != ShipmentStatus.Cancelled,
                 cancellationToken);
@@ -202,9 +204,14 @@ internal sealed class PackPartCommandHandler(
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
+        if (shipment.Awb is null && shipment.QuotedCourierId is null)
+        {
+            await QuoteAsync(shipment, part, cancellationToken);
+        }
+
         if (shipment.Awb is null)
         {
-            var awb = await courier.AssignAwbAsync(shipment.CarrierShipmentId!, cancellationToken);
+            var awb = await courier.AssignAwbAsync(shipment.CarrierShipmentId!, shipment.QuotedCourierId, cancellationToken);
 
             if (awb.IsFailure)
             {
@@ -237,6 +244,47 @@ internal sealed class PackPartCommandHandler(
 
             return Result.Failure(error);
         }
+    }
+
+    /// <summary>
+    /// Prices the parcel before the AWB is asked for, so the courier assigned is the one quoted
+    /// for. A parcel that cannot be priced still ships: its charge is left for staff to enter from
+    /// the invoice, rather than holding up the buyer's delivery.
+    /// </summary>
+    private async Task QuoteAsync(Shipment shipment, ShippablePartDto part, CancellationToken cancellationToken)
+    {
+        var pickupPincode = await planner.PickupPincodeForAsync(part.SellerId, cancellationToken);
+
+        if (pickupPincode is null)
+        {
+            shipment.RecordQuoteError("The pickup location has no PIN code, so the courier charge could not be quoted.");
+        }
+        else
+        {
+            var quote = await courier.QuoteAsync(
+                new CourierQuoteRequest(
+                    pickupPincode,
+                    part.DeliveryAddress.Pincode,
+                    shipment.WeightGrams,
+                    shipment.LengthCm,
+                    shipment.BreadthCm,
+                    shipment.HeightCm,
+                    shipment.CodAmount > 0,
+                    part.Subtotal,
+                    IsReturn: false),
+                cancellationToken);
+
+            if (quote.IsSuccess)
+            {
+                shipment.RecordQuote(quote.Value.CourierId, quote.Value.Freight, quote.Value.CodCharge);
+            }
+            else
+            {
+                shipment.RecordQuoteError("The courier could not quote a charge for this parcel.");
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static CourierOrderRequest Request(Shipment shipment, ShippablePartDto part)

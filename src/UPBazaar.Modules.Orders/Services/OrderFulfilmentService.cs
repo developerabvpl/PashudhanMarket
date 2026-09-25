@@ -48,7 +48,8 @@ internal sealed class OrderFulfilmentService(
             order.PlacedAtUtc,
             dto.DeliveryAddress,
             partDto.Lines,
-            part.IsBuyerReturn);
+            part.IsBuyerReturn,
+            part.ReturnRequest?.Reason.ToString());
     }
 
     public async Task<Result> AdvancePartAsync(

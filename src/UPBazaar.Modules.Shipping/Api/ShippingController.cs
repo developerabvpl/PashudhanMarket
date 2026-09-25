@@ -164,6 +164,32 @@ public sealed class AdminShippingController(IDispatcher dispatcher) : Controller
             .ToActionResult();
     }
 
+    /// <summary>Sets what a courier trip really cost.</summary>
+    [HttpPut("shipments/{shipmentId:guid}/charges/{trip}")]
+    [Authorize(ShippingPermissions.ShipmentsWrite)]
+    [EndpointSummary("Correct a courier charge")]
+    [EndpointDescription(
+        "For when Shiprocket's invoice differs from the quote, or there was no quote. Trip is Delivery, "
+        + "Rto or ReturnPickup. If the trip has happened the seller is charged, or credited, the "
+        + "difference at once; otherwise the amount is what they will be charged when it does.")]
+    [ProducesResponseType<ShipmentDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ShipmentDto>> CorrectCharge(
+        Guid shipmentId,
+        string trip,
+        CorrectChargeRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return (await dispatcher.SendAsync(
+                new CorrectShipmentChargeCommand(shipmentId, trip, request.Amount, request.Note),
+                cancellationToken))
+            .ToActionResult();
+    }
+
     /// <summary>Lists pickup locations.</summary>
     [HttpGet("pickup-locations")]
     [Authorize(ShippingPermissions.ShipmentsRead)]
@@ -188,7 +214,7 @@ public sealed class AdminShippingController(IDispatcher dispatcher) : Controller
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return (await dispatcher.SendAsync(new SetPickupLocationCommand(request.SellerId, request.Name), cancellationToken))
+        return (await dispatcher.SendAsync(new SetPickupLocationCommand(request.SellerId, request.Name, request.Pincode), cancellationToken))
             .ToActionResult();
     }
 
@@ -208,10 +234,15 @@ public sealed record PackPartRequest(ParcelDto? Parcel);
 
 /// <param name="SellerId">The seller, or null for the platform warehouse.</param>
 /// <param name="Name">The pickup location's name exactly as registered in Shiprocket.</param>
-public sealed record PickupLocationRequest(Guid? SellerId, string Name);
+/// <param name="Pincode">The 6-digit PIN code of that address. Without it parcels still ship, but their courier charge must be entered by hand.</param>
+public sealed record PickupLocationRequest(Guid? SellerId, string Name, string? Pincode = null);
 
 /// <param name="Page">1-based page number. Defaults to 1.</param>
 /// <param name="PageSize">Items per page, 1 to 100. Defaults to 20.</param>
 /// <param name="Status">Booking, PickupRequested, InTransit, Delivered, Returned or Cancelled.</param>
 /// <param name="Search">Order number or AWB.</param>
 public sealed record ListShipmentsRequest(int? Page, int? PageSize, string? Status, string? Search);
+
+/// <param name="Amount">What the trip cost, in rupees, as Shiprocket billed it.</param>
+/// <param name="Note">Where the figure comes from, such as the invoice number.</param>
+public sealed record CorrectChargeRequest(decimal Amount, string? Note);

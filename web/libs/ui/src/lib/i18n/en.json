@@ -488,7 +488,24 @@
     "sellerIdOptional": "Seller id (blank for the platform warehouse)",
     "pickupName": "Name as registered in Shiprocket",
     "sellerIdInvalid": "A seller id looks like 00000000-0000-0000-0000-000000000000.",
-    "pickupSaved": "Pickup location saved."
+    "pickupSaved": "Pickup location saved.",
+    "pincode": "PIN code",
+    "noPincode": "no PIN code, so parcels are not priced",
+    "charges": {
+      "notQuoted": "Courier charge not quoted: {{reason}} Enter it from the invoice.",
+      "unknown": "not known yet",
+      "charged": "{{amount}} charged",
+      "notYet": "not charged yet",
+      "correct": "Correct",
+      "amount": "Charge (₹)",
+      "note": "Why, e.g. invoice number",
+      "saved": "Courier charge saved.",
+      "trips": {
+        "Delivery": "Delivery",
+        "Rto": "Returned undelivered (RTO)",
+        "ReturnPickup": "Return pickup"
+      }
+    }
   },
   "sellerPortal": {
     "registerTitle": "Sell on UP Bazaar",
@@ -648,7 +665,13 @@
     "balancePaid": "Paid so far",
     "youGet": "You get",
     "noEarnings": "No earnings yet.",
-    "kindDelivery": "delivery charge"
+    "kindDelivery": "delivery charge",
+    "courierCosts": "Courier charges",
+    "courier": {
+      "Delivery": "courier: delivery",
+      "Rto": "courier: returned undelivered",
+      "ReturnPickup": "courier: return pickup"
+    }
   },
   "catalogAdmin": {
     "title": "Products",

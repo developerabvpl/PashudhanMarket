@@ -6,6 +6,7 @@ export interface PayoutDto {
   accountHolder: string;
   accountNumber: string;
   commissionAmount: number;
+  courierCostAmount: number;
   createdAtUtc: string;
   currency: string;
   earnings: Array<EarningDto>;

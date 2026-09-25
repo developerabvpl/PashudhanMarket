@@ -6,6 +6,7 @@ export interface EarningDto {
   commissionPercent: number;
   currency: string;
   deliveredAtUtc: string;
+  detail: (string | null);
   grossAmount: number;
   id: string;
   kind: string;

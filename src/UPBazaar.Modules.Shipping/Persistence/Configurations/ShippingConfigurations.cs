@@ -36,6 +36,9 @@ internal sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
         builder.Property(x => x.Awb).HasMaxLength(40);
         builder.Property(x => x.CourierName).HasMaxLength(100);
         builder.Property(x => x.LastError).HasMaxLength(500);
+        builder.Property(x => x.QuotedCourierId).HasMaxLength(32);
+        builder.Property(x => x.QuoteError).HasMaxLength(500);
+        builder.Property(x => x.ReturnReason).HasMaxLength(16);
         builder.Property(x => x.LengthCm).HasPrecision(6, 1);
         builder.Property(x => x.BreadthCm).HasPrecision(6, 1);
         builder.Property(x => x.HeightCm).HasPrecision(6, 1);
@@ -50,6 +53,13 @@ internal sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Navigation(x => x.Events).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(x => x.Charges)
+            .WithOne()
+            .HasForeignKey(x => x.ShipmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(x => x.Charges).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 
@@ -63,6 +73,26 @@ internal sealed class ShipmentEventConfiguration : IEntityTypeConfiguration<Ship
         builder.HasIndex(x => x.PublicId).IsUnique();
 
         builder.Property(x => x.Status).HasMaxLength(64).IsRequired();
+    }
+}
+
+internal sealed class ShipmentChargeConfiguration : IEntityTypeConfiguration<ShipmentCharge>
+{
+    public void Configure(EntityTypeBuilder<ShipmentCharge> builder)
+    {
+        builder.ToTable("ShipmentCharges", ShippingModule.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.PublicId).IsUnique();
+
+        // One charge per trip of a shipment.
+        builder.HasIndex(x => new { x.ShipmentId, x.Trip }).IsUnique();
+
+        builder.Property(x => x.Trip).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.CorrectedBy).HasMaxLength(64);
+        builder.Property(x => x.Note).HasMaxLength(200);
+
+        builder.Ignore(x => x.IsIncurred);
     }
 }
 
@@ -80,5 +110,6 @@ internal sealed class PickupLocationConfiguration : IEntityTypeConfiguration<Pic
         builder.HasIndex(x => x.SellerId).IsUnique().HasFilter(null);
 
         builder.Property(x => x.Name).HasMaxLength(PickupLocation.NameMaxLength).IsRequired();
+        builder.Property(x => x.Pincode).HasMaxLength(6);
     }
 }
