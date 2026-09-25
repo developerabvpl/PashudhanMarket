@@ -47,3 +47,13 @@ public sealed record ShipmentChargedDomainEvent(
     string Currency,
     int Sequence,
     string? ReturnReason) : DomainEvent;
+
+/// <summary>
+/// The cash a courier collected for a delivered cash-on-delivery parcel is in: paid over in full,
+/// or written off by staff as never coming. Settlements lets the seller's earnings from the parcel
+/// become payable - the platform does not pay out money it has not received.
+/// </summary>
+/// <param name="OrderId">The order.</param>
+/// <param name="OrderPartId">The seller's part the parcel carried.</param>
+/// <param name="SellerId">Whose parcel it was.</param>
+public sealed record CodCashReceivedDomainEvent(Guid OrderId, Guid OrderPartId, Guid SellerId) : DomainEvent;

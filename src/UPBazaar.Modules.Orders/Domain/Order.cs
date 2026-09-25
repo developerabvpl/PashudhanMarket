@@ -331,7 +331,8 @@ public sealed class Order : AggregateRoot, IAuditable
                 now,
                 now + returnWindow,
                 SellerEarnsDelivery(part),
-                SellerDiscount: CouponFundedBy == "Seller" ? part.Discount : 0m));
+                SellerDiscount: CouponFundedBy == "Seller" ? part.Discount : 0m,
+                CashOnDelivery: PaymentMethod == PaymentMethod.CashOnDelivery));
         }
 
         CompleteIfDone();

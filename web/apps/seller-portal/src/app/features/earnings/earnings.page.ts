@@ -72,6 +72,9 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
                 @if (e.status === 'Accruing') {
                 <span class="block text-xs text-ink-muted">{{ 'settlements.payableFrom' | transloco }} {{ e.payableFromUtc | dateIst }}</span>
                 }
+                @if (e.awaitingCash) {
+                <span class="block text-xs text-warning">{{ 'settlements.awaitingCash' | transloco }}</span>
+                }
               </td>
             </tr>
             } @empty {

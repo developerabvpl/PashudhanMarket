@@ -73,7 +73,13 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
 
         var isReturn = shipment.Direction == ShipmentDirection.Return;
         var mapped = isReturn ? CourierStatus.MapReturn(rawStatus) : CourierStatus.Map(rawStatus);
-        var moved = shipment.ApplyCourierStatus(rawStatus, mapped, clock.UtcNow);
+        var now = clock.UtcNow;
+        var moved = shipment.ApplyCourierStatus(rawStatus, mapped, now);
+
+        if (moved && shipment is { Direction: ShipmentDirection.Forward, Status: ShipmentStatus.Delivered, CodAmount: > 0 })
+        {
+            await OpenCodReceivableAsync(shipment, now, cancellationToken);
+        }
 
         try
         {
@@ -105,6 +111,25 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
         }
 
         return await orders.AdvancePartAsync(shipment.OrderId, shipment.OrderPartId, partStatus, cancellationToken);
+    }
+
+    /// <summary>
+    /// The courier now owes the cash it collected at the door. A remittance report that paid for
+    /// the parcel before this update arrived is matched to it here.
+    /// </summary>
+    private async Task OpenCodReceivableAsync(Shipment shipment, DateTime now, CancellationToken cancellationToken)
+    {
+        var receivable = CodReceivable.Open(shipment, now);
+        dbContext.Set<CodReceivable>().Add(receivable);
+
+        var paidEarlier = await dbContext.Set<CodRemittanceLine>()
+            .Where(l => l.Awb == receivable.Awb && l.ReceivableId == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var line in paidEarlier)
+        {
+            line.MatchTo(receivable, now);
+        }
     }
 
     private static string? Text(JsonElement element, string property) =>

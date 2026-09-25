@@ -58,7 +58,8 @@ internal static class SettlementMappings
         earning.Status.ToString(),
         earning.DeliveredAtUtc,
         earning.PayableFromUtc,
-        payoutId);
+        payoutId,
+        earning.AwaitingCash);
 
     private static string Mask(string accountNumber) =>
         accountNumber.Length <= 4 ? accountNumber : new string('•', accountNumber.Length - 4) + accountNumber[^4..];

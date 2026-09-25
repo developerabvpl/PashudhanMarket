@@ -74,6 +74,9 @@ import {
       <a *hasPermission="shipmentsRead" mat-button routerLink="/shipping">
         {{ 'nav.shipments' | transloco }}
       </a>
+      <a *hasPermission="codRead" mat-button routerLink="/shipping/cod">
+        {{ 'nav.cod' | transloco }}
+      </a>
       <a *hasPermission="sellersRead" mat-button routerLink="/sellers">
         {{ 'nav.sellers' | transloco }}
       </a>
@@ -130,6 +133,7 @@ export class App {
   protected readonly paymentsRead = PaymentsPermissions.Read;
   protected readonly settlementsRead = SettlementsPermissions.Read;
   protected readonly shipmentsRead = ShippingPermissions.ShipmentsRead;
+  protected readonly codRead = ShippingPermissions.CodRead;
   protected readonly sellersRead = SellersPermissions.Read;
   protected readonly productsRead = CatalogPermissions.ProductsRead;
   protected readonly productsWrite = CatalogPermissions.ProductsWrite;

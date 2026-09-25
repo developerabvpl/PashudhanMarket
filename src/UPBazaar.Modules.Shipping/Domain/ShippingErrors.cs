@@ -57,6 +57,26 @@ public static class ShippingErrors
         "shipping.charge.wrong_trip",
         "That trip is not one this shipment makes: a delivery can be charged for its delivery and its RTO, a return for its pickup.");
 
+    public static readonly Error CodNothingOwed = Error.Conflict(
+        "shipping.cod.nothing_owed",
+        "The courier owes nothing more for this parcel.");
+
+    public static readonly Error CodReceivableNotFound = Error.NotFound(
+        "shipping.cod.not_found",
+        "No cash-on-delivery parcel with that id.");
+
+    public static readonly Error CodRemittanceNotFound = Error.NotFound(
+        "shipping.cod.remittance_not_found",
+        "No remittance with that id.");
+
+    public static readonly Error CodReferenceTaken = Error.Conflict(
+        "shipping.cod.reference_taken",
+        "A remittance with this bank reference has already been uploaded.");
+
+    public static Error CodFileUnreadable(string why) => Error.Validation(
+        "shipping.cod.file_unreadable",
+        why);
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "shipping.concurrent_change",
         "The shipment was updated at the same time by something else. Try again.");

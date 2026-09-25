@@ -102,6 +102,12 @@ public sealed class Earning : Entity
 
     public EarningStatus Status { get; private set; }
 
+    /// <summary>
+    /// A cash-on-delivery parcel whose cash the courier has not yet paid over. Not payable until it
+    /// has, whatever the return window says: the platform does not pay out money it has not had.
+    /// </summary>
+    public bool AwaitingCash { get; private set; }
+
     /// <summary>The payout it was paid in, once settled.</summary>
     public long? PayoutId { get; private set; }
 
@@ -238,7 +244,13 @@ public sealed class Earning : Entity
         };
     }
 
-    public bool IsPayable(DateTime now) => Status == EarningStatus.Accruing && PayableFromUtc <= now;
+    public bool IsPayable(DateTime now) => Status == EarningStatus.Accruing && PayableFromUtc <= now && !AwaitingCash;
+
+    /// <summary>Holds a cash-on-delivery earning until the courier pays over the cash.</summary>
+    public void AwaitCash() => AwaitingCash = true;
+
+    /// <summary>The courier has paid the cash over, or staff wrote it off: payable on the usual terms.</summary>
+    public void CashReceived() => AwaitingCash = false;
 
     /// <summary>A return was asked for. Only an earning not yet paid can be held; a paid one has gone.</summary>
     public void Hold()

@@ -4,7 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UPBazaar.Infrastructure;
 using UPBazaar.Modules.Shipping.Application;
+using UPBazaar.Modules.Shipping.Contracts;
 using UPBazaar.Modules.Shipping.Gateway;
+using UPBazaar.Modules.Shipping.Services;
 using UPBazaar.SharedKernel.Modules;
 
 namespace UPBazaar.Modules.Shipping;
@@ -74,6 +76,12 @@ public static class ShippingModuleExtensions
             services.AddSingleton<ICourierGateway, UnconfiguredCourierGateway>();
         }
 
+        services.AddOptions<CodOptions>()
+            .Bind(configuration.GetSection(CodOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddScoped<ICodCash, CodCash>();
         services.AddScoped<ParcelPlanner>();
         services.AddScoped<ReturnPickupBooker>();
 

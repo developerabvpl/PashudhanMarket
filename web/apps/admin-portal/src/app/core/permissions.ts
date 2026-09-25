@@ -28,6 +28,8 @@ export const PaymentsPermissions = {
 export const ShippingPermissions = {
   ShipmentsRead: 'shipping.shipments.read',
   ShipmentsWrite: 'shipping.shipments.write',
+  CodRead: 'shipping.cod.read',
+  CodWrite: 'shipping.cod.write',
 } as const;
 
 /** Permission names the seller review screens depend on. */

@@ -207,7 +207,8 @@ internal sealed class ListEarningsQueryHandler(UPBazaarDbContext dbContext)
                 x.earning.Status.ToString(),
                 x.earning.DeliveredAtUtc,
                 x.earning.PayableFromUtc,
-                x.payout != null ? (Guid?)x.payout.PublicId : null))
+                x.payout != null ? (Guid?)x.payout.PublicId : null,
+                x.earning.AwaitingCash))
             .ToListAsync(cancellationToken);
 
         return new PagedList<EarningDto>(items, query.Page, query.PageSize, total);
@@ -227,9 +228,9 @@ internal sealed class GetSellerBalanceQueryHandler(UPBazaarDbContext dbContext, 
         var payouts = dbContext.Set<Payout>().AsNoTracking().Where(p => p.SellerId == query.SellerId);
 
         return new SellerBalanceDto(
-            await earnings.Where(e => e.Status == EarningStatus.Accruing && e.PayableFromUtc > now).SumAsync(e => e.NetAmount, cancellationToken),
+            await earnings.Where(e => e.Status == EarningStatus.Accruing && (e.PayableFromUtc > now || e.AwaitingCash)).SumAsync(e => e.NetAmount, cancellationToken),
             await earnings.Where(e => e.Status == EarningStatus.OnHold).SumAsync(e => e.NetAmount, cancellationToken),
-            await earnings.Where(e => e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now).SumAsync(e => e.NetAmount, cancellationToken),
+            await earnings.Where(e => e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now && !e.AwaitingCash).SumAsync(e => e.NetAmount, cancellationToken),
             await payouts.Where(p => p.Status == PayoutStatus.Pending).SumAsync(p => p.NetAmount, cancellationToken),
             await payouts.Where(p => p.Status == PayoutStatus.Paid).SumAsync(p => p.NetAmount, cancellationToken),
             "INR");

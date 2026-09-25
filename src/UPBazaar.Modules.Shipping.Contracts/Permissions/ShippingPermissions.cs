@@ -19,11 +19,19 @@ public static class ShippingPermissions
     /// <summary>A seller packing and booking couriers for their own parts, and setting their pickup location.</summary>
     public const string OwnShipmentsWrite = "shipping.shipments.own.write";
 
+    /// <summary>See what cash-on-delivery money the courier owes, and what it has paid over.</summary>
+    public const string CodRead = "shipping.cod.read";
+
+    /// <summary>Upload the courier's remittance reports and write off what will never come.</summary>
+    public const string CodWrite = "shipping.cod.write";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         ShipmentsRead,
         ShipmentsWrite,
         OwnShipmentsWrite,
+        CodRead,
+        CodWrite,
     ];
 }

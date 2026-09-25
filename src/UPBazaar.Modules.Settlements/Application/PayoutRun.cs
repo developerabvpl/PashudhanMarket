@@ -38,7 +38,7 @@ internal sealed partial class PayoutRunner(
         var now = clock.UtcNow;
 
         var sellerIds = await dbContext.Set<Earning>()
-            .Where(e => e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now)
+            .Where(e => e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now && !e.AwaitingCash)
             .Select(e => e.SellerId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -58,7 +58,7 @@ internal sealed partial class PayoutRunner(
             }
 
             var earnings = await dbContext.Set<Earning>()
-                .Where(e => e.SellerId == sellerId && e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now)
+                .Where(e => e.SellerId == sellerId && e.Status == EarningStatus.Accruing && e.PayableFromUtc <= now && !e.AwaitingCash)
                 .ToListAsync(cancellationToken);
 
             // Courier costs can outweigh what a seller has earned so far - a returned parcel's

@@ -30,7 +30,8 @@
     "earnings": "Earnings",
     "reviews": "Reviews",
     "buyerReviews": "Buyer reviews",
-    "coupons": "Coupons"
+    "coupons": "Coupons",
+    "cod": "Cash on delivery"
   },
   "state": {
     "loading": "Loading",
@@ -701,7 +702,8 @@
       "Delivery": "courier: delivery",
       "Rto": "courier: returned undelivered",
       "ReturnPickup": "courier: return pickup"
-    }
+    },
+    "awaitingCash": "Waiting for the courier to pay over the cash"
   },
   "catalogAdmin": {
     "title": "Products",
@@ -912,5 +914,50 @@
     "joinedToast": "You have joined the campaign.",
     "leftToast": "You have left the campaign.",
     "noCampaigns": "No campaigns to join right now."
+  },
+  "cod": {
+    "title": "Cash on delivery",
+    "subtitle": "What the courier collected at buyers’ doors and still owes. Sellers are paid for a cash-on-delivery parcel only once its cash is in.",
+    "owedAmount": "Owed by the courier",
+    "owedCount": "Parcels owed for",
+    "overdueCount": "Overdue (over {{days}} days)",
+    "shortCount": "Paid short",
+    "uploadTitle": "Upload a remittance report",
+    "reference": "Bank reference (UTR)",
+    "remittedOn": "Money arrived on",
+    "file": "Report (CSV)",
+    "upload": "Upload",
+    "uploadHint": "One report per bank transfer. It needs an AWB column and an amount column, such as \"Remitted Amount\". Rows for parcels not yet reported delivered are matched when they are.",
+    "uploaded": "{{count}} rows recorded, {{unmatched}} not matched to a delivered parcel yet.",
+    "filterLabel": "Show",
+    "filters": {
+      "Owed": "Owed",
+      "Overdue": "Overdue",
+      "Short": "Paid short",
+      "Over": "Paid over",
+      "All": "All"
+    },
+    "overdue": "Overdue",
+    "deliveredOn": "Delivered {{date}}",
+    "paidOf": "{{received}} of {{expected}} paid over",
+    "statuses": {
+      "Outstanding": "Nothing paid yet",
+      "ShortPaid": "Paid short",
+      "Received": "Paid in full",
+      "Over": "Paid over",
+      "WrittenOff": "Written off"
+    },
+    "writeOff": "Write off the rest",
+    "writeOffNote": "Why the rest will not come",
+    "confirmWriteOff": "Write off",
+    "writtenOff": "Written off. The seller can now be paid.",
+    "none": "Nothing here.",
+    "showingOf": "Showing {{shown}} of {{total}}, oldest first.",
+    "remittancesTitle": "Remittances",
+    "unmatched": "{{count}} not matched",
+    "order": "Order",
+    "amount": "Amount",
+    "notMatched": "Not matched yet",
+    "noRemittances": "No remittances uploaded yet."
   }
 }

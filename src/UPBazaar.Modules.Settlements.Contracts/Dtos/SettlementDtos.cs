@@ -41,6 +41,7 @@ public sealed record SellerCommissionDto(Guid SellerId, string? ShopName, decima
 /// <param name="DeliveredAtUtc">When the parcel was delivered, or the courier trip made.</param>
 /// <param name="PayableFromUtc">When the buyer's return window closes; for a courier cost, at once.</param>
 /// <param name="PayoutId">The payout it was paid in, once settled.</param>
+/// <param name="AwaitingCash">A cash-on-delivery parcel whose cash the courier has not paid over yet: not payable until it has.</param>
 public sealed record EarningDto(
     Guid Id,
     Guid SellerId,
@@ -59,7 +60,8 @@ public sealed record EarningDto(
     string Status,
     DateTime DeliveredAtUtc,
     DateTime PayableFromUtc,
-    Guid? PayoutId);
+    Guid? PayoutId,
+    bool AwaitingCash);
 
 /// <summary>A payout in a list.</summary>
 /// <param name="Id">Public id.</param>
@@ -131,7 +133,7 @@ public sealed record PayoutDto(
     IReadOnlyList<EarningDto> Earnings);
 
 /// <summary>A seller's money at a glance.</summary>
-/// <param name="AccruingAmount">Delivered, waiting for the return window to close.</param>
+/// <param name="AccruingAmount">Delivered, waiting for the return window to close or, for cash on delivery, for the courier to pay the cash over.</param>
 /// <param name="OnHoldAmount">Waiting for a return request to be decided.</param>
 /// <param name="PayableAmount">Window closed: goes into the next payout run.</param>
 /// <param name="PendingPayoutAmount">In a payout not yet transferred.</param>

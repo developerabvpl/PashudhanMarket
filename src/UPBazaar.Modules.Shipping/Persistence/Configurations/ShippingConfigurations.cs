@@ -113,3 +113,80 @@ internal sealed class PickupLocationConfiguration : IEntityTypeConfiguration<Pic
         builder.Property(x => x.Pincode).HasMaxLength(6);
     }
 }
+
+internal sealed class CodReceivableConfiguration : IEntityTypeConfiguration<CodReceivable>
+{
+    public void Configure(EntityTypeBuilder<CodReceivable> builder)
+    {
+        builder.ToTable("CodReceivables", ShippingModule.SchemaName, table =>
+            table.HasCheckConstraint("CK_CodReceivables_Expected", "[Expected] > 0"));
+
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.PublicId).IsUnique();
+
+        // One per delivered parcel, however often the courier reports the delivery.
+        builder.HasIndex(x => x.ShipmentId).IsUnique();
+
+        // Remittance rows find their parcel by AWB; staff filter by what is still owed.
+        builder.HasIndex(x => x.Awb);
+        builder.HasIndex(x => new { x.Status, x.DeliveredAtUtc });
+        builder.HasIndex(x => x.OrderPartId);
+
+        builder.HasOne<Shipment>()
+            .WithMany()
+            .HasForeignKey(x => x.ShipmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(x => x.OrderNumber).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Awb).HasMaxLength(CodRemittanceLine.AwbMaxLength).IsRequired();
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.WriteOffNote).HasMaxLength(500);
+        builder.Property(x => x.WrittenOffBy).HasMaxLength(64);
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
+        builder.Ignore(x => x.IsCashIn);
+    }
+}
+
+internal sealed class CodRemittanceConfiguration : IEntityTypeConfiguration<CodRemittance>
+{
+    public void Configure(EntityTypeBuilder<CodRemittance> builder)
+    {
+        builder.ToTable("CodRemittances", ShippingModule.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.PublicId).IsUnique();
+
+        // A report is counted once.
+        builder.HasIndex(x => x.Reference).IsUnique();
+
+        builder.Property(x => x.Reference).HasMaxLength(CodRemittance.ReferenceMaxLength).IsRequired();
+        builder.Property(x => x.FileName).HasMaxLength(CodRemittance.FileNameMaxLength).IsRequired();
+        builder.Property(x => x.UploadedBy).HasMaxLength(64);
+
+        builder.HasMany(x => x.Lines)
+            .WithOne()
+            .HasForeignKey(x => x.CodRemittanceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(x => x.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Ignore(x => x.Total);
+    }
+}
+
+internal sealed class CodRemittanceLineConfiguration : IEntityTypeConfiguration<CodRemittanceLine>
+{
+    public void Configure(EntityTypeBuilder<CodRemittanceLine> builder)
+    {
+        builder.ToTable("CodRemittanceLines", ShippingModule.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.PublicId).IsUnique();
+
+        // Unmatched rows are looked up by AWB when a delivery is reported.
+        builder.HasIndex(x => new { x.Awb, x.ReceivableId });
+
+        builder.Property(x => x.Awb).HasMaxLength(CodRemittanceLine.AwbMaxLength).IsRequired();
+    }
+}

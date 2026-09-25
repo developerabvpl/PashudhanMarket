@@ -75,6 +75,7 @@ public sealed record OrderPartReturnedDomainEvent(
 /// the platform paid for lifted it off the buyer, but not when the seller paid for that coupon.
 /// </param>
 /// <param name="SellerDiscount">The coupon discount on the part's goods when the seller bears it: their earning is on the goods less this. Zero when the platform bears the discount, or there was none.</param>
+/// <param name="CashOnDelivery">Paid in cash at the door: the seller is paid only once the courier has paid that cash over.</param>
 public sealed record OrderPartDeliveredDomainEvent(
     Guid OrderId,
     string Number,
@@ -85,7 +86,8 @@ public sealed record OrderPartDeliveredDomainEvent(
     DateTime DeliveredAtUtc,
     DateTime ReturnWindowClosesAtUtc,
     decimal DeliveryFee = 0m,
-    decimal SellerDiscount = 0m) : DomainEvent;
+    decimal SellerDiscount = 0m,
+    bool CashOnDelivery = false) : DomainEvent;
 
 /// <summary>
 /// A buyer asked to return a delivered part. Settlements holds the seller's earning from it until

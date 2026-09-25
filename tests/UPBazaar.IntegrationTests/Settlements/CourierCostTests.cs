@@ -57,6 +57,7 @@ public sealed class CourierCostTests(ApiFixture fixture)
         // The sale is not payable until the return window closes, so this run has only the cost:
         // nothing is paid, and it waits.
         await CourierAsync(shipment.Awb!, "DELIVERED");
+        await CourierRemittance.PayAsync(admin, shipment.Awb!, shipment.CodAmount);
         await ProcessOutboxAsync();
         (await RunPayoutsAsync(admin)).SellersCarriedForward.ShouldBeGreaterThanOrEqualTo(1);
         (await PayoutsAsync(admin, sellerId)).ShouldBeEmpty();

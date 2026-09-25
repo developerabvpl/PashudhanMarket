@@ -223,9 +223,12 @@ public sealed class SettlementTests(ApiFixture fixture)
             new { parcel = new { weightGrams = 300, lengthCm = 20m, breadthCm = 15m, heightCm = 10m } });
         packed.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var awb = (await packed.Content.ReadFromJsonAsync<ShipmentDto>())!.Awb!;
-        await CourierAsync(awb, "PICKED UP");
-        await CourierAsync(awb, "DELIVERED");
+        var shipment = (await packed.Content.ReadFromJsonAsync<ShipmentDto>())!;
+        await CourierAsync(shipment.Awb!, "PICKED UP");
+        await CourierAsync(shipment.Awb!, "DELIVERED");
+
+        // The courier pays the cash over, or the seller would not be paid for it.
+        await CourierRemittance.PayAsync(admin, shipment.Awb!, shipment.CodAmount);
 
         _buyers[order.Id] = buyer;
 

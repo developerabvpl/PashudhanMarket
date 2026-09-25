@@ -273,6 +273,18 @@ export type { ApiV1SellerSettlementsPayoutsGet$Params as ApiV1SellerSettlementsP
 export { apiV1SellerSettlementsPayoutsGet as apiV1SellerSettlementsPayoutsGet } from './fn/seller-settlements/api-v-1-seller-settlements-payouts-get';
 export type { ApiV1SellerSettlementsPayoutsPayoutIdGet$Params as ApiV1SellerSettlementsPayoutsPayoutIdGet$Params } from './fn/seller-settlements/api-v-1-seller-settlements-payouts-payout-id-get';
 export { apiV1SellerSettlementsPayoutsPayoutIdGet as apiV1SellerSettlementsPayoutsPayoutIdGet } from './fn/seller-settlements/api-v-1-seller-settlements-payouts-payout-id-get';
+export type { ApiV1AdminShippingCodSummaryGet$Params as ApiV1AdminShippingCodSummaryGet$Params } from './fn/cod/api-v-1-admin-shipping-cod-summary-get';
+export { apiV1AdminShippingCodSummaryGet as apiV1AdminShippingCodSummaryGet } from './fn/cod/api-v-1-admin-shipping-cod-summary-get';
+export type { ApiV1AdminShippingCodReceivablesGet$Params as ApiV1AdminShippingCodReceivablesGet$Params } from './fn/cod/api-v-1-admin-shipping-cod-receivables-get';
+export { apiV1AdminShippingCodReceivablesGet as apiV1AdminShippingCodReceivablesGet } from './fn/cod/api-v-1-admin-shipping-cod-receivables-get';
+export type { ApiV1AdminShippingCodReceivablesReceivableIdWriteOffPost$Params as ApiV1AdminShippingCodReceivablesReceivableIdWriteOffPost$Params } from './fn/cod/api-v-1-admin-shipping-cod-receivables-receivable-id-write-off-post';
+export { apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost as apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost } from './fn/cod/api-v-1-admin-shipping-cod-receivables-receivable-id-write-off-post';
+export type { ApiV1AdminShippingCodRemittancesGet$Params as ApiV1AdminShippingCodRemittancesGet$Params } from './fn/cod/api-v-1-admin-shipping-cod-remittances-get';
+export { apiV1AdminShippingCodRemittancesGet as apiV1AdminShippingCodRemittancesGet } from './fn/cod/api-v-1-admin-shipping-cod-remittances-get';
+export type { ApiV1AdminShippingCodRemittancesPost$Params as ApiV1AdminShippingCodRemittancesPost$Params } from './fn/cod/api-v-1-admin-shipping-cod-remittances-post';
+export { apiV1AdminShippingCodRemittancesPost as apiV1AdminShippingCodRemittancesPost } from './fn/cod/api-v-1-admin-shipping-cod-remittances-post';
+export type { ApiV1AdminShippingCodRemittancesRemittanceIdGet$Params as ApiV1AdminShippingCodRemittancesRemittanceIdGet$Params } from './fn/cod/api-v-1-admin-shipping-cod-remittances-remittance-id-get';
+export { apiV1AdminShippingCodRemittancesRemittanceIdGet as apiV1AdminShippingCodRemittancesRemittanceIdGet } from './fn/cod/api-v-1-admin-shipping-cod-remittances-remittance-id-get';
 export type { ApiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet$Params as ApiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet$Params } from './fn/seller-shipping/api-v-1-seller-shipping-orders-order-id-parts-part-id-parcel-get';
 export { apiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet as apiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet } from './fn/seller-shipping/api-v-1-seller-shipping-orders-order-id-parts-part-id-parcel-get';
 export type { ApiV1SellerShippingOrdersOrderIdPartsPartIdPackPost$Params as ApiV1SellerShippingOrdersOrderIdPartsPartIdPackPost$Params } from './fn/seller-shipping/api-v-1-seller-shipping-orders-order-id-parts-part-id-pack-post';

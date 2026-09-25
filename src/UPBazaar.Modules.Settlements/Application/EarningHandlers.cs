@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Orders.Contracts.Events;
 using UPBazaar.Modules.Settlements.Domain;
+using UPBazaar.Modules.Shipping.Contracts;
+using UPBazaar.Modules.Shipping.Contracts.Events;
 using UPBazaar.SharedKernel.Messaging;
 
 namespace UPBazaar.Modules.Settlements.Application;
@@ -11,8 +13,11 @@ namespace UPBazaar.Modules.Settlements.Application;
 /// bear; one the platform bears leaves them paid in full - and from its share of the
 /// delivery charge if the buyer paid one, at today's rates, payable once the buyer's return
 /// window closes. The outbox may deliver the event twice; the second finds both already there.
+///
+/// Paid in cash at the door, both also wait for the courier to pay that cash over - unless its
+/// remittance was matched before this event arrived.
 /// </summary>
-internal sealed class OrderPartDeliveredEarningHandler(UPBazaarDbContext dbContext, PolicyReader policy)
+internal sealed class OrderPartDeliveredEarningHandler(UPBazaarDbContext dbContext, PolicyReader policy, ICodCash codCash)
     : IDomainEventHandler<OrderPartDeliveredDomainEvent>
 {
     public async Task HandleAsync(OrderPartDeliveredDomainEvent e, CancellationToken cancellationToken)
@@ -23,18 +28,26 @@ internal sealed class OrderPartDeliveredEarningHandler(UPBazaarDbContext dbConte
             .ToListAsync(cancellationToken);
 
         var rates = await policy.RatesForAsync(e.SellerId, cancellationToken);
+        var added = new List<Earning>();
 
         if (!existing.Contains(EarningKind.Sale))
         {
-            dbContext.Set<Earning>().Add(Earning.Create(
+            added.Add(Earning.Create(
                 e.SellerId, e.OrderId, e.Number, e.PartId, e.Subtotal - e.SellerDiscount, e.Currency, e.DeliveredAtUtc, e.ReturnWindowClosesAtUtc, rates));
         }
 
         if (e.DeliveryFee > 0 && !existing.Contains(EarningKind.Delivery))
         {
-            dbContext.Set<Earning>().Add(Earning.ForDelivery(
+            added.Add(Earning.ForDelivery(
                 e.SellerId, e.OrderId, e.Number, e.PartId, e.DeliveryFee, e.Currency, e.DeliveredAtUtc, e.ReturnWindowClosesAtUtc, rates));
         }
+
+        if (added.Count > 0 && e.CashOnDelivery && !await codCash.IsCashInAsync(e.PartId, cancellationToken))
+        {
+            added.ForEach(earning => earning.AwaitCash());
+        }
+
+        dbContext.Set<Earning>().AddRange(added);
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
@@ -123,5 +136,25 @@ internal sealed class PolicyReader(UPBazaarDbContext dbContext)
             .FirstOrDefaultAsync(cancellationToken);
 
         return new EarningRates(own ?? policy.DefaultCommissionPercent, policy.TcsPercent, policy.TdsPercent);
+    }
+}
+
+/// <summary>
+/// The courier has paid over the cash it collected for a parcel, or staff wrote it off: the
+/// seller's earnings from it can be paid on the usual terms. An earning not recorded yet is
+/// covered by the delivery handler, which asks Shipping.
+/// </summary>
+internal sealed class CodCashReceivedEarningHandler(UPBazaarDbContext dbContext)
+    : IDomainEventHandler<CodCashReceivedDomainEvent>
+{
+    public async Task HandleAsync(CodCashReceivedDomainEvent e, CancellationToken cancellationToken)
+    {
+        var waiting = await dbContext.Set<Earning>()
+            .Where(x => x.OrderPartId == e.OrderPartId && x.AwaitingCash)
+            .ToListAsync(cancellationToken);
+
+        waiting.ForEach(earning => earning.CashReceived());
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

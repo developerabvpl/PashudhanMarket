@@ -9,4 +9,9 @@ export const shippingRoutes: Route[] = [
     canActivate: [permissionGuard(ShippingPermissions.ShipmentsRead)],
     loadComponent: () => import('./pickup-locations.page').then((m) => m.PickupLocationsPage),
   },
+  {
+    path: 'cod',
+    canActivate: [permissionGuard(ShippingPermissions.CodRead)],
+    loadComponent: () => import('./cod.page').then((m) => m.CodPage),
+  },
 ];

@@ -79,6 +79,8 @@ public static class PermissionCatalog
                 PaymentsPermissions.RefundsWrite,
                 ShippingPermissions.ShipmentsRead,
                 ShippingPermissions.ShipmentsWrite,
+                ShippingPermissions.CodRead,
+                ShippingPermissions.CodWrite,
                 SellersPermissions.Read,
                 SellersPermissions.Write,
                 SellersPermissions.KycApprove,
@@ -120,6 +122,10 @@ public static class PermissionCatalog
                 SettlementsPermissions.Read,
                 SettlementsPermissions.PayoutsApprove,
                 SettlementsPermissions.PolicyWrite,
+
+                // Finance reconciles what the courier pays over against what it collected.
+                ShippingPermissions.CodRead,
+                ShippingPermissions.CodWrite,
             ]),
 
         new(
