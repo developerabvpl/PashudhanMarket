@@ -18,8 +18,9 @@ internal static class CatalogMappings
     /// <summary>
     /// Requires <see cref="Product.Category"/> and its parent to be loaded. Stock comes from
     /// Inventory, which owns it; the DTO keeps the fields so callers did not have to change.
+    /// <paramref name="now"/> decides the current price and whether a sale is running.
     /// </summary>
-    public static ProductDto ToDto(this Product product, StockLevelDto stock) => new(
+    public static ProductDto ToDto(this Product product, StockLevelDto stock, DateTime now) => new(
         product.PublicId,
         product.Sku,
         product.Name,
@@ -36,7 +37,15 @@ internal static class CatalogMappings
         product.CreatedAtUtc,
         product.ModifiedAtUtc,
         product.ToPackageDto(),
-        product.ReviewNote);
+        product.ReviewNote,
+        product.PriceAt(now),
+        product.ToSaleDto(now));
+
+    /// <summary>The product's sale, or null when none is set or the one set has ended.</summary>
+    public static ProductSaleDto? ToSaleDto(this Product product, DateTime now) =>
+        product is { SalePrice: { } price, SaleStartsAtUtc: { } starts, SaleEndsAtUtc: { } ends } && ends > now
+            ? new ProductSaleDto(price, starts, ends, product.IsSaleRunning(now))
+            : null;
 
     /// <summary>The product's parcel, or null while its seller has not measured it.</summary>
     public static ProductPackageDto? ToPackageDto(this Product product) =>
@@ -48,10 +57,11 @@ internal static class CatalogMappings
     public static async Task<ProductDto> ToDtoAsync(
         this Product product,
         IInventoryService inventory,
+        DateTime now,
         CancellationToken cancellationToken)
     {
         var levels = await inventory.GetStockLevelsAsync([product.PublicId], cancellationToken);
 
-        return product.ToDto(levels[product.PublicId]);
+        return product.ToDto(levels[product.PublicId], now);
     }
 }

@@ -19,6 +19,8 @@ const baseProduct: ProductDto = {
   modifiedAtUtc: null,
   package: null,
   reviewNote: null,
+  currentPrice: 4599,
+  sale: null,
 };
 
 const url = 'https://upbazaar.example/products/a1';
@@ -30,6 +32,20 @@ describe('productJsonLd', () => {
     expect(schema['@type']).toBe('Product');
     expect(schema['offers'].price).toBe(4599);
     expect(schema['offers'].priceCurrency).toBe('INR');
+  });
+
+  it('offers the sale price, valid until the last day of the sale', () => {
+    const onSale: ProductDto = {
+      ...baseProduct,
+      currentPrice: 3999,
+      sale: { price: 3999, startsAtUtc: '2026-03-14T00:00:00Z', endsAtUtc: '2026-03-20T18:29:59Z', isRunning: true },
+    };
+
+    const offer = (productJsonLd(onSale, url) as Record<string, any>)['offers'];
+
+    expect(offer.price).toBe(3999);
+    expect(offer.priceValidUntil).toBe('2026-03-20');
+    expect((productJsonLd(baseProduct, url) as Record<string, any>)['offers']).not.toHaveProperty('priceValidUntil');
   });
 
   it('reports InStock while unreserved units remain', () => {
@@ -72,6 +88,7 @@ describe('productJsonLd for a listing with no price', () => {
     brand: 'Gurushraddha',
     description: null,
     price: 0,
+    currentPrice: 0,
     onHandQuantity: 0,
     reservedQuantity: 0,
   };

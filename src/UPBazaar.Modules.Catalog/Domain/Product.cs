@@ -45,7 +45,20 @@ public sealed class Product : AggregateRoot, IAuditable
 
     public string? Description { get; private set; }
 
+    /// <summary>The regular price: what the listing costs when no sale is running.</summary>
     public decimal Price { get; private set; }
+
+    /// <summary>
+    /// What it costs while its sale runs; null with no sale set. The seller bears the difference -
+    /// the sale price simply is the price while it lasts, and is what they are paid on.
+    /// </summary>
+    public decimal? SalePrice { get; private set; }
+
+    /// <summary>When the sale price takes over.</summary>
+    public DateTime? SaleStartsAtUtc { get; private set; }
+
+    /// <summary>When the regular price comes back. Every sale ends: a price that never does is just the price.</summary>
+    public DateTime? SaleEndsAtUtc { get; private set; }
 
     public string Currency { get; private set; } = DefaultCurrency;
 
@@ -137,13 +150,19 @@ public sealed class Product : AggregateRoot, IAuditable
         string? brand,
         string? description,
         decimal price,
-        Category category)
+        Category category,
+        DateTime now)
     {
         ArgumentNullException.ThrowIfNull(category);
 
         if (Status == ProductStatus.Archived)
         {
             return Result.Failure(CatalogErrors.ProductArchived);
+        }
+
+        if (!StaysAboveSale(price, now))
+        {
+            return Result.Failure(CatalogErrors.PriceNotAboveSale);
         }
 
         // Only a published price is one somebody may have put in a cart; a draft can be
@@ -214,11 +233,16 @@ public sealed class Product : AggregateRoot, IAuditable
     /// since a price is operational rather than a claim about the product. Buyers with it in their
     /// cart see the change flagged, exactly as when staff re-price it.
     /// </summary>
-    public Result Reprice(decimal price)
+    public Result Reprice(decimal price, DateTime now)
     {
         if (Status == ProductStatus.Archived)
         {
             return Result.Failure(CatalogErrors.ProductArchived);
+        }
+
+        if (!StaysAboveSale(price, now))
+        {
+            return Result.Failure(CatalogErrors.PriceNotAboveSale);
         }
 
         if (price != Price && Status == ProductStatus.Active)
@@ -229,6 +253,56 @@ public sealed class Product : AggregateRoot, IAuditable
         Price = price;
 
         return Result.Success();
+    }
+
+    /// <summary>Whether its sale is running at <paramref name="now"/>.</summary>
+    public bool IsSaleRunning(DateTime now) => SaleRuns(SalePrice, SaleStartsAtUtc, SaleEndsAtUtc, now);
+
+    /// <summary>What it costs at <paramref name="now"/>: the sale price while the sale runs, else the regular price.</summary>
+    public decimal PriceAt(DateTime now) => IsSaleRunning(now) ? SalePrice!.Value : Price;
+
+    /// <summary>
+    /// <see cref="PriceAt(DateTime)"/> from bare columns, for queries that project a product rather than
+    /// load it.
+    /// </summary>
+    public static decimal PriceAt(decimal price, decimal? salePrice, DateTime? startsAtUtc, DateTime? endsAtUtc, DateTime now) =>
+        SaleRuns(salePrice, startsAtUtc, endsAtUtc, now) ? salePrice!.Value : price;
+
+    /// <summary>
+    /// Puts the listing on sale between two moments, replacing any sale already set. The sale
+    /// price must be below the regular price - otherwise it is not a sale - and the sale must
+    /// still have time to run.
+    /// </summary>
+    public Result SetSale(decimal salePrice, DateTime startsAtUtc, DateTime endsAtUtc, DateTime now)
+    {
+        if (Status == ProductStatus.Archived)
+        {
+            return Result.Failure(CatalogErrors.ProductArchived);
+        }
+
+        if (salePrice <= 0 || salePrice >= Price)
+        {
+            return Result.Failure(CatalogErrors.SaleNotBelowPrice);
+        }
+
+        if (endsAtUtc <= startsAtUtc || endsAtUtc <= now)
+        {
+            return Result.Failure(CatalogErrors.SaleEndsTooSoon);
+        }
+
+        SalePrice = salePrice;
+        SaleStartsAtUtc = startsAtUtc;
+        SaleEndsAtUtc = endsAtUtc;
+
+        return Result.Success();
+    }
+
+    /// <summary>Ends the sale now, or calls off one still to come. Nothing to end is not an error.</summary>
+    public void EndSale()
+    {
+        SalePrice = null;
+        SaleStartsAtUtc = null;
+        SaleEndsAtUtc = null;
     }
 
     /// <summary>Makes the listing visible. Publishing an active listing is a no-op.</summary>
@@ -262,5 +336,23 @@ public sealed class Product : AggregateRoot, IAuditable
 
         Status = ProductStatus.Archived;
         Raise(new ProductArchivedDomainEvent(PublicId, SellerId, Sku));
+    }
+
+    private static bool SaleRuns(decimal? salePrice, DateTime? startsAtUtc, DateTime? endsAtUtc, DateTime now) =>
+        salePrice is not null && now >= startsAtUtc && now < endsAtUtc;
+
+    /// <summary>
+    /// A regular price must stay above a sale that has not finished, or the "sale" would cost
+    /// more than the listing. A finished sale no longer matters, so it is cleared here rather
+    /// than left to stand in the way.
+    /// </summary>
+    private bool StaysAboveSale(decimal price, DateTime now)
+    {
+        if (SaleEndsAtUtc <= now)
+        {
+            EndSale();
+        }
+
+        return SalePrice is not { } sale || price > sale;
     }
 }

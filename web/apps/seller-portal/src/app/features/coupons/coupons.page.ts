@@ -16,7 +16,7 @@ import {
   toApiProblem,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
-import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { DateIstPipe, InrCurrencyPipe, endOfIstDay } from '@upbazaar/util';
 
 /**
  * The seller's own coupons, and the platform's campaigns they can join.
@@ -179,7 +179,7 @@ export class CouponsPage {
           discountType: this.discountType(),
           value: this.discountType() === 'FreeDelivery' ? 0 : Number(this.amount()),
           minOrderValue: optionalNumber(this.minOrderValue()),
-          endsAtUtc: this.endsOn() ? new Date(`${this.endsOn()}T23:59:59+05:30`).toISOString() : null,
+          endsAtUtc: this.endsOn() ? endOfIstDay(this.endsOn()) : null,
           totalLimit: optionalNumber(this.totalLimit()),
         },
       });

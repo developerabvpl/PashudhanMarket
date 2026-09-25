@@ -24,6 +24,7 @@ import {
   toApiProblem,
 } from '@upbazaar/data-access';
 import { FieldErrors, ToastService } from '@upbazaar/ui';
+import { SaleForm } from './sale-form';
 
 interface Details {
   sku: string;
@@ -51,7 +52,7 @@ interface Package {
  */
 @Component({
   selector: 'upb-product-edit-page',
-  imports: [RouterLink, TranslocoPipe, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, FieldErrors],
+  imports: [RouterLink, TranslocoPipe, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, FieldErrors, SaleForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -139,6 +140,10 @@ interface Package {
         <button mat-stroked-button type="submit" [disabled]="busy() || Number(price()) <= 0">{{ 'sellerPortal.updatePrice' | transloco }}</button>
         <upb-field-errors class="w-full" fieldId="price" [errors]="errors('price')" />
       </form>
+
+      @if (p.status !== 'Archived') {
+      <upb-sale-form [product]="p" (changed)="show($event)" />
+      }
 
       <form class="upb-card space-y-2 p-5" (submit)="saveStock($event)">
         <h2 class="font-medium text-ink">{{ 'sellerPortal.stock' | transloco }}</h2>
@@ -351,7 +356,7 @@ export class ProductEditPage {
     }
   }
 
-  private show(product: ProductDto): void {
+  protected show(product: ProductDto): void {
     this.product.set(product);
     this.details.set({
       sku: product.sku,

@@ -42,7 +42,12 @@ import { InrCurrencyPipe } from '@upbazaar/util';
               </div>
               <div class="flex items-center gap-3 text-sm">
                 <span class="rounded-full bg-surface-sunken px-2.5 py-0.5">{{ 'sellerPortal.productStatus.' + product.status | transloco }}</span>
+                @if (product.currentPrice < product.price) {
+                <span class="font-semibold text-success">{{ 'sellerPortal.sale.onSale' | transloco: { price: (product.currentPrice | inr) } }}</span>
+                <span class="text-ink-muted line-through">{{ product.price | inr }}</span>
+                } @else {
                 <span class="font-semibold text-ink">{{ product.price | inr }}</span>
+                }
               </div>
             </a>
           </li>

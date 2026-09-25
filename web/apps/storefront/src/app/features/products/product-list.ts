@@ -3,9 +3,9 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { CategoryDto, PagedListOfProductSummaryDto } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
-import { InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { ProductThumb } from './product-thumb';
+import { SalePrice } from './sale-price';
 
 /**
  * Public catalogue. Data arrives from the route resolvers as inputs, so the first paint is
@@ -13,7 +13,7 @@ import { ProductThumb } from './product-thumb';
  */
 @Component({
   selector: 'upb-product-list',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, PageState, ProductThumb],
+  imports: [RouterLink, TranslocoPipe, PageState, ProductThumb, SalePrice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="border-b border-border bg-surface">
@@ -117,7 +117,7 @@ import { ProductThumb } from './product-thumb';
 
               <div class="mt-auto pt-3">
                 @if (product.price > 0) {
-                <p class="text-lg font-bold text-ink">{{ product.price | inr: 'symbol' : 'auto' }}</p>
+                <upb-sale-price [regular]="product.price" [current]="product.currentPrice" />
                 <p
                   class="mt-0.5 text-xs font-medium"
                   [class.text-success]="product.availableQuantity > 0"

@@ -4,6 +4,7 @@ using UPBazaar.Infrastructure.Persistence;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Domain;
 using UPBazaar.Modules.Inventory.Contracts;
+using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
 
@@ -37,7 +38,7 @@ internal sealed class ListProductsQueryValidator : AbstractValidator<ListProduct
     }
 }
 
-internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : IQueryHandler<ListProductsQuery, PagedList<ProductSummaryDto>>
 {
     public async Task<Result<PagedList<ProductSummaryDto>>> HandleAsync(
@@ -63,8 +64,10 @@ internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInv
             .OrderBy(p => p.Sku)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
-            .Select(p => new { p.PublicId, p.Sku, p.Name, p.Price, p.Currency, p.Status })
+            .Select(p => new { p.PublicId, p.Sku, p.Name, p.Price, p.Currency, p.Status, p.SalePrice, p.SaleStartsAtUtc, p.SaleEndsAtUtc })
             .ToListAsync(cancellationToken);
+
+        var now = clock.UtcNow;
 
         // One call for the whole page rather than one per card.
         var stock = await inventory.GetStockLevelsAsync([.. page.Select(p => p.PublicId)], cancellationToken);
@@ -78,7 +81,8 @@ internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInv
                     p.Price,
                     p.Currency,
                     p.Status.ToString(),
-                    Math.Max(0, stock[p.PublicId].AvailableQuantity)))
+                    Math.Max(0, stock[p.PublicId].AvailableQuantity),
+                    Product.PriceAt(p.Price, p.SalePrice, p.SaleStartsAtUtc, p.SaleEndsAtUtc, now)))
             ],
             query.Page,
             query.PageSize,
@@ -92,7 +96,7 @@ internal sealed class ListProductsQueryHandler(UPBazaarDbContext dbContext, IInv
 /// </summary>
 public sealed record GetProductQuery(Guid ProductId, bool IncludeUnpublished) : IQuery<ProductDto>;
 
-internal sealed class GetProductQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class GetProductQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : IQueryHandler<GetProductQuery, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -108,7 +112,7 @@ internal sealed class GetProductQueryHandler(UPBazaarDbContext dbContext, IInven
             return Result.Failure<ProductDto>(CatalogErrors.ProductNotFound);
         }
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 

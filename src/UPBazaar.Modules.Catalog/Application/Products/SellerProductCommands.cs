@@ -5,6 +5,7 @@ using UPBazaar.Modules.Catalog.Application.Categories;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Domain;
 using UPBazaar.Modules.Inventory.Contracts;
+using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
 
@@ -28,7 +29,7 @@ internal static class SellerProductAccess
 /// <summary>One of the seller's own listings, in any status.</summary>
 public sealed record GetSellerProductQuery(Guid SellerId, Guid ProductId) : IQuery<ProductDto>;
 
-internal sealed class GetSellerProductQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class GetSellerProductQueryHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : IQueryHandler<GetSellerProductQuery, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(GetSellerProductQuery query, CancellationToken cancellationToken)
@@ -37,7 +38,7 @@ internal sealed class GetSellerProductQueryHandler(UPBazaarDbContext dbContext, 
 
         return product is null
             ? Result.Failure<ProductDto>(CatalogErrors.ProductNotFound)
-            : await product.ToDtoAsync(inventory, cancellationToken);
+            : await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
@@ -65,7 +66,7 @@ internal sealed class UpdateSellerDraftCommandValidator : AbstractValidator<Upda
     }
 }
 
-internal sealed class UpdateSellerDraftCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class UpdateSellerDraftCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<UpdateSellerDraftCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(UpdateSellerDraftCommand command, CancellationToken cancellationToken)
@@ -89,7 +90,7 @@ internal sealed class UpdateSellerDraftCommandHandler(UPBazaarDbContext dbContex
             return Result.Failure<ProductDto>(CatalogErrors.CategoryNotFound);
         }
 
-        var updated = product.UpdateDetails(command.Name, command.Brand, command.Description, command.Price, category);
+        var updated = product.UpdateDetails(command.Name, command.Brand, command.Description, command.Price, category, clock.UtcNow);
 
         if (updated.IsFailure)
         {
@@ -98,7 +99,7 @@ internal sealed class UpdateSellerDraftCommandHandler(UPBazaarDbContext dbContex
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
@@ -114,7 +115,7 @@ internal sealed class RepriceSellerProductCommandValidator : AbstractValidator<R
     }
 }
 
-internal sealed class RepriceSellerProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class RepriceSellerProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<RepriceSellerProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(RepriceSellerProductCommand command, CancellationToken cancellationToken)
@@ -126,7 +127,7 @@ internal sealed class RepriceSellerProductCommandHandler(UPBazaarDbContext dbCon
             return Result.Failure<ProductDto>(CatalogErrors.ProductNotFound);
         }
 
-        var repriced = product.Reprice(command.Price);
+        var repriced = product.Reprice(command.Price, clock.UtcNow);
 
         if (repriced.IsFailure)
         {
@@ -135,14 +136,14 @@ internal sealed class RepriceSellerProductCommandHandler(UPBazaarDbContext dbCon
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
 /// <summary>A seller asks for their draft to be published.</summary>
 public sealed record SubmitProductForReviewCommand(Guid SellerId, Guid ProductId) : ICommand<ProductDto>;
 
-internal sealed class SubmitProductForReviewCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class SubmitProductForReviewCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<SubmitProductForReviewCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(SubmitProductForReviewCommand command, CancellationToken cancellationToken)
@@ -163,7 +164,7 @@ internal sealed class SubmitProductForReviewCommandHandler(UPBazaarDbContext dbC
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
@@ -179,7 +180,7 @@ internal sealed class SendProductBackCommandValidator : AbstractValidator<SendPr
     }
 }
 
-internal sealed class SendProductBackCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class SendProductBackCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<SendProductBackCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(SendProductBackCommand command, CancellationToken cancellationToken)
@@ -200,6 +201,6 @@ internal sealed class SendProductBackCommandHandler(UPBazaarDbContext dbContext,
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }

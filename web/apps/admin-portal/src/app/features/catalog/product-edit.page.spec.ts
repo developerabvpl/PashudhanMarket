@@ -33,6 +33,8 @@ const product: ProductDto = {
   modifiedAtUtc: null,
   package: null,
   reviewNote: null,
+  currentPrice: 120,
+  sale: null,
 };
 
 function setUp(permissions: readonly string[]) {

@@ -250,6 +250,18 @@ public sealed class AdminCatalogController(IDispatcher dispatcher, ISellerDirect
         return (await dispatcher.SendAsync(new SendProductBackCommand(productId, request.Note), cancellationToken)).ToActionResult();
     }
 
+    /// <summary>Ends a product's sale.</summary>
+    [HttpDelete("products/{productId:guid}/sale")]
+    [Authorize(CatalogPermissions.ProductsWrite)]
+    [EndpointSummary("End a product's sale")]
+    [EndpointDescription(
+        "Ends a running sale, or calls off one still to come, whichever seller set it. Buyers with "
+        + "it in their cart see the price change flagged.")]
+    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProductDto>> EndSale(Guid productId, CancellationToken cancellationToken) =>
+        (await dispatcher.SendAsync(new EndProductSaleCommand(productId, SellerId: null), cancellationToken)).ToActionResult();
+
     /// <summary>Archives a product.</summary>
     [HttpDelete("products/{productId:guid}")]
     [Authorize(CatalogPermissions.ProductsWrite)]

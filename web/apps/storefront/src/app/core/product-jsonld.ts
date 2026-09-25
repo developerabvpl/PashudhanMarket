@@ -11,6 +11,9 @@ import { ProductDto, RatingSummaryDto } from '@upbazaar/data-access';
  * A product with no price gets no Offer node at all. Emitting `price: 0` would advertise it as
  * free in the search result, and there is no way to say "ask us" in an Offer — the absence of
  * an offer is exactly how schema.org expresses a listing that cannot be bought yet.
+ *
+ * A sale price carries priceValidUntil, its last day: the page is prerendered, so without it a
+ * search result could go on advertising the sale after it ended.
  */
 export function productJsonLd(
   product: ProductDto,
@@ -53,12 +56,13 @@ export function productJsonLd(
     };
   }
 
-  if (product.price > 0) {
+  if (product.currentPrice > 0) {
     node['offers'] = {
       '@type': 'Offer',
       url: canonicalUrl,
       priceCurrency: product.currency,
-      price: product.price,
+      price: product.currentPrice,
+      ...(product.sale?.isRunning ? { priceValidUntil: product.sale.endsAtUtc.slice(0, 10) } : {}),
       availability: available
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',

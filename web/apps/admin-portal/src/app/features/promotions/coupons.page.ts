@@ -15,13 +15,8 @@ import {
   toApiProblem,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
-import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { DateIstPipe, InrCurrencyPipe, endOfIstDay } from '@upbazaar/util';
 import { PromotionsPermissions } from '../../core/permissions';
-
-/** The last moment of a day in India, so a coupon "ending 31 October" works all that day. */
-export function endOfIstDay(date: string): string {
-  return new Date(`${date}T23:59:59+05:30`).toISOString();
-}
 
 /**
  * Coupon codes: the platform's, and sellers' own, newest first.

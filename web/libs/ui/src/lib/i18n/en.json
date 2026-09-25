@@ -188,7 +188,12 @@
     "nextPage": "Next",
     "pageOf": "Page {{page}} of {{totalPages}}",
     "brand": "Brand",
-    "byBrand": "by {{brand}}"
+    "byBrand": "by {{brand}}",
+    "sale": {
+      "was": "Regular price",
+      "percentOff": "{{percent}}% off",
+      "ends": "Sale ends {{date}}"
+    }
   },
   "seller": {
     "newProduct": "Add a product",
@@ -583,7 +588,23 @@
     "pickupTitle": "Pickup location",
     "pickupOwn": "Couriers collect from your pickup location \"{{name}}\".",
     "pickupWarehouse": "You ship from the platform warehouse, \"{{name}}\".",
-    "pickupHelp": "To collect from your own address, register it as a pickup location in Shiprocket and enter its name here exactly."
+    "pickupHelp": "To collect from your own address, register it as a pickup location in Shiprocket and enter its name here exactly.",
+    "sale": {
+      "title": "Sale",
+      "note": "A lower price for a while. You are paid on the sale price. Buyers see the regular price struck through beside it.",
+      "running": "On sale at {{price}} until {{ends}}.",
+      "scheduled": "On sale at {{price}} from {{starts}} until {{ends}}.",
+      "end": "End sale",
+      "price": "Sale price (₹)",
+      "startsOn": "Starts on",
+      "endsOn": "Ends on",
+      "set": "Put on sale",
+      "replace": "Replace sale",
+      "startsHint": "Leave the start empty to begin now. The sale runs to the end of its last day.",
+      "saved": "Sale set.",
+      "ended": "Sale ended.",
+      "onSale": "On sale {{price}}"
+    }
   },
   "sellersAdmin": {
     "title": "Sellers",

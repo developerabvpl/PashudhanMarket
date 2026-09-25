@@ -105,6 +105,33 @@ public sealed class SellerCatalogController(IDispatcher dispatcher, ICurrentUser
         return AsSeller(seller => dispatcher.SendAsync(new RepriceSellerProductCommand(seller, productId, request.Price), cancellationToken));
     }
 
+    /// <summary>Puts a product on sale.</summary>
+    [HttpPut("products/{productId:guid}/sale")]
+    [EndpointSummary("Put my product on sale")]
+    [EndpointDescription(
+        "A lower price between two moments, replacing any sale already set. You are paid on the sale "
+        + "price. Buyers with it in their cart see the price change flagged when it starts and ends.")]
+    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<ProductDto>> SetSale(Guid productId, SellerSaleRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsSeller(seller => dispatcher.SendAsync(
+            new SetProductSaleCommand(seller, productId, request.SalePrice, request.StartsAtUtc, request.EndsAtUtc),
+            cancellationToken));
+    }
+
+    /// <summary>Ends a product's sale.</summary>
+    [HttpDelete("products/{productId:guid}/sale")]
+    [EndpointSummary("End my sale")]
+    [EndpointDescription("Ends a running sale now, or calls off one still to come.")]
+    [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<ProductDto>> EndSale(Guid productId, CancellationToken cancellationToken) =>
+        AsSeller(seller => dispatcher.SendAsync(new EndProductSaleCommand(productId, seller), cancellationToken));
+
     /// <summary>Sets how a product ships.</summary>
     [HttpPut("products/{productId:guid}/package")]
     [EndpointSummary("Set my product's package")]
@@ -174,3 +201,8 @@ public sealed record SellerCreateProductRequest(
 
 /// <param name="Price">New price in rupees.</param>
 public sealed record SellerPriceRequest(decimal Price);
+
+/// <param name="SalePrice">The price while the sale runs, in rupees; below the regular price.</param>
+/// <param name="EndsAtUtc">When the regular price comes back.</param>
+/// <param name="StartsAtUtc">When the sale starts; now if left out.</param>
+public sealed record SellerSaleRequest(decimal SalePrice, DateTime EndsAtUtc, DateTime? StartsAtUtc = null);

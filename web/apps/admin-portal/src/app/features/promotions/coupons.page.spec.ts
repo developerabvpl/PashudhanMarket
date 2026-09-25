@@ -9,7 +9,7 @@ import {
   apiV1AdminPromotionsCouponsPost,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
-import { CouponsPage, endOfIstDay } from './coupons.page';
+import { CouponsPage } from './coupons.page';
 
 const campaign: CouponDto = {
   id: 'c1',
@@ -91,7 +91,6 @@ describe('CouponsPage', () => {
         perBuyerLimit: 1,
       },
     });
-    expect(endOfIstDay('2026-10-31')).toBe('2026-10-31T18:29:59.000Z');
   });
 
   it('creates a free-delivery coupon without asking for an amount', async () => {

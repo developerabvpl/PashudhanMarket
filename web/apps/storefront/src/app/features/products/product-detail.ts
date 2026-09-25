@@ -3,20 +3,21 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ProductDto, RatingSummaryDto } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
-import { InrCurrencyPipe } from '@upbazaar/util';
+import { DateIstPipe } from '@upbazaar/util';
 import { productFacts } from '../../core/product-facts';
 import { breadcrumbJsonLd, productJsonLd } from '../../core/product-jsonld';
 import { SeoService } from '../../core/seo.service';
 import { CartStore } from '../cart/cart.store';
 import { ProductReviews } from './product-reviews';
 import { ProductThumb, productPhotoUrl } from './product-thumb';
+import { SalePrice } from './sale-price';
 
 const ORIGIN = 'https://upbazaar.example';
 
 /** Public product page: server-rendered, canonicalised, and marked up with JSON-LD. */
 @Component({
   selector: 'upb-product-detail',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, ProductThumb, ProductReviews],
+  imports: [RouterLink, TranslocoPipe, DateIstPipe, ProductThumb, ProductReviews, SalePrice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (product(); as item) {
@@ -89,7 +90,10 @@ const ORIGIN = 'https://upbazaar.example';
 
           <div class="mt-6 rounded-card border border-border bg-surface p-5">
             @if (item.price > 0) {
-            <p class="text-3xl font-bold text-ink">{{ item.price | inr: 'symbol' : 'auto' }}</p>
+            <upb-sale-price [regular]="item.price" [current]="item.currentPrice" [large]="true" />
+            @if (item.sale?.isRunning) {
+            <p class="mt-1 text-sm text-ink-muted">{{ 'catalog.sale.ends' | transloco: { date: (item.sale!.endsAtUtc | dateIst: 'datetime') } }}</p>
+            }
             <p
               class="mt-1 font-medium"
               [class.text-success]="available() > 0"
@@ -230,7 +234,7 @@ export class ProductDetail {
         title: item.name,
         description: this.transloco.translate('catalog.productMetaDescription', {
           name: item.name,
-          price: `${item.currency} ${item.price}`,
+          price: `${item.currency} ${item.currentPrice}`,
           availability: this.transloco.translate(
             this.available() > 0 ? 'catalog.availabilityInStock' : 'catalog.availabilityOutOfStock'
           ),

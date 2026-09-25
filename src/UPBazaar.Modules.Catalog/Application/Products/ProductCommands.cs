@@ -5,6 +5,7 @@ using UPBazaar.Modules.Catalog.Application.Categories;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Catalog.Domain;
 using UPBazaar.Modules.Inventory.Contracts;
+using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 using UPBazaar.SharedKernel.Results;
 
@@ -68,7 +69,7 @@ internal sealed class CreateProductCommandValidator : AbstractValidator<CreatePr
 /// The opening stock is staged with Inventory and saved in the same transaction as the product,
 /// so a listing never exists without its stock row.
 /// </summary>
-internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<CreateProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -109,7 +110,7 @@ internal sealed class CreateProductCommandHandler(UPBazaarDbContext dbContext, I
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 
     internal static string? Normalize(string? value) =>
@@ -135,7 +136,7 @@ internal sealed class UpdateProductCommandValidator : AbstractValidator<UpdatePr
     }
 }
 
-internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<UpdateProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -162,7 +163,8 @@ internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext, I
             CreateProductCommandHandler.Normalize(command.Brand),
             CreateProductCommandHandler.Normalize(command.Description),
             command.Price,
-            category);
+            category,
+            clock.UtcNow);
 
         if (result.IsFailure)
         {
@@ -171,14 +173,14 @@ internal sealed class UpdateProductCommandHandler(UPBazaarDbContext dbContext, I
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
 /// <summary>Makes a draft visible to shoppers.</summary>
 public sealed record PublishProductCommand(Guid ProductId) : ICommand<ProductDto>;
 
-internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<PublishProductCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -202,7 +204,7 @@ internal sealed class PublishProductCommandHandler(UPBazaarDbContext dbContext, 
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 
@@ -241,7 +243,7 @@ internal sealed class SetProductPackageCommandValidator : AbstractValidator<SetP
     }
 }
 
-internal sealed class SetProductPackageCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory)
+internal sealed class SetProductPackageCommandHandler(UPBazaarDbContext dbContext, IInventoryService inventory, IClock clock)
     : ICommandHandler<SetProductPackageCommand, ProductDto>
 {
     public async Task<Result<ProductDto>> HandleAsync(
@@ -259,7 +261,7 @@ internal sealed class SetProductPackageCommandHandler(UPBazaarDbContext dbContex
         product.SetPackage(command.WeightGrams, command.LengthCm, command.BreadthCm, command.HeightCm);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await product.ToDtoAsync(inventory, cancellationToken);
+        return await product.ToDtoAsync(inventory, clock.UtcNow, cancellationToken);
     }
 }
 

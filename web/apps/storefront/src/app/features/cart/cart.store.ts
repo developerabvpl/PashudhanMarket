@@ -125,7 +125,7 @@ export class CartStore {
    * than a button that does nothing.
    */
   async add(product: ProductDto, quantity = 1): Promise<boolean> {
-    if (product.price <= 0 || quantity <= 0) {
+    if (product.currentPrice <= 0 || quantity <= 0) {
       return false;
     }
 

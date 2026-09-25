@@ -19,6 +19,7 @@ import {
   apiV1AdminCatalogProductsProductIdPackagePut,
   apiV1AdminCatalogProductsProductIdPublishPost,
   apiV1AdminCatalogProductsProductIdPut,
+  apiV1AdminCatalogProductsProductIdSaleDelete,
   apiV1AdminCatalogSellersGet,
   apiV1AdminInventoryStockProductIdGet,
   apiV1AdminInventoryStockProductIdPut,
@@ -28,6 +29,7 @@ import {
   toApiProblem,
 } from '@upbazaar/data-access';
 import { FieldErrors, ToastService } from '@upbazaar/ui';
+import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { CatalogPermissions, InventoryPermissions } from '../../core/permissions';
 import { confirm } from '../staff/confirm.dialog';
 
@@ -68,6 +70,8 @@ interface Package {
     MatInputModule,
     MatSelectModule,
     FieldErrors,
+    DateIstPipe,
+    InrCurrencyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -105,6 +109,23 @@ interface Package {
         <p class="mt-1 text-ink">{{ p.reviewNote }}</p>
       </div>
       }
+      }
+
+      @if (product()?.sale; as sale) {
+      <div class="upb-card flex flex-wrap items-center justify-between gap-3 p-5 text-sm" role="status">
+        <p class="text-ink">
+          {{ (sale.isRunning ? 'sellerPortal.sale.running' : 'sellerPortal.sale.scheduled') | transloco: {
+            price: (sale.price | inr),
+            starts: (sale.startsAtUtc | dateIst: 'datetime'),
+            ends: (sale.endsAtUtc | dateIst: 'datetime')
+          } }}
+        </p>
+        @if (canWrite()) {
+        <button mat-stroked-button color="warn" type="button" [disabled]="busy()" (click)="endSale()">
+          {{ 'sellerPortal.sale.end' | transloco }}
+        </button>
+        }
+      </div>
       }
 
       @if (!canWrite()) {
@@ -337,6 +358,14 @@ export class ProductEditPage {
     await this.run('details', async () => {
       this.show(await this.api.invoke(apiV1AdminCatalogProductsProductIdPublishPost, { productId: this.productId() }));
       this.toast.success('seller.published');
+    });
+  }
+
+  /** Ends a seller's sale - one that misleads, say. The seller sets sales; staff can only end them. */
+  protected async endSale(): Promise<void> {
+    await this.run('details', async () => {
+      this.show(await this.api.invoke(apiV1AdminCatalogProductsProductIdSaleDelete, { productId: this.productId() }));
+      this.toast.success('sellerPortal.sale.ended');
     });
   }
 

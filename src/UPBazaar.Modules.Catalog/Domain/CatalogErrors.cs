@@ -37,6 +37,18 @@ public static class CatalogErrors
         "catalog.category.in_use",
         "This category still has products or sub-categories. Move them elsewhere first.");
 
+    public static readonly Error SaleNotBelowPrice = Error.Validation(
+        "catalog.product.sale_not_below_price",
+        "A sale price must be more than zero and below the regular price.");
+
+    public static readonly Error SaleEndsTooSoon = Error.Validation(
+        "catalog.product.sale_ends_too_soon",
+        "A sale must end after it starts, and not in the past.");
+
+    public static readonly Error PriceNotAboveSale = Error.Validation(
+        "catalog.product.price_not_above_sale",
+        "The regular price must stay above the sale price. End the sale first to go lower.");
+
     public static readonly Error ProductArchived = Error.Conflict(
         "catalog.product.archived",
         "An archived product cannot be changed. Create a new listing instead.");

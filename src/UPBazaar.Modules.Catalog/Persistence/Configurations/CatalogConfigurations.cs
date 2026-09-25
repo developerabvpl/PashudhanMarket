@@ -33,6 +33,12 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         {
             table.HasCheckConstraint("CK_Products_Price", "[Price] >= 0");
 
+            // A sale is all three values or none, below the regular price, and ends after it starts.
+            table.HasCheckConstraint(
+                "CK_Products_Sale",
+                "([SalePrice] IS NULL AND [SaleStartsAtUtc] IS NULL AND [SaleEndsAtUtc] IS NULL) "
+                + "OR ([SalePrice] > 0 AND [SalePrice] < [Price] AND [SaleEndsAtUtc] > [SaleStartsAtUtc])");
+
             // All four package values, or none; and a package that exists is a real one.
             table.HasCheckConstraint(
                 "CK_Products_Package",

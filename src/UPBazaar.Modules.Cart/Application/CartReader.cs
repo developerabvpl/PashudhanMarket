@@ -70,7 +70,7 @@ internal sealed class CartReader(UPBazaarDbContext dbContext, IProductCatalog ca
             var price = product?.Price ?? line.PriceWhenAdded;
 
             var problem =
-                product is null || !product.IsOnSale ? LineProblem.Unavailable
+                product is null || !product.IsPurchasable ? LineProblem.Unavailable
                 : available < line.Quantity ? LineProblem.InsufficientStock
                 : price != line.PriceWhenAdded ? LineProblem.PriceChanged
                 : null;

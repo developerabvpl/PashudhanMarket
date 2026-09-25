@@ -26,14 +26,14 @@ public interface IProductCatalog
         CancellationToken cancellationToken);
 }
 
-/// <summary>A product as another module sees it: what it is called, what it costs, whether it is on sale.</summary>
+/// <summary>A product as another module sees it: what it is called, what it costs, whether it can be bought.</summary>
 /// <param name="Id">Public id.</param>
 /// <param name="Sku">Stock-keeping unit.</param>
 /// <param name="Name">Listing title.</param>
-/// <param name="Price">Current price.</param>
+/// <param name="Price">What it costs now: the sale price while a sale runs, else the regular price.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="SellerId">Public id of the selling account.</param>
-/// <param name="IsOnSale">Published and priced: something a shopper may buy right now.</param>
+/// <param name="IsPurchasable">Published and priced: something a shopper may buy right now.</param>
 public sealed record CatalogProductDto(
     Guid Id,
     string Sku,
@@ -41,4 +41,4 @@ public sealed record CatalogProductDto(
     decimal Price,
     string Currency,
     Guid SellerId,
-    bool IsOnSale);
+    bool IsPurchasable);

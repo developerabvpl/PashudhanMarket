@@ -4,6 +4,7 @@
 export interface ProductSummaryDto {
   availableQuantity: number;
   currency: string;
+  currentPrice: number;
   id: string;
   name: string;
   price: number;

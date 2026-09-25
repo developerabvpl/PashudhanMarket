@@ -16,6 +16,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CartStore, MAX_QUANTITY } from './cart.store';
 
 function product(overrides: Partial<ProductDto> = {}): ProductDto {
+  const price = overrides.price ?? 139;
+
   return {
     id: 'p1',
     sku: 'UPB-AGB-001',
@@ -23,7 +25,7 @@ function product(overrides: Partial<ProductDto> = {}): ProductDto {
     slug: 'gurushraddha-cow-dung-dhoop-agarbatti',
     brand: 'Gurushraddha',
     description: null,
-    price: 139,
+    price,
     currency: 'INR',
     status: 'Active',
     sellerId: 's1',
@@ -34,6 +36,8 @@ function product(overrides: Partial<ProductDto> = {}): ProductDto {
     modifiedAtUtc: null,
     package: null,
     reviewNote: null,
+    currentPrice: price,
+    sale: null,
     ...overrides,
   };
 }

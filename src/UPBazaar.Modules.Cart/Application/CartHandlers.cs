@@ -48,7 +48,7 @@ internal sealed class SetCartItemCommandHandler(CartReader reader, CartWriter wr
         {
             var (products, stock) = await reader.LookUpAsync([command.ProductId], cancellationToken);
 
-            if (!products.TryGetValue(command.ProductId, out var product) || !product.IsOnSale)
+            if (!products.TryGetValue(command.ProductId, out var product) || !product.IsPurchasable)
             {
                 return Result.Failure<CartDto>(CartErrors.ProductNotOnSale);
             }
@@ -109,7 +109,7 @@ internal sealed class AcknowledgeCartPricesCommandHandler(CartReader reader, Car
 
         var (products, _) = await reader.LookUpAsync([.. cart.Lines.Select(l => l.ProductId)], cancellationToken);
 
-        cart.AcknowledgePrices(products.Values.Where(p => p.IsOnSale).ToDictionary(p => p.Id, p => p.Price));
+        cart.AcknowledgePrices(products.Values.Where(p => p.IsPurchasable).ToDictionary(p => p.Id, p => p.Price));
 
         return await writer.SaveAsync(cart, cancellationToken);
     }
@@ -161,7 +161,7 @@ internal sealed class MergeCartCommandHandler(CartReader reader, CartWriter writ
         foreach (var (productId, quantity) in wanted)
         {
             if (!products.TryGetValue(productId, out var product)
-                || !product.IsOnSale
+                || !product.IsPurchasable
                 || !cart.Merge(productId, quantity, product.Price))
             {
                 skipped.Add(productId);

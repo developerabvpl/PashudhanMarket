@@ -3,11 +3,13 @@
 
 import { CategoryDto } from '../models/category-dto';
 import { ProductPackageDto } from '../models/product-package-dto';
+import { ProductSaleDto } from '../models/product-sale-dto';
 export interface ProductDto {
   brand: (string | null);
   category: CategoryDto;
   createdAtUtc: string;
   currency: string;
+  currentPrice: number;
   description: (string | null);
   id: string;
   modifiedAtUtc: (string | null);
@@ -17,6 +19,7 @@ export interface ProductDto {
   price: number;
   reservedQuantity: number;
   reviewNote: (string | null);
+  sale: (null | ProductSaleDto);
   sellerId: string;
   sku: string;
   slug: string;
