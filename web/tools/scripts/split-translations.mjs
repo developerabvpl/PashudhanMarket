@@ -119,7 +119,7 @@ for (const app of Object.keys(APPS).filter((name) => !onlyApp || name === onlyAp
     const outFile = join(outDir, `${lang}.json`);
 
     if (check) {
-      if (!existsSync(outFile) || readFileSync(outFile, 'utf8') !== text) {
+      if (!existsSync(outFile) || readFileSync(outFile, 'utf8').replace(/\r\n/g, '\n') !== text) {
         stale.push(relative(workspaceRoot, outFile));
       }
     } else {
