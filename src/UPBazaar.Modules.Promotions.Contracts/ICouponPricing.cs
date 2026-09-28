@@ -46,13 +46,18 @@ public sealed record CouponLineDto(Guid ProductId, Guid SellerId, decimal LineTo
 /// A free-delivery coupon: nothing comes off the goods, and the parcels of the sellers whose lines it
 /// covers carry no delivery charge for the buyer.
 /// </param>
+/// <param name="MinOrderValue">
+/// The least the goods it covers must come to; null for none. Orders keeps it: a return that leaves
+/// the buyer below it takes the discount back.
+/// </param>
 public sealed record CouponDiscountDto(
     Guid CouponId,
     string Code,
     string FundedBy,
     decimal Discount,
     IReadOnlyList<CouponLineDiscountDto> Lines,
-    bool FreeDelivery = false);
+    bool FreeDelivery = false,
+    decimal? MinOrderValue = null);
 
 /// <summary>The part of a discount that falls on one line.</summary>
 public sealed record CouponLineDiscountDto(Guid ProductId, decimal Discount);

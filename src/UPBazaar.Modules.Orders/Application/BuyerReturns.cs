@@ -16,13 +16,15 @@ namespace UPBazaar.Modules.Orders.Application;
 /// <param name="Reason">Damaged, WrongItem, NotAsDescribed, QualityIssue, NoLongerNeeded or Other.</param>
 /// <param name="Comment">The buyer's own words. Required for Other.</param>
 /// <param name="RefundUpiId">Where a cash-on-delivery refund goes. Required for cash orders, ignored otherwise.</param>
+/// <param name="Items">How many of which products go back; null or empty for the whole parcel.</param>
 public sealed record RequestReturnCommand(
     Guid OrderId,
     Guid PartId,
     Guid BuyerId,
     string Reason,
     string? Comment,
-    string? RefundUpiId) : ICommand<OrderDto>;
+    string? RefundUpiId,
+    IReadOnlyList<ReturnItemDto>? Items = null) : ICommand<OrderDto>;
 
 internal sealed class RequestReturnCommandValidator : AbstractValidator<RequestReturnCommand>
 {
@@ -49,6 +51,9 @@ internal sealed class RequestReturnCommandValidator : AbstractValidator<RequestR
             .Matches(UpiIdPattern)
             .When(x => !string.IsNullOrWhiteSpace(x.RefundUpiId))
             .WithMessage("Enter a UPI id such as name@okicici.");
+        RuleFor(x => x.Items)
+            .Must(items => items is null || items.Select(i => i.ProductId).Distinct().Count() == items.Count)
+            .WithMessage("Name each product once.");
     }
 }
 
@@ -73,7 +78,8 @@ internal sealed class RequestReturnCommandHandler(
                 Enum.Parse<ReturnReason>(command.Reason, ignoreCase: true),
                 command.Comment,
                 command.RefundUpiId?.Trim(),
-                clock.UtcNow);
+                clock.UtcNow,
+                command.Items?.ToDictionary(i => i.ProductId, i => i.Quantity));
 
             if (requested.IsFailure)
             {
@@ -214,7 +220,7 @@ internal sealed class ListReturnRequestsQueryHandler(UPBazaarDbContext dbContext
                 x.part.ReturnRequest.Reason.ToString(),
                 x.part.ReturnRequest.Comment,
                 x.order.PaymentMethod.ToString(),
-                x.part.Lines.Sum(l => (l.UnitPrice * l.Quantity) - l.Discount),
+                x.part.ReturnRequest.RefundDue ?? x.part.Lines.Sum(l => (l.UnitPrice * l.ReturnRequestedQuantity) - (l.Discount * l.ReturnRequestedQuantity / l.Quantity)),
                 x.order.Currency,
                 x.part.ReturnRequest.RequestedAtUtc))
             .ToListAsync(cancellationToken);

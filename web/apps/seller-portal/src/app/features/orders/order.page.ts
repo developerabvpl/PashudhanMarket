@@ -57,7 +57,12 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           @for (line of o.lines; track line.productId) {
           <li class="flex justify-between gap-3 py-2">
             <span><span class="font-mono text-xs">{{ line.sku }}</span> {{ line.name }}</span>
-            <span class="font-medium">× {{ line.quantity }}</span>
+            <span class="font-medium">
+              × {{ line.quantity }}
+              @if (o.returnRequest && line.returnQuantity) {
+              <span class="block text-xs font-normal text-warning">{{ 'returns.unitsBack' | transloco: { count: line.returnQuantity } }}</span>
+              }
+            </span>
           </li>
           }
         </ul>

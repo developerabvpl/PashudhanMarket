@@ -15,6 +15,7 @@ using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Payments.Contracts.Dtos;
 using UPBazaar.Modules.Payments.Gateway;
 using UPBazaar.Modules.Sellers.Domain;
+using UPBazaar.Modules.Settlements.Contracts.Dtos;
 using UPBazaar.Modules.Shipping.Contracts.Dtos;
 using UPBazaar.Modules.Shipping.Gateway;
 using UPBazaar.SharedKernel.Results;
@@ -177,6 +178,53 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         var stranger = fixture.CreateAuthenticatedClient((await _auth.SignInBuyerByOtpAsync(AuthClient.NewMobile())).AccessToken);
         (await RequestReturnAsync(stranger, shipped.Order, "Damaged", upiId: "asha@okicici"))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [DatabaseFact]
+    public async Task Returning_one_of_two_refunds_that_one_and_the_seller_is_paid_for_the_other()
+    {
+        var delivered = await DeliveredAsync("Online", withSellerAccount: true);
+        var (admin, buyer, seller, product, order) = (delivered.Admin, delivered.Buyer, delivered.Seller!, delivered.Product, delivered.Order);
+        var part = order.Parts.Single();
+
+        (await buyer.PostAsJsonAsync(
+                new Uri($"/api/v1/orders/{order.Id}/parts/{part.Id}/return", UriKind.Relative),
+                new { reason = "Damaged", items = new[] { new { productId = product.Id, quantity = 3 } } }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var requested = await buyer.PostAsJsonAsync(
+            new Uri($"/api/v1/orders/{order.Id}/parts/{part.Id}/return", UriKind.Relative),
+            new { reason = "Damaged", items = new[] { new { productId = product.Id, quantity = 1 } } });
+        requested.StatusCode.ShouldBe(HttpStatusCode.OK, await requested.Content.ReadAsStringAsync());
+        (await requested.Content.ReadFromJsonAsync<OrderDto>())!.Parts.Single().Lines.Single().ReturnQuantity.ShouldBe(1);
+
+        (await admin.PostAsJsonAsync(DecisionUri("admin", order), new { approve = true })).EnsureSuccessStatusCode();
+        await ProcessOutboxAsync();
+
+        var returning = await OrderAsync(buyer, order.Id);
+        returning.Subtotal.ShouldBe(75m);
+        returning.Parts.Single().ReturnRequest!.RefundDue.ShouldBe(75m);
+
+        var pickup = (await ShipmentsAsync(buyer, order)).Single(s => s.Direction == "Return");
+        await CourierAsync(pickup.Awb!, "RETURN PICKED UP");
+        await CourierAsync(pickup.Awb!, "RETURN DELIVERED");
+        await ProcessOutboxAsync();
+
+        (await RefundsForAsync(admin, order.Id)).ShouldHaveSingleItem().Amount.ShouldBe(75m);
+
+        var earnings = await admin.GetFromJsonAsync<PagedList<EarningDto>>(
+            new Uri($"/api/v1/admin/settlements/earnings?sellerId={returning.Parts.Single().SellerId}", UriKind.Relative));
+        var sale = earnings!.Items.Single(e => e.Kind == "Sale");
+        sale.GrossAmount.ShouldBe(75m);
+        sale.Status.ShouldBe("Accruing");
+
+        // Only the unit that came back is inspected and restocked.
+        (await StockAsync(admin, product.Id)).OnHandQuantity.ShouldBe(8);
+        (await seller.PostAsJsonAsync(
+                new Uri($"/api/v1/seller/orders/{order.Id}/parts/{part.Id}/return-inspection", UriKind.Relative),
+                new { lines = new[] { new { productId = product.Id, condition = "Good" } } }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await StockAsync(admin, product.Id)).OnHandQuantity.ShouldBe(9);
     }
 
     private sealed record Setup(HttpClient Admin, HttpClient Buyer, HttpClient? Seller, ProductDto Product, OrderDto Order, string Awb);

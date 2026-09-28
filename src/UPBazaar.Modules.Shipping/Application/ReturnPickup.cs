@@ -140,15 +140,31 @@ internal sealed class ReturnPickupBooker(
         return booked.IsFailure ? Result.Failure<ShipmentDto>(booked.Error) : shipment.ToDto(courier);
     }
 
+    /// <summary>
+    /// Only the units the buyer is sending back travel: the parcel is sized for them from their
+    /// recorded packages, or - when they are the whole parcel, or cannot be sized - taken to be the
+    /// box it went out in.
+    /// </summary>
+    /// <summary>The part as it goes back: only the units the buyer is returning. Requests made before
+    /// partial returns named no units, and send the whole part.</summary>
+    private static ShippablePartDto Returning(ShippablePartDto part) =>
+        part.Lines.Any(l => l.ReturnQuantity > 0)
+            ? part with { Lines = [.. part.Lines.Where(l => l.ReturnQuantity > 0).Select(l => l with { Quantity = l.ReturnQuantity, LineTotal = l.UnitPrice * l.ReturnQuantity })] }
+            : part;
+
     private async Task<Result<Shipment>> CreateAsync(ShippablePartDto part, CancellationToken cancellationToken)
     {
+        var returning = Returning(part);
+        var whole = returning.Lines.Sum(l => l.Quantity) == part.Lines.Sum(l => l.Quantity);
+        var planned = whole ? null : (await planner.PlanAsync(returning, cancellationToken)).Parcel;
+
         var outbound = await dbContext.Set<Shipment>()
             .AsNoTracking()
             .Where(s => s.OrderPartId == part.PartId && s.Direction == ShipmentDirection.Forward && s.Status == ShipmentStatus.Delivered)
             .Select(s => new ParcelDto(s.WeightGrams, s.LengthCm, s.BreadthCm, s.HeightCm))
             .FirstOrDefaultAsync(cancellationToken);
 
-        var parcel = outbound ?? (await planner.PlanAsync(part, cancellationToken)).Parcel;
+        var parcel = planned ?? outbound ?? (await planner.PlanAsync(returning, cancellationToken)).Parcel;
 
         if (parcel is null)
         {
@@ -274,8 +290,8 @@ internal sealed class ReturnPickupBooker(
                 returnTo.Address.City,
                 returnTo.Address.State,
                 returnTo.Address.Pincode),
-            [.. part.Lines.Select(l => new CourierOrderItem(l.Name, l.Sku, l.Quantity, l.UnitPrice))],
-            part.Subtotal,
+            [.. Returning(part).Lines.Select(l => new CourierOrderItem(l.Name, l.Sku, l.Quantity, l.UnitPrice))],
+            Returning(part).Lines.Sum(l => l.UnitPrice * l.Quantity),
             shipment.WeightGrams,
             shipment.LengthCm,
             shipment.BreadthCm,

@@ -6,6 +6,7 @@ export interface ReturnRequestDto {
   decidedAtUtc: (string | null);
   decisionNote: (string | null);
   reason: string;
+  refundDue?: (number | null);
   refundUpiId: (string | null);
   requestedAtUtc: string;
   status: string;

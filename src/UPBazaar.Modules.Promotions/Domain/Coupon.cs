@@ -209,7 +209,7 @@ public sealed class Coupon : AggregateRoot, IAuditable
         {
             // The goods keep their price; the lines say whose parcels travel free.
             return new CouponDiscountDto(
-                PublicId, Code, FundedBy.ToString(), 0m, [.. covered.Select(l => new CouponLineDiscountDto(l.ProductId, 0m))], FreeDelivery: true);
+                PublicId, Code, FundedBy.ToString(), 0m, [.. covered.Select(l => new CouponLineDiscountDto(l.ProductId, 0m))], FreeDelivery: true, MinOrderValue);
         }
 
         var discount = DiscountType == DiscountType.Percent
@@ -220,7 +220,7 @@ public sealed class Coupon : AggregateRoot, IAuditable
         // online payment of nothing is not one a gateway will take.
         discount = Math.Min(discount, Paise(goods * MaxShare));
 
-        return new CouponDiscountDto(PublicId, Code, FundedBy.ToString(), discount, Spread(discount, covered));
+        return new CouponDiscountDto(PublicId, Code, FundedBy.ToString(), discount, Spread(discount, covered), MinOrderValue: MinOrderValue);
     }
 
     public void TakeUse() => Uses++;

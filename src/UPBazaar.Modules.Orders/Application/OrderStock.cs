@@ -36,4 +36,8 @@ internal sealed class OrderStock(IInventoryService inventory)
             ? Result.Success()
             : await inventory.ReturnAsync(order.Number, lines, cancellationToken);
     }
+
+    /// <summary>Puts returned units back on sale: those found in good condition.</summary>
+    public Task<Result> RestockAsync(Order order, IReadOnlyList<ReservationLineDto> lines, CancellationToken cancellationToken) =>
+        inventory.ReturnAsync(order.Number, [.. lines.GroupBy(l => l.ProductId).Select(g => new ReservationLineDto(g.Key, g.Sum(l => l.Quantity)))], cancellationToken);
 }

@@ -88,7 +88,11 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
         builder.Ignore(x => x.GoodsPaid);
         builder.Ignore(x => x.DeliveryPaid);
         builder.Ignore(x => x.AmountDue);
-        builder.Ignore(x => x.IsComing);
+        builder.Ignore(x => x.IsRto);
+        builder.Ignore(x => x.IsKept);
+        builder.Ignore(x => x.KeptSubtotal);
+        builder.Ignore(x => x.KeptDiscount);
+        builder.Ignore(x => x.CameBack);
         builder.Ignore(x => x.IsBuyerReturn);
 
         // Stored in the part's own row: a request never exists apart from its part, and the
@@ -105,6 +109,7 @@ internal sealed class OrderPartConfiguration : IEntityTypeConfiguration<OrderPar
             request.Property(r => r.DecisionNote).HasColumnName("ReturnDecisionNote").HasMaxLength(500);
             request.Property(r => r.DecidedBy).HasColumnName("ReturnDecidedBy").HasMaxLength(64);
             request.Property(r => r.DecidedAtUtc).HasColumnName("ReturnDecidedAtUtc");
+            request.Property(r => r.RefundDue).HasColumnName("ReturnRefundDue");
 
             // Staff's queue of requests waiting for a decision, oldest first.
             request.HasIndex(r => new { r.Status, r.RequestedAtUtc });
@@ -124,7 +129,12 @@ internal sealed class OrderLineConfiguration : IEntityTypeConfiguration<OrderLin
     public void Configure(EntityTypeBuilder<OrderLine> builder)
     {
         builder.ToTable("OrderLines", OrdersModule.SchemaName, table =>
-            table.HasCheckConstraint("CK_OrderLines_Quantity", "[Quantity] > 0"));
+        {
+            table.HasCheckConstraint("CK_OrderLines_Quantity", "[Quantity] > 0");
+            table.HasCheckConstraint(
+                "CK_OrderLines_Return",
+                "[ReturnRequestedQuantity] BETWEEN 0 AND [Quantity] AND [ReturnedQuantity] BETWEEN 0 AND [ReturnRequestedQuantity]");
+        });
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
@@ -133,6 +143,11 @@ internal sealed class OrderLineConfiguration : IEntityTypeConfiguration<OrderLin
         builder.Property(x => x.Sku).HasMaxLength(64).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(256).IsRequired();
 
+        builder.Property(x => x.ReturnCondition).HasConversion<string>().HasMaxLength(16);
+
         builder.Ignore(x => x.LineTotal);
+        builder.Ignore(x => x.KeptQuantity);
+        builder.Ignore(x => x.KeptDiscount);
+        builder.Ignore(x => x.ReturnedPaid);
     }
 }

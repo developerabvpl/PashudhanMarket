@@ -1,5 +1,6 @@
 using FluentValidation;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Modules.Inventory.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Contracts.Dtos;
 using UPBazaar.Modules.Orders.Domain;
 using UPBazaar.SharedKernel.Abstractions;
@@ -14,9 +15,16 @@ namespace UPBazaar.Modules.Orders.Application;
 /// <param name="OrderId">The order.</param>
 /// <param name="PartId">The part that came back.</param>
 /// <param name="SellerId">Set when the seller is inspecting: the part must be theirs. Null for staff.</param>
-/// <param name="Condition">Good or Damaged.</param>
+/// <param name="Condition">Good or Damaged, for every line that came back; ignored for lines named in <paramref name="Lines"/>.</param>
 /// <param name="Note">What was wrong, if anything.</param>
-public sealed record InspectReturnCommand(Guid OrderId, Guid PartId, Guid? SellerId, string Condition, string? Note)
+/// <param name="Lines">A condition for each product that came back, when they differ.</param>
+public sealed record InspectReturnCommand(
+    Guid OrderId,
+    Guid PartId,
+    Guid? SellerId,
+    string? Condition,
+    string? Note,
+    IReadOnlyList<ReturnLineConditionDto>? Lines = null)
     : ICommand<OrderDto>;
 
 internal sealed class InspectReturnCommandValidator : AbstractValidator<InspectReturnCommand>
@@ -26,14 +34,18 @@ internal sealed class InspectReturnCommandValidator : AbstractValidator<InspectR
         RuleFor(x => x.OrderId).NotEmpty();
         RuleFor(x => x.PartId).NotEmpty();
         RuleFor(x => x.Condition)
-            .Must(c => Enum.TryParse<ReturnCondition>(c, ignoreCase: true, out _))
+            .Must(c => c is null || Enum.TryParse<ReturnCondition>(c, ignoreCase: true, out _))
             .WithMessage("Condition must be Good or Damaged.");
+        RuleForEach(x => x.Lines).ChildRules(line =>
+            line.RuleFor(l => l.Condition)
+                .Must(c => Enum.TryParse<ReturnCondition>(c, ignoreCase: true, out _))
+                .WithMessage("Condition must be Good or Damaged."));
         RuleFor(x => x.Note).MaximumLength(500);
     }
 }
 
 /// <summary>
-/// Good goods go back on sale, as a Returned stock movement; damaged ones do not, since their
+/// Good units go back on sale, as a Returned stock movement; damaged ones do not, since their
 /// stock left the shelf at confirmation and never came back to it. Both in one transaction with
 /// the inspection, so a parcel cannot be inspected twice and restocked twice.
 /// </summary>
@@ -57,17 +69,32 @@ internal sealed class InspectReturnCommandHandler(
                 return Result.Failure<OrderDto>(OrderErrors.NotFound);
             }
 
-            var condition = Enum.Parse<ReturnCondition>(command.Condition, ignoreCase: true);
-            var inspected = order.InspectReturn(part.PublicId, condition, command.Note, currentUser.UserId, clock.UtcNow);
+            var conditions = part.CameBack.ToDictionary(
+                x => x.Line.ProductId,
+                x => command.Lines?.FirstOrDefault(l => l.ProductId == x.Line.ProductId)?.Condition ?? command.Condition);
+
+            var inspected = conditions.Values.Any(c => c is null)
+                ? Result.Failure(OrderErrors.ConditionForEveryLine)
+                : order.InspectReturn(
+                    part.PublicId,
+                    conditions.ToDictionary(c => c.Key, c => Enum.Parse<ReturnCondition>(c.Value!, ignoreCase: true)),
+                    command.Note,
+                    currentUser.UserId,
+                    clock.UtcNow);
 
             if (inspected.IsFailure)
             {
                 return Result.Failure<OrderDto>(inspected.Error);
             }
 
-            if (condition == ReturnCondition.Good)
+            var good = part.CameBack
+                .Where(x => x.Line.ReturnCondition == ReturnCondition.Good)
+                .Select(x => new ReservationLineDto(x.Line.ProductId, x.Quantity))
+                .ToList();
+
+            if (good.Count > 0)
             {
-                var restocked = await stock.GiveBackAsync(order, wasAwaitingPayment: false, [part], ct);
+                var restocked = await stock.RestockAsync(order, good, ct);
 
                 if (restocked.IsFailure)
                 {

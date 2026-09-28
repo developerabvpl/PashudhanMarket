@@ -111,14 +111,42 @@ public sealed record OrderPartReturnRejectedDomainEvent(
     Guid SellerId) : DomainEvent;
 
 /// <summary>
-/// A buyer's return was accepted and the part is going back. Shipping books a pickup from the
-/// buyer's address from this; Settlements cancels the seller's earning, since the sale is undone.
+/// A buyer's return was accepted and the returned units are going back. Shipping books a pickup
+/// from the buyer's address from this. Settlements pays the seller only for what the buyer keeps:
+/// nothing when the whole parcel goes back.
 /// </summary>
+/// <param name="OrderId">The order.</param>
+/// <param name="Number">Its number.</param>
+/// <param name="PartId">The part being returned.</param>
+/// <param name="SellerId">Whose part it is.</param>
+/// <param name="KeptGross">
+/// What the seller now earns on for the goods the buyer keeps - less the coupon discount on them
+/// when the seller bears it. Zero when everything goes back.
+/// </param>
 public sealed record OrderPartReturnApprovedDomainEvent(
     Guid OrderId,
     string Number,
     Guid PartId,
-    Guid SellerId) : DomainEvent;
+    Guid SellerId,
+    decimal KeptGross = 0m) : DomainEvent;
+
+/// <summary>
+/// A return left the buyer keeping less than the coupon's minimum order, so the discount on this
+/// delivered part was taken back from them. The seller bore that discount, so they are owed it.
+/// </summary>
+/// <param name="OrderId">The order.</param>
+/// <param name="Number">Its number.</param>
+/// <param name="PartId">The delivered part whose discount was taken back.</param>
+/// <param name="SellerId">Whose part it is.</param>
+/// <param name="Amount">The discount taken back on this part.</param>
+/// <param name="Currency">ISO currency code.</param>
+public sealed record OrderPartDiscountRevokedDomainEvent(
+    Guid OrderId,
+    string Number,
+    Guid PartId,
+    Guid SellerId,
+    decimal Amount,
+    string Currency) : DomainEvent;
 
 /// <summary>
 /// Nothing in the order is coming any more: the buyer or staff cancelled it, or an online payment

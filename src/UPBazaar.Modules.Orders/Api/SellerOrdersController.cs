@@ -120,7 +120,7 @@ public sealed class SellerOrdersController(IDispatcher dispatcher, ICurrentUser 
         return AsSeller<SellerOrderDto>(async seller =>
         {
             var inspected = await dispatcher.SendAsync(
-                new InspectReturnCommand(orderId, partId, seller, request.Condition, request.Note), cancellationToken);
+                new InspectReturnCommand(orderId, partId, seller, request.Condition, request.Note, request.Lines), cancellationToken);
 
             return inspected.IsFailure
                 ? Result.Failure<SellerOrderDto>(inspected.Error)
@@ -145,6 +145,10 @@ public sealed class SellerOrdersController(IDispatcher dispatcher, ICurrentUser 
 /// <param name="Status">Confirmed, Packed, Shipped, Delivered, Cancelled, Returning or Returned.</param>
 public sealed record SellerOrdersRequest(int? Page, int? PageSize, string? Status);
 
-/// <param name="Condition">Good (restock it) or Damaged (do not).</param>
+/// <param name="Condition">Good (restock it) or Damaged (do not), for everything that came back. Leave out when giving Lines.</param>
 /// <param name="Note">What was wrong, if anything.</param>
-public sealed record InspectReturnRequest(string Condition, string? Note);
+public sealed record InspectReturnRequest(string? Condition, string? Note)
+{
+    /// <summary>A condition for each product that came back, when they differ.</summary>
+    public IReadOnlyList<ReturnLineConditionDto> Lines { get; init; } = [];
+}

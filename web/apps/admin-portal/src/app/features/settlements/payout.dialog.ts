@@ -75,6 +75,7 @@ import { SettlementsPermissions } from '../../core/permissions';
               @switch (e.kind) {
               @case ('Delivery') { <span class="font-sans text-ink-muted">· {{ 'settlements.kindDelivery' | transloco }}</span> }
               @case ('CourierCost') { <span class="font-sans text-ink-muted">· {{ 'settlements.courier.' + e.detail | transloco }}</span> }
+              @case ('Adjustment') { <span class="font-sans text-ink-muted">· {{ 'settlements.adjustment.' + e.detail | transloco }}</span> }
               }
             </td>
             <td class="py-1">{{ e.deliveredAtUtc | dateIst }}</td>

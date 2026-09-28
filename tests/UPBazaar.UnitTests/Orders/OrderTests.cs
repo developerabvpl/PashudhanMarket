@@ -222,6 +222,10 @@ public sealed class OrderTests
         order.Status.ShouldBe(OrderStatus.Completed);
     }
 
+    /// <summary>The same condition for every line of a part.</summary>
+    private static Dictionary<Guid, ReturnCondition> Every(Order order, Guid part, ReturnCondition condition) =>
+        order.Parts.Single(p => p.PublicId == part).Lines.ToDictionary(l => l.ProductId, _ => condition);
+
     [Fact]
     public void Only_a_part_that_left_the_seller_can_come_back_and_it_is_inspected_once()
     {
@@ -229,13 +233,13 @@ public sealed class OrderTests
         var part = order.Parts.First().PublicId;
 
         order.StartReturn(part).Error.ShouldBe(OrderErrors.NotInTransit);
-        order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
+        order.InspectReturn(part, Every(order, part, ReturnCondition.Good), null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
 
         order.AdvancePart(part, OrderPartStatus.Shipped, Now, Window);
         order.CompleteReturn(part, Now);
 
-        order.InspectReturn(part, ReturnCondition.Damaged, "Box crushed", "seller", Now).IsSuccess.ShouldBeTrue();
-        order.InspectReturn(part, ReturnCondition.Good, null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
+        order.InspectReturn(part, Every(order, part, ReturnCondition.Damaged), "Box crushed", "seller", Now).IsSuccess.ShouldBeTrue();
+        order.InspectReturn(part, Every(order, part, ReturnCondition.Good), null, "seller", Now).Error.ShouldBe(OrderErrors.NotAwaitingInspection);
         order.Parts.First().ReturnCondition.ShouldBe(ReturnCondition.Damaged);
     }
 

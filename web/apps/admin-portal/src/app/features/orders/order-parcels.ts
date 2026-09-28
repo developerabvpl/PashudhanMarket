@@ -6,6 +6,7 @@ import { HasPermissionDirective } from '@upbazaar/auth';
 import {
   Api,
   OrderDto,
+  OrderPartDto,
   ShipmentDto,
   apiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost,
   apiV1AdminOrdersOrderIdPartsPartIdReturnInspectionPost,
@@ -17,6 +18,13 @@ import { InrCurrencyPipe } from '@upbazaar/util';
 import { OrderingPermissions, ShippingPermissions } from '../../core/permissions';
 import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
 import { ShipmentCharges } from './shipment-charges';
+
+/** A product that is coming, or came, back, and how many of it. */
+interface ReturnedLine {
+  productId: string;
+  name: string;
+  quantity: number;
+}
 
 /**
  * One row per seller's parcel: its status, its courier booking, and "Pack and book" for a part
@@ -61,6 +69,15 @@ import { ShipmentCharges } from './shipment-charges';
           </p>
           @if (request.comment) { <p class="mt-1 text-ink-muted">{{ 'returns.buyerSays' | transloco: { comment: request.comment } }}</p> }
           @if (request.decisionNote) { <p class="mt-1 text-ink-muted">{{ request.decisionNote }}</p> }
+          @if (returned(part).length > 0) {
+          <p class="mt-1 text-ink">
+            {{ 'returns.itemsBack' | transloco }}
+            @for (line of returned(part); track line.productId) { <span class="mr-2">{{ line.quantity }} × {{ line.name }}</span> }
+          </p>
+          }
+          @if (request.refundDue !== null && request.refundDue !== undefined) {
+          <p class="mt-1 text-ink-muted">{{ 'returns.refundDue' | transloco: { amount: (request.refundDue | inr) } }}</p>
+          }
 
           @if (request.status === 'Requested') {
           <div *hasPermission="ordersWrite" class="mt-2 flex flex-wrap items-center gap-2">
@@ -93,9 +110,17 @@ import { ShipmentCharges } from './shipment-charges';
         }
 
         @if (part.status === 'Returned' && !part.returnCondition) {
-        <div *hasPermission="ordersWrite" class="flex gap-2">
-          <button mat-stroked-button type="button" (click)="inspect(part.id, 'Good')">{{ 'returns.good' | transloco }}</button>
-          <button mat-stroked-button color="warn" type="button" (click)="inspect(part.id, 'Damaged')">{{ 'returns.damaged' | transloco }}</button>
+        <div *hasPermission="ordersWrite" class="w-full space-y-1">
+          @for (line of returned(part); track line.productId) {
+          <label class="flex items-center justify-between gap-3">
+            <span>{{ line.quantity }} × {{ line.name }}</span>
+            <select class="rounded-control border border-border bg-surface px-2 py-1" (change)="setCondition(part.id, line.productId, value($event))">
+              <option value="Good" [selected]="conditionOf(part.id, line.productId) === 'Good'">{{ 'returns.good' | transloco }}</option>
+              <option value="Damaged" [selected]="conditionOf(part.id, line.productId) === 'Damaged'">{{ 'returns.damaged' | transloco }}</option>
+            </select>
+          </label>
+          }
+          <button mat-stroked-button type="button" (click)="inspect(part)">{{ 'returns.recordInspection' | transloco }}</button>
         </div>
         } @else if (part.returnCondition) {
         <span class="text-sm text-ink-muted">{{ 'returns.inspectedAs.' + part.returnCondition | transloco }}</span>
@@ -119,6 +144,9 @@ export class OrderParcels {
   protected readonly ordersWrite = OrderingPermissions.Write;
   protected readonly shipments = signal<readonly ShipmentDto[]>([]);
   protected readonly rejectNote = signal('');
+
+  /** Conditions chosen for what came back, by part and product; Good until changed. */
+  private readonly conditions = signal<Readonly<Record<string, string>>>({});
 
   private readonly api = inject(Api);
   private readonly dialog = inject(MatDialog);
@@ -207,18 +235,38 @@ export class OrderParcels {
     }
   }
 
+  /** What goes back to the seller from a part: returned units, or all of an undelivered parcel. */
+  protected returned(part: OrderPartDto): ReturnedLine[] {
+    const named = part.lines.some((l) => (l.returnQuantity ?? 0) > 0);
+    const buyerReturn = part.returnRequest?.status === 'Approved';
+
+    return part.lines
+      .map((l) => ({ productId: l.productId, name: l.name, quantity: buyerReturn && named ? (l.returnQuantity ?? 0) : l.quantity }))
+      .filter((l) => l.quantity > 0);
+  }
+
+  protected conditionOf(partId: string, productId: string): string {
+    return this.conditions()[`${partId}:${productId}`] ?? 'Good';
+  }
+
+  protected setCondition(partId: string, productId: string, condition: string): void {
+    this.conditions.update((c) => ({ ...c, [`${partId}:${productId}`]: condition }));
+  }
+
   /**
-   * Inspects a returned parcel on the seller's behalf - for a seller without portal access, or
-   * one who asked support to do it. Good restocks it; Damaged does not.
+   * Inspects what came back on the seller's behalf - for a seller without portal access, or one
+   * who asked support to do it - product by product. Good units are restocked; damaged ones are not.
    */
-  protected async inspect(partId: string, condition: 'Good' | 'Damaged'): Promise<void> {
+  protected async inspect(part: OrderPartDto): Promise<void> {
+    const lines = this.returned(part).map((l) => ({ productId: l.productId, condition: this.conditionOf(part.id, l.productId) }));
+
     try {
       await this.api.invoke(apiV1AdminOrdersOrderIdPartsPartIdReturnInspectionPost, {
         orderId: this.order().id,
-        partId,
-        body: { condition, note: null },
+        partId: part.id,
+        body: { condition: null, note: null, lines },
       });
-      this.toast.success(condition === 'Good' ? 'returns.restocked' : 'returns.recordedDamaged');
+      this.toast.success(lines.some((l) => l.condition === 'Good') ? 'returns.restocked' : 'returns.recordedDamaged');
       this.changed.emit();
     } catch {
       // Reported by the interceptor.

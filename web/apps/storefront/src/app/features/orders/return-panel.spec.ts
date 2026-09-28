@@ -59,7 +59,7 @@ describe('ReturnPanel', () => {
     expect(invoke).toHaveBeenCalledWith(apiV1OrdersOrderIdPartsPartIdReturnPost, {
       orderId: 'o1',
       partId: 'part1',
-      body: { reason: 'Damaged', comment: null, refundUpiId: 'asha@okicici' },
+      body: { reason: 'Damaged', comment: null, refundUpiId: 'asha@okicici', items: [{ productId: 'p1', quantity: 2 }] },
     });
   });
 
@@ -70,7 +70,7 @@ describe('ReturnPanel', () => {
     fixture.nativeElement.querySelector('button').click();
     await fixture.whenStable();
 
-    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+    const select = fixture.nativeElement.querySelector('select[id^="return-reason"]') as HTMLSelectElement;
     select.value = 'Other';
     select.dispatchEvent(new Event('change'));
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
@@ -78,6 +78,45 @@ describe('ReturnPanel', () => {
 
     expect(invoke).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Tell the seller what is wrong.');
+  });
+
+  it('sends back only the units chosen, and says roughly what comes back', async () => {
+    const { fixture, invoke } = render(part, vi.fn(async () => order));
+    await fixture.whenStable();
+
+    fixture.nativeElement.querySelector('button').click();
+    await fixture.whenStable();
+
+    const quantity = fixture.nativeElement.querySelector('select[id^="return-qty-p1"]') as HTMLSelectElement;
+    quantity.value = '1';
+    quantity.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Refund of about ₹75');
+
+    const upi = fixture.nativeElement.querySelector('input[placeholder="name@okicici"]') as HTMLInputElement;
+    upi.value = 'asha@okicici';
+    upi.dispatchEvent(new Event('input'));
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(invoke).toHaveBeenCalledWith(apiV1OrdersOrderIdPartsPartIdReturnPost, expect.objectContaining({
+      body: expect.objectContaining({ items: [{ productId: 'p1', quantity: 1 }] }),
+    }));
+  });
+
+  it('will not send nothing back', async () => {
+    const { fixture } = render(part);
+    await fixture.whenStable();
+
+    fixture.nativeElement.querySelector('button').click();
+    await fixture.whenStable();
+
+    const quantity = fixture.nativeElement.querySelector('select[id^="return-qty-p1"]') as HTMLSelectElement;
+    quantity.value = '0';
+    quantity.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('offers nothing once the window has closed', async () => {

@@ -70,6 +70,13 @@ public sealed class Order : AggregateRoot, IAuditable
     /// </summary>
     public string? CouponFundedBy { get; private set; }
 
+    /// <summary>
+    /// The least the goods the coupon covered had to come to, as it stood at checkout. If a return
+    /// leaves the buyer keeping less than this, the discount on what they keep comes out of their
+    /// refund. Null with no coupon, or one with no minimum.
+    /// </summary>
+    public decimal? CouponMinOrder { get; private set; }
+
     public IReadOnlyCollection<OrderPart> Parts => _parts.AsReadOnly();
 
     /// <summary>Optimistic concurrency token: a payment and a cancel landing together must not both win.</summary>
@@ -83,11 +90,14 @@ public sealed class Order : AggregateRoot, IAuditable
 
     public string? ModifiedBy { get; set; }
 
-    /// <summary>What is still coming: cancelled and returned parts drop out, so a refund shows in the total.</summary>
-    public decimal Subtotal => _parts.Where(p => p.IsComing).Sum(p => p.Subtotal);
+    /// <summary>
+    /// The goods the buyer keeps: cancelled parts, RTOs and returned units drop out, so a refund
+    /// shows in the total.
+    /// </summary>
+    public decimal Subtotal => _parts.Where(p => p.IsKept).Sum(p => p.KeptSubtotal);
 
-    /// <summary>The coupon discount on what is still coming.</summary>
-    public decimal Discount => _parts.Where(p => p.IsComing).Sum(p => p.Discount);
+    /// <summary>The coupon discount on the goods the buyer keeps.</summary>
+    public decimal Discount => _parts.Where(p => p.IsKept).Sum(p => p.KeptDiscount);
 
     /// <summary>
     /// The delivery charge a free-delivery coupon lifts off the buyer: the shares of the parts it
@@ -124,7 +134,8 @@ public sealed class Order : AggregateRoot, IAuditable
         (string Code, string FundedBy)? coupon,
         Guid reservationId,
         DateTime now,
-        IReadOnlyCollection<Guid>? freeDeliveryFor = null)
+        IReadOnlyCollection<Guid>? freeDeliveryFor = null,
+        decimal? couponMinOrder = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
         ArgumentOutOfRangeException.ThrowIfNegative(deliveryFee);
@@ -150,6 +161,7 @@ public sealed class Order : AggregateRoot, IAuditable
             ReservationId = reservationId,
             CouponCode = coupon?.Code,
             CouponFundedBy = coupon?.FundedBy,
+            CouponMinOrder = coupon is null ? null : couponMinOrder,
             PlacedAtUtc = now,
             PaymentDueAtUtc = isCod ? null : now + PaymentWindow,
         };
@@ -331,7 +343,7 @@ public sealed class Order : AggregateRoot, IAuditable
                 now,
                 now + returnWindow,
                 SellerEarnsDelivery(part),
-                SellerDiscount: CouponFundedBy == "Seller" ? part.Discount : 0m,
+                SellerDiscount: CouponFundedBy == "Seller" ? part.KeptDiscount : 0m,
                 CashOnDelivery: PaymentMethod == PaymentMethod.CashOnDelivery));
         }
 
@@ -345,8 +357,17 @@ public sealed class Order : AggregateRoot, IAuditable
     /// closes. A cash-on-delivery buyer must say where the refund goes, since there is no online
     /// payment to reverse; an online buyer's refund goes back the way it came, so any UPI id they
     /// sent is ignored.
+    ///
+    /// <paramref name="items"/> says how many units of which products go back; null or empty sends
+    /// the whole parcel. One request per part: whatever it leaves out stays with the buyer.
     /// </summary>
-    public Result RequestReturn(Guid partId, ReturnReason reason, string? comment, string? refundUpiId, DateTime now)
+    public Result RequestReturn(
+        Guid partId,
+        ReturnReason reason,
+        string? comment,
+        string? refundUpiId,
+        DateTime now,
+        IReadOnlyDictionary<Guid, int>? items = null)
     {
         var part = _parts.FirstOrDefault(p => p.PublicId == partId);
 
@@ -377,6 +398,16 @@ public sealed class Order : AggregateRoot, IAuditable
             return Result.Failure(OrderErrors.RefundUpiIdRequired);
         }
 
+        if (items is { Count: > 0 } && !items.All(i => part.Lines.Any(l => l.ProductId == i.Key && i.Value >= 1 && i.Value <= l.Quantity)))
+        {
+            return Result.Failure(OrderErrors.InvalidReturnItems);
+        }
+
+        foreach (var line in part.Lines)
+        {
+            line.AskToReturn(items is { Count: > 0 } ? items.GetValueOrDefault(line.ProductId) : line.Quantity);
+        }
+
         part.RequestReturn(ReturnRequest.Create(reason, comment, isCod ? refundUpiId : null, now));
 
         Raise(new OrderPartReturnRequestedDomainEvent(PublicId, Number, part.PublicId, part.SellerId, reason.ToString()));
@@ -405,9 +436,56 @@ public sealed class Order : AggregateRoot, IAuditable
         part.ReturnRequest.Decide(approve: true, note, decidedBy, now);
         part.MoveTo(OrderPartStatus.Returning);
 
-        Raise(new OrderPartReturnApprovedDomainEvent(PublicId, Number, part.PublicId, part.SellerId));
+        foreach (var line in part.Lines)
+        {
+            line.Return();
+        }
+
+        var revoked = RevokeCouponIfBelowMinimum();
+        part.ReturnRequest.SetRefund(Math.Max(0m, part.Lines.Sum(l => l.ReturnedPaid) - revoked.Values.Sum()));
+
+        var sellerBears = CouponFundedBy == "Seller";
+
+        Raise(new OrderPartReturnApprovedDomainEvent(
+            PublicId,
+            Number,
+            part.PublicId,
+            part.SellerId,
+            KeptGross: part.KeptSubtotal - (sellerBears ? part.KeptDiscount : 0m)));
+
+        // A seller who bore the coupon on a parcel already delivered to the buyer is owed the
+        // discount taken back on it. One still on its way is paid on the reduced discount anyway.
+        if (sellerBears)
+        {
+            foreach (var (other, amount) in revoked.Where(r => r.Key != part && r.Key.DeliveredAtUtc is not null))
+            {
+                Raise(new OrderPartDiscountRevokedDomainEvent(PublicId, Number, other.PublicId, other.SellerId, amount, Currency));
+            }
+        }
 
         return Result.Success();
+    }
+
+    /// <summary>
+    /// When a return leaves the buyer keeping less of what the coupon covered than its minimum
+    /// order, they no longer qualified for it: the discount on everything they keep is taken back,
+    /// out of this refund. Once only - revoked lines have no discount left to take.
+    /// </summary>
+    /// <returns>What was taken back, by part.</returns>
+    private Dictionary<OrderPart, decimal> RevokeCouponIfBelowMinimum()
+    {
+        var kept = _parts.Where(p => p.IsKept).ToList();
+        var covered = kept.SelectMany(p => p.Lines).Where(l => l.Discount > 0).ToList();
+
+        if (CouponMinOrder is not { } minimum || covered.Sum(l => l.UnitPrice * l.KeptQuantity) >= minimum)
+        {
+            return [];
+        }
+
+        return kept
+            .Select(p => (Part: p, Amount: p.Lines.Where(l => l.Discount > 0).Sum(l => l.RevokeDiscount())))
+            .Where(x => x.Amount > 0)
+            .ToDictionary(x => x.Part, x => x.Amount);
     }
 
     /// <summary>The seller, or staff, refuse a return, saying why. The part stays delivered.</summary>
@@ -498,7 +576,9 @@ public sealed class Order : AggregateRoot, IAuditable
             Number,
             part.PublicId,
             part.SellerId,
-            byBuyer || PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid : 0m,
+            byBuyer ? part.ReturnRequest!.RefundDue ?? part.GoodsPaid
+                : PaymentStatus == PaymentStatus.Paid ? part.GoodsPaid
+                : 0m,
             Currency,
             RequestedByBuyer: byBuyer,
             RefundUpiId: part.ReturnRequest?.RefundUpiId));
@@ -516,9 +596,19 @@ public sealed class Order : AggregateRoot, IAuditable
         return Result.Success();
     }
 
-    /// <summary>Records what the seller found in a returned parcel. Once only.</summary>
-    public Result InspectReturn(Guid partId, ReturnCondition condition, string? note, string? inspectedBy, DateTime now)
+    /// <summary>
+    /// Records what the seller found in what came back: a condition for each product, by id. Once
+    /// only, and every line that came back needs one.
+    /// </summary>
+    public Result InspectReturn(
+        Guid partId,
+        IReadOnlyDictionary<Guid, ReturnCondition> conditions,
+        string? note,
+        string? inspectedBy,
+        DateTime now)
     {
+        ArgumentNullException.ThrowIfNull(conditions);
+
         var part = _parts.FirstOrDefault(p => p.PublicId == partId);
 
         if (part is null)
@@ -531,7 +621,23 @@ public sealed class Order : AggregateRoot, IAuditable
             return Result.Failure(OrderErrors.NotAwaitingInspection);
         }
 
-        part.RecordInspection(condition, note, inspectedBy, now);
+        var cameBack = part.CameBack.Select(x => x.Line).ToList();
+
+        if (cameBack.Any(l => !conditions.ContainsKey(l.ProductId)))
+        {
+            return Result.Failure(OrderErrors.ConditionForEveryLine);
+        }
+
+        foreach (var line in cameBack)
+        {
+            line.RecordCondition(conditions[line.ProductId]);
+        }
+
+        part.RecordInspection(
+            cameBack.Any(l => l.ReturnCondition == ReturnCondition.Damaged) ? ReturnCondition.Damaged : ReturnCondition.Good,
+            note,
+            inspectedBy,
+            now);
 
         return Result.Success();
     }
@@ -663,7 +769,10 @@ public sealed class OrderPart : Entity
 
     public string? CancellationReason { get; private set; }
 
-    /// <summary>What the seller found in the parcel after an RTO; null until inspected.</summary>
+    /// <summary>
+    /// What the seller found in what came back, as a whole: Damaged if any line was, else Good.
+    /// Null until inspected. Each line keeps its own.
+    /// </summary>
     public ReturnCondition? ReturnCondition { get; private set; }
 
     public string? ReturnNote { get; private set; }
@@ -687,8 +796,26 @@ public sealed class OrderPart : Entity
     /// </summary>
     public bool IsBuyerReturn => ReturnRequest?.Status == ReturnRequestStatus.Approved;
 
-    /// <summary>Still on its way to the buyer, or already there: neither called off nor sent back.</summary>
-    public bool IsComing => Status is not (OrderPartStatus.Cancelled or OrderPartStatus.Returned or OrderPartStatus.Returning);
+    /// <summary>Undelivered and taken back by the courier: none of it reached the buyer.</summary>
+    public bool IsRto => Status is OrderPartStatus.Returning or OrderPartStatus.Returned && !IsBuyerReturn;
+
+    /// <summary>
+    /// Some or all of it is the buyer's: neither called off nor taken back undelivered. A part the
+    /// buyer is returning still counts for the units they keep.
+    /// </summary>
+    public bool IsKept => Status != OrderPartStatus.Cancelled && !IsRto;
+
+    /// <summary>The goods the buyer keeps, at full price.</summary>
+    public decimal KeptSubtotal => _lines.Sum(l => l.UnitPrice * l.KeptQuantity);
+
+    /// <summary>The coupon discount on the goods the buyer keeps.</summary>
+    public decimal KeptDiscount => _lines.Sum(l => l.KeptDiscount);
+
+    /// <summary>The lines that came back, with how many of each: all of an RTO, the returned units of a buyer's return.</summary>
+    public IEnumerable<(OrderLine Line, int Quantity)> CameBack =>
+        IsBuyerReturn
+            ? _lines.Where(l => l.ReturnedQuantity > 0).Select(l => (l, l.ReturnedQuantity))
+            : _lines.Select(l => (l, l.Quantity));
 
     public IReadOnlyCollection<OrderLine> Lines => _lines.AsReadOnly();
 
@@ -773,6 +900,57 @@ public sealed class OrderLine : Entity
     public decimal Discount { get; private set; }
 
     public decimal LineTotal => UnitPrice * Quantity;
+
+    /// <summary>Units the buyer asked to send back; zero when they asked for none.</summary>
+    public int ReturnRequestedQuantity { get; private set; }
+
+    /// <summary>Units of an approved return: no longer the buyer's.</summary>
+    public int ReturnedQuantity { get; private set; }
+
+    /// <summary>
+    /// The share of <see cref="Discount"/> that was on the returned units. The buyer never paid it,
+    /// so it is not refunded.
+    /// </summary>
+    public decimal ReturnedDiscount { get; private set; }
+
+    /// <summary>
+    /// Discount on the kept units taken back from the buyer's refund, because what they kept no
+    /// longer met the coupon's minimum order.
+    /// </summary>
+    public decimal RevokedDiscount { get; private set; }
+
+    /// <summary>What the seller found in the units that came back; null until inspected.</summary>
+    public ReturnCondition? ReturnCondition { get; private set; }
+
+    public int KeptQuantity => Quantity - ReturnedQuantity;
+
+    /// <summary>The coupon discount still on the kept units.</summary>
+    public decimal KeptDiscount => Discount - ReturnedDiscount - RevokedDiscount;
+
+    /// <summary>What the buyer paid for the returned units: refunded when they are back.</summary>
+    public decimal ReturnedPaid => (UnitPrice * ReturnedQuantity) - ReturnedDiscount;
+
+    internal void AskToReturn(int quantity) => ReturnRequestedQuantity = quantity;
+
+    /// <summary>The return of the requested units is approved.</summary>
+    internal void Return()
+    {
+        ReturnedQuantity = ReturnRequestedQuantity;
+        ReturnedDiscount = ReturnedQuantity == Quantity
+            ? Discount
+            : Math.Round(Discount * ReturnedQuantity / Quantity, 2, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>Takes back the discount on the kept units, and says how much that was.</summary>
+    internal decimal RevokeDiscount()
+    {
+        var amount = KeptQuantity > 0 ? KeptDiscount : 0m;
+        RevokedDiscount += amount;
+
+        return amount;
+    }
+
+    internal void RecordCondition(ReturnCondition condition) => ReturnCondition = condition;
 
     internal static OrderLine Create(OrderLineInput input) => new()
     {

@@ -36,6 +36,13 @@ public sealed class ReturnRequest
 
     public DateTime? DecidedAtUtc { get; private set; }
 
+    /// <summary>
+    /// What is refunded when the goods are back, worked out on approval: what the buyer paid for
+    /// the returned units, less any coupon discount taken back. Null until approved, and for
+    /// requests approved before partial returns, which refund the whole part.
+    /// </summary>
+    public decimal? RefundDue { get; private set; }
+
     internal static ReturnRequest Create(ReturnReason reason, string? comment, string? refundUpiId, DateTime now) => new()
     {
         Reason = reason,
@@ -52,6 +59,8 @@ public sealed class ReturnRequest
         DecidedBy = decidedBy;
         DecidedAtUtc = now;
     }
+
+    internal void SetRefund(decimal amount) => RefundDue = amount;
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

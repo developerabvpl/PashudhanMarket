@@ -92,6 +92,7 @@ public sealed record OrderPartDto(
 /// <param name="RequestedAtUtc">When the buyer asked.</param>
 /// <param name="DecisionNote">Why it was refused, or a note left on approving.</param>
 /// <param name="DecidedAtUtc">When the seller or staff decided.</param>
+/// <param name="RefundDue">What is refunded once the goods are back, set on approval: what was paid for the returned units, less any coupon discount taken back.</param>
 public sealed record ReturnRequestDto(
     string Status,
     string Reason,
@@ -99,7 +100,8 @@ public sealed record ReturnRequestDto(
     string? RefundUpiId,
     DateTime RequestedAtUtc,
     string? DecisionNote,
-    DateTime? DecidedAtUtc);
+    DateTime? DecidedAtUtc,
+    decimal? RefundDue = null);
 
 /// <summary>A return request in a queue: enough to decide which to open next.</summary>
 /// <param name="OrderId">The order.</param>
@@ -111,7 +113,7 @@ public sealed record ReturnRequestDto(
 /// <param name="Reason">Why the buyer wants to return it.</param>
 /// <param name="Comment">The buyer's own words, if any.</param>
 /// <param name="PaymentMethod">CashOnDelivery (refunded by UPI) or Online (refunded through Razorpay).</param>
-/// <param name="Subtotal">What will be refunded once the goods are back.</param>
+/// <param name="Subtotal">What will be refunded once the goods are back: set on approval, and before then what was paid for the units asked about.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="RequestedAtUtc">When the buyer asked.</param>
 public sealed record ReturnRequestSummaryDto(
@@ -133,6 +135,15 @@ public sealed record ReturnRequestSummaryDto(
 /// order still reads correctly after the listing is edited or withdrawn. A coupon's discount on it
 /// is kept separately, so the price paid can always be told from the listed price.
 /// </summary>
+/// <param name="ProductId">The product.</param>
+/// <param name="Sku">Its SKU when bought.</param>
+/// <param name="Name">Its name when bought.</param>
+/// <param name="UnitPrice">The price of one, when bought.</param>
+/// <param name="Quantity">How many were bought.</param>
+/// <param name="LineTotal">Price times quantity.</param>
+/// <param name="Discount">The coupon's discount on the line.</param>
+/// <param name="ReturnQuantity">Units the buyer asked to send back; whether they go back is the request's status.</param>
+/// <param name="ReturnCondition">Good or Damaged once the units that came back are inspected.</param>
 public sealed record OrderLineDto(
     Guid ProductId,
     string Sku,
@@ -140,7 +151,19 @@ public sealed record OrderLineDto(
     decimal UnitPrice,
     int Quantity,
     decimal LineTotal,
-    decimal Discount = 0m);
+    decimal Discount = 0m,
+    int ReturnQuantity = 0,
+    string? ReturnCondition = null);
+
+/// <summary>How a product that came back was found.</summary>
+/// <param name="ProductId">The product.</param>
+/// <param name="Condition">Good (back on sale) or Damaged.</param>
+public sealed record ReturnLineConditionDto(Guid ProductId, string Condition);
+
+/// <summary>Some units of one product to send back.</summary>
+/// <param name="ProductId">The product.</param>
+/// <param name="Quantity">How many, up to how many were delivered.</param>
+public sealed record ReturnItemDto(Guid ProductId, int Quantity);
 
 /// <summary>A delivery address as entered at checkout.</summary>
 /// <param name="FullName">Who receives it.</param>

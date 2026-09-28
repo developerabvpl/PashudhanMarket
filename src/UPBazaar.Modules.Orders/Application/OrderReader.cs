@@ -39,10 +39,13 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 o.Status.ToString(),
                 o.PaymentMethod.ToString(),
                 o.PaymentStatus.ToString(),
+                // What the buyer keeps: not cancelled, not taken back undelivered, less returned units.
                 o.Parts
-                    .Where(p => p.Status != OrderPartStatus.Cancelled && p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
+                    .Where(p => p.Status != OrderPartStatus.Cancelled
+                        && ((p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
+                            || (p.ReturnRequest != null && p.ReturnRequest.Status == ReturnRequestStatus.Approved)))
                     .SelectMany(p => p.Lines)
-                    .Sum(l => (l.UnitPrice * l.Quantity) - l.Discount)
+                    .Sum(l => (l.UnitPrice * (l.Quantity - l.ReturnedQuantity)) - (l.Discount - l.ReturnedDiscount - l.RevokedDiscount))
                     + o.ShippingFee
                     - o.Parts.Where(p => p.FreeDelivery).Sum(p => p.DeliveryFee),
                 o.Currency,
@@ -83,7 +86,7 @@ internal static class OrderMappings
         part.Subtotal,
         part.Discount,
         [.. part.Lines.OrderBy(l => l.Id).Select(l =>
-            new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal, l.Discount))],
+            new OrderLineDto(l.ProductId, l.Sku, l.Name, l.UnitPrice, l.Quantity, l.LineTotal, l.Discount, l.ReturnRequestedQuantity, l.ReturnCondition?.ToString()))],
         part.CancellationReason,
         part.ReturnCondition?.ToString(),
         part.DeliveredAtUtc,
@@ -99,7 +102,8 @@ internal static class OrderMappings
         includeUpiId ? request.RefundUpiId : null,
         request.RequestedAtUtc,
         request.DecisionNote,
-        request.DecidedAtUtc);
+        request.DecidedAtUtc,
+        request.RefundDue);
 
     private static DeliveryAddressDto ToDto(this DeliveryAddress address) => new(
         address.FullName,

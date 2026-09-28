@@ -20,6 +20,12 @@ public enum EarningKind
     /// into later payouts when there is not enough to take it from yet.
     /// </summary>
     CourierCost = 2,
+
+    /// <summary>
+    /// A change to a sale already earned from: a coupon discount the seller bore, given back to them
+    /// because a later return meant the buyer no longer qualified for it. At the sale's own rates.
+    /// </summary>
+    Adjustment = 3,
 }
 
 /// <summary>Where a seller's earning from one parcel stands.</summary>
@@ -206,6 +212,37 @@ public sealed class Earning : Entity
         return earning;
     }
 
+    /// <summary>
+    /// A change to a sale's gross, at the sale's own rates, payable when the sale is - or at once if
+    /// that has passed - and waiting for the same cash on delivery the sale waits for.
+    /// </summary>
+    /// <param name="sale">The sale it changes.</param>
+    /// <param name="amount">What is added to the gross.</param>
+    /// <param name="reason">Why, for the statement: CouponRevoked.</param>
+    /// <param name="now">When it was made.</param>
+    public static Earning AdjustmentOf(Earning sale, decimal amount, string reason, DateTime now)
+    {
+        ArgumentNullException.ThrowIfNull(sale);
+
+        var earning = Make(
+            EarningKind.Adjustment,
+            sale.SellerId,
+            sale.OrderId,
+            sale.OrderNumber,
+            sale.OrderPartId,
+            amount,
+            sale.Currency,
+            now,
+            sale.PayableFromUtc > now ? sale.PayableFromUtc : now,
+            new EarningRates(sale.CommissionPercent, sale.TcsPercent, sale.TdsPercent));
+
+        earning.Detail = reason;
+        earning.Reference = reason;
+        earning.AwaitingCash = sale.AwaitingCash && sale.Status != EarningStatus.Settled;
+
+        return earning;
+    }
+
     private static Earning Make(
         EarningKind kind,
         Guid sellerId,
@@ -268,6 +305,25 @@ public sealed class Earning : Entity
         {
             Status = EarningStatus.Accruing;
         }
+    }
+
+    /// <summary>
+    /// Part of the parcel is coming back and the buyer keeps the rest: the seller earns on what is
+    /// kept, at the same rates, payable on the same terms. Only an earning not yet paid can change.
+    /// </summary>
+    public void KeepOnly(decimal grossAmount)
+    {
+        if (Status is not (EarningStatus.Accruing or EarningStatus.OnHold))
+        {
+            return;
+        }
+
+        GrossAmount = grossAmount;
+        CommissionAmount = Paise(grossAmount * CommissionPercent / 100m);
+        TcsAmount = Paise(grossAmount * TcsPercent / 100m);
+        TdsAmount = Paise(grossAmount * TdsPercent / 100m);
+        NetAmount = grossAmount - CommissionAmount - TcsAmount - TdsAmount;
+        Status = EarningStatus.Accruing;
     }
 
     /// <summary>The return was accepted. Nothing is owed for goods the seller gets back.</summary>

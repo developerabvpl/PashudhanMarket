@@ -99,6 +99,8 @@ export type { RejectSellerRequest } from './models/reject-seller-request';
 export type { RequestOtpRequest } from './models/request-otp-request';
 export type { RequestReturnRequest } from './models/request-return-request';
 export type { ResetPasswordRequest } from './models/reset-password-request';
+export type { ReturnItemDto } from './models/return-item-dto';
+export type { ReturnLineConditionDto } from './models/return-line-condition-dto';
 export type { ReturnRequestDto } from './models/return-request-dto';
 export type { ReturnRequestSummaryDto } from './models/return-request-summary-dto';
 export type { ReviewDto } from './models/review-dto';

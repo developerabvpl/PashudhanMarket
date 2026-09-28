@@ -162,7 +162,7 @@ public sealed class OrdersController(
         }
 
         return (await dispatcher.SendAsync(
-                new RequestReturnCommand(orderId, partId, buyerId, request.Reason, request.Comment, request.RefundUpiId),
+                new RequestReturnCommand(orderId, partId, buyerId, request.Reason, request.Comment, request.RefundUpiId, request.Items),
                 cancellationToken))
             .ToActionResult();
     }
@@ -327,7 +327,7 @@ public sealed class AdminOrdersController(IDispatcher dispatcher) : ControllerBa
         ArgumentNullException.ThrowIfNull(request);
 
         return (await dispatcher.SendAsync(
-                new InspectReturnCommand(orderId, partId, SellerId: null, request.Condition, request.Note),
+                new InspectReturnCommand(orderId, partId, SellerId: null, request.Condition, request.Note, request.Lines),
                 cancellationToken))
             .ToActionResult();
     }
@@ -378,7 +378,11 @@ public sealed record ListOrdersRequest(int? Page, int? PageSize, string? Status,
 /// <param name="Reason">Damaged, WrongItem, NotAsDescribed, QualityIssue, NoLongerNeeded or Other.</param>
 /// <param name="Comment">What is wrong, in the buyer's words. Required for Other.</param>
 /// <param name="RefundUpiId">Where to send the refund, such as name@okicici. Required for a cash-on-delivery order.</param>
-public sealed record RequestReturnRequest(string Reason, string? Comment, string? RefundUpiId);
+public sealed record RequestReturnRequest(string Reason, string? Comment, string? RefundUpiId)
+{
+    /// <summary>How many of which products to send back. Leave out to return the whole parcel.</summary>
+    public IReadOnlyList<ReturnItemDto> Items { get; init; } = [];
+}
 
 /// <param name="Approve">True to accept and book a pickup; false to refuse.</param>
 /// <param name="Note">Why it is refused, shown to the buyer. Required when refusing.</param>

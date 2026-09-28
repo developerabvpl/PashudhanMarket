@@ -4,6 +4,7 @@ using UPBazaar.Modules.Orders.Contracts.Events;
 using UPBazaar.Modules.Settlements.Domain;
 using UPBazaar.Modules.Shipping.Contracts;
 using UPBazaar.Modules.Shipping.Contracts.Events;
+using UPBazaar.SharedKernel.Abstractions;
 using UPBazaar.SharedKernel.Messaging;
 
 namespace UPBazaar.Modules.Settlements.Application;
@@ -70,15 +71,57 @@ internal sealed class OrderPartReturnRejectedEarningHandler(UPBazaarDbContext db
 }
 
 /// <summary>
-/// The return was accepted: the goods go back to the seller and the buyer is refunded, so the
-/// seller earns nothing from the sale. Cancelled now rather than when the parcel arrives, so a
-/// return still in transit is never paid out.
+/// The return was accepted: the returned goods go back to the seller and the buyer is refunded for
+/// them. The seller earns only on what the buyer keeps - nothing when the whole parcel goes back.
+/// Settled now rather than when the parcel arrives, so a return still in transit is never paid out.
 /// </summary>
 internal sealed class OrderPartReturnApprovedEarningHandler(UPBazaarDbContext dbContext)
     : IDomainEventHandler<OrderPartReturnApprovedDomainEvent>
 {
     public Task HandleAsync(OrderPartReturnApprovedDomainEvent e, CancellationToken cancellationToken) =>
-        EarningUpdate.ApplyAsync(dbContext, e.PartId, earning => earning.Cancel(), cancellationToken);
+        EarningUpdate.ApplyAsync(
+            dbContext,
+            e.PartId,
+            earning =>
+            {
+                if (e.KeptGross > 0)
+                {
+                    earning.KeepOnly(e.KeptGross);
+                }
+                else
+                {
+                    earning.Cancel();
+                }
+            },
+            cancellationToken);
+}
+
+/// <summary>
+/// A return left the buyer below the coupon's minimum, and the discount this seller bore on a
+/// delivered parcel was taken back from the buyer: it is the seller's again, as an adjustment at
+/// the sale's rates. Made once, however often the event arrives.
+/// </summary>
+internal sealed class OrderPartDiscountRevokedEarningHandler(UPBazaarDbContext dbContext, IClock clock)
+    : IDomainEventHandler<OrderPartDiscountRevokedDomainEvent>
+{
+    private const string Reason = "CouponRevoked";
+
+    public async Task HandleAsync(OrderPartDiscountRevokedDomainEvent e, CancellationToken cancellationToken)
+    {
+        var earnings = await dbContext.Set<Earning>()
+            .Where(x => x.OrderPartId == e.PartId && (x.Kind == EarningKind.Sale || x.Kind == EarningKind.Adjustment))
+            .ToListAsync(cancellationToken);
+
+        var sale = earnings.FirstOrDefault(x => x.Kind == EarningKind.Sale);
+
+        if (sale is null || earnings.Any(x => x.Kind == EarningKind.Adjustment && x.Reference == Reason))
+        {
+            return;
+        }
+
+        dbContext.Set<Earning>().Add(Earning.AdjustmentOf(sale, e.Amount, Reason, clock.UtcNow));
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
 
 /// <summary>

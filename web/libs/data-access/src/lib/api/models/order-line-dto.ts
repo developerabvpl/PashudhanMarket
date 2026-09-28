@@ -7,6 +7,8 @@ export interface OrderLineDto {
   name: string;
   productId: string;
   quantity: number;
+  returnCondition?: (string | null);
+  returnQuantity?: number;
   sku: string;
   unitPrice: number;
 }

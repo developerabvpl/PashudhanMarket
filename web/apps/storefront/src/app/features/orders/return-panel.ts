@@ -20,9 +20,11 @@ export const RETURN_REASONS = ['Damaged', 'WrongItem', 'NotAsDescribed', 'Qualit
  * A delivered parcel's return: the button and form to ask for one while the window is open, and
  * afterwards where the return stands.
  *
- * The whole parcel goes back, never some of it, and the refund falls due only once it is with the
- * seller - both said up front, so a buyer knows what they are asking for. A cash-on-delivery buyer
- * gives a UPI id, since there is no online payment to reverse.
+ * The buyer chooses how many of each product go back - all of them to start with - and sees
+ * roughly what comes back to them, due only once the goods are with the seller. The exact refund
+ * is set when the return is approved: a coupon whose minimum is no longer met by what the buyer
+ * keeps takes its discount back out of it. One request per parcel. A cash-on-delivery buyer gives
+ * a UPI id, since there is no online payment to reverse.
  */
 @Component({
   selector: 'upb-return-panel',
@@ -42,9 +44,9 @@ export const RETURN_REASONS = ['Damaged', 'WrongItem', 'NotAsDescribed', 'Qualit
       @if (part().status === 'Returned') {
       <p>
         @if (request.refundUpiId) {
-        {{ 'orders.return.refundUpi' | transloco: { amount: (part().subtotal | inr: 'symbol' : 'auto'), upi: request.refundUpiId } }}
+        {{ 'orders.return.refundUpi' | transloco: { amount: (request.refundDue ?? part().subtotal | inr: 'symbol' : 'auto'), upi: request.refundUpiId } }}
         } @else {
-        {{ 'orders.return.refundOnline' | transloco: { amount: (part().subtotal | inr: 'symbol' : 'auto') } }}
+        {{ 'orders.return.refundOnline' | transloco: { amount: (request.refundDue ?? part().subtotal | inr: 'symbol' : 'auto') } }}
         }
       </p>
       } @else {
@@ -72,7 +74,23 @@ export const RETURN_REASONS = ['Damaged', 'WrongItem', 'NotAsDescribed', 'Qualit
       </div>
       } @else {
       <form class="space-y-3" novalidate (submit)="submit($event)">
-        <p class="text-ink-muted">{{ 'orders.return.wholeParcel' | transloco: { amount: (part().subtotal | inr: 'symbol' : 'auto') } }}</p>
+        <fieldset>
+          <legend class="font-medium text-ink">{{ 'orders.return.chooseItems' | transloco }}</legend>
+          @for (line of part().lines; track line.productId) {
+          <div class="mt-2 flex items-center justify-between gap-3">
+            <label class="text-ink" [for]="id('qty-' + line.productId)">{{ line.name }}</label>
+            <select [id]="id('qty-' + line.productId)" class="rounded-control border border-border bg-surface px-2 py-1 text-ink" (change)="choose(line.productId, value($event))">
+              @for (n of upTo(line.quantity); track n) {
+              <option [value]="n" [selected]="chosen(line.productId) === n">{{ n }}</option>
+              }
+            </select>
+          </div>
+          }
+        </fieldset>
+        <p class="text-ink-muted">{{ 'orders.return.refundAbout' | transloco: { amount: (estimate() | inr: 'symbol' : 'auto') } }}</p>
+        @if (order().couponCode) {
+        <p class="text-xs text-ink-muted">{{ 'orders.return.couponNote' | transloco }}</p>
+        }
 
         <div>
           <label class="block font-medium text-ink" [for]="id('reason')">{{ 'orders.return.reasonLabel' | transloco }}</label>
@@ -106,7 +124,7 @@ export const RETURN_REASONS = ['Damaged', 'WrongItem', 'NotAsDescribed', 'Qualit
         <upb-field-errors [fieldId]="id('form')" [errors]="generalErrors()" />
 
         <div class="flex flex-wrap items-center gap-3">
-          <button type="submit" [disabled]="busy()"
+          <button type="submit" [disabled]="busy() || units() === 0"
             class="rounded-control bg-brand-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50">
             {{ 'orders.return.submit' | transloco }}
           </button>
@@ -142,6 +160,24 @@ export class ReturnPanel {
   private readonly problem = signal<ApiProblem | null>(null);
   private readonly commentMissing = signal(false);
 
+  /** Units chosen per product; a product not in here goes back whole. */
+  private readonly quantities = signal<Readonly<Record<string, number>>>({});
+
+  /** Units chosen in all. */
+  protected readonly units = computed(() => this.part().lines.reduce((sum, l) => sum + this.chosen(l.productId), 0));
+
+  /**
+   * What the chosen units cost the buyer: their price less their share of the coupon discount.
+   * An estimate - approving the return can take the discount on the rest back out of it.
+   */
+  protected readonly estimate = computed(() =>
+    this.part().lines.reduce((sum, l) => {
+      const units = this.chosen(l.productId);
+
+      return sum + units * l.unitPrice - (l.discount ?? 0) * (units / l.quantity);
+    }, 0)
+  );
+
   protected readonly isCod = computed(() => this.order().paymentMethod === 'CashOnDelivery');
 
   /** Delivered, not yet asked about, and still inside its window. The API checks all three again. */
@@ -164,6 +200,19 @@ export class ReturnPanel {
 
   protected id(name: string): string {
     return `return-${name}-${this.part().id}`;
+  }
+
+  protected chosen(productId: string): number {
+    return this.quantities()[productId] ?? this.part().lines.find((l) => l.productId === productId)?.quantity ?? 0;
+  }
+
+  protected choose(productId: string, units: string): void {
+    this.quantities.update((q) => ({ ...q, [productId]: Number(units) }));
+  }
+
+  /** 0 up to `quantity`, for a quantity picker. */
+  protected upTo(quantity: number): number[] {
+    return Array.from({ length: quantity + 1 }, (_, n) => n);
   }
 
   protected value(event: Event): string {
@@ -197,6 +246,9 @@ export class ReturnPanel {
           reason: this.reason(),
           comment: this.comment().trim() || null,
           refundUpiId: this.isCod() ? this.upiId().trim() || null : null,
+          items: this.part().lines
+            .map((l) => ({ productId: l.productId, quantity: this.chosen(l.productId) }))
+            .filter((i) => i.quantity > 0),
         },
       });
 

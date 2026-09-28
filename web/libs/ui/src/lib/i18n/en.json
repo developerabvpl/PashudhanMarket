@@ -413,7 +413,6 @@
       "commentRequired": "Tell the seller what is wrong.",
       "upiLabel": "UPI id for your refund",
       "upiHint": "You paid in cash, so the refund is sent to this UPI id, such as name@okicici.",
-      "wholeParcel": "The whole parcel goes back. You are refunded {{amount}} once it reaches the seller.",
       "submit": "Ask to return it",
       "cancel": "Not now",
       "sent": "Return requested. The seller will reply soon.",
@@ -422,7 +421,10 @@
       "pickupWith": "Collection by {{courier}}, AWB {{awb}}",
       "refundUpi": "Back with the seller. Your refund of {{amount}} will be sent to {{upi}}.",
       "refundOnline": "Back with the seller. Your refund of {{amount}} will go back to your original payment.",
-      "rejected": "The seller did not accept this return: {{note}}"
+      "rejected": "The seller did not accept this return: {{note}}",
+      "chooseItems": "What are you sending back?",
+      "refundAbout": "Refund of about {{amount}}, once it reaches the seller.",
+      "couponNote": "If what you keep no longer reaches your coupon’s minimum order, its discount comes off the refund."
     }
   },
   "payments": {
@@ -703,7 +705,10 @@
       "Rto": "courier: returned undelivered",
       "ReturnPickup": "courier: return pickup"
     },
-    "awaitingCash": "Waiting for the courier to pay over the cash"
+    "awaitingCash": "Waiting for the courier to pay over the cash",
+    "adjustment": {
+      "CouponRevoked": "coupon discount given back to you"
+    }
   },
   "catalogAdmin": {
     "title": "Products",
@@ -789,7 +794,11 @@
     "inspectedAs": {
       "Good": "Returned and put back on sale.",
       "Damaged": "Returned damaged; not restocked."
-    }
+    },
+    "unitsBack": "{{count}} coming back",
+    "itemsBack": "Coming back:",
+    "refundDue": "Refund due: {{amount}}",
+    "recordInspection": "Record inspection"
   },
   "reviews": {
     "starsLabel": "{{rating}} out of 5 stars",

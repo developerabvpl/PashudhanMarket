@@ -216,7 +216,8 @@ internal sealed class PlaceOrderCommandHandler(
             coupon is null ? null : (coupon.Code, coupon.FundedBy),
             reservation.Value,
             clock.UtcNow,
-            freeDeliveryFor);
+            freeDeliveryFor,
+            coupon?.MinOrderValue);
 
         dbContext.Set<Order>().Add(order);
 

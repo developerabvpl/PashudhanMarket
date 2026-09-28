@@ -78,6 +78,14 @@ public static class OrderErrors
         "orders.part.return_not_pending",
         "There is no return request waiting for a decision on this parcel.");
 
+    public static readonly Error InvalidReturnItems = Error.Validation(
+        "orders.part.invalid_return_items",
+        "Choose products from this parcel, and no more of each than was delivered.");
+
+    public static readonly Error ConditionForEveryLine = Error.Validation(
+        "orders.part.condition_for_every_line",
+        "Say whether each product that came back is good or damaged.");
+
     public static readonly Error RefundUpiIdRequired = Error.Validation(
         "orders.part.refund_upi_required",
         "This order was paid in cash. Give a UPI id to receive the refund.");
