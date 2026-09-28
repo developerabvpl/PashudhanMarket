@@ -37,6 +37,30 @@ public static class SellerErrors
         "sellers.owner_has_shop",
         "That account already runs a shop. One account, one shop.");
 
+    public static readonly Error NoSellerAccount = Error.NotFound(
+        "sellers.team.no_account",
+        "No account uses that email. Ask them to register on the seller portal first.");
+
+    public static readonly Error NotYourself = Error.Validation(
+        "sellers.team.not_yourself",
+        "You own the shop already. Add someone else.");
+
+    public static readonly Error AlreadyInATeam = Error.Conflict(
+        "sellers.team.already_in_a_team",
+        "That account already runs a shop or works for one. One account, one shop.");
+
+    public static readonly Error TeamFull = Error.Conflict(
+        "sellers.team.full",
+        "A shop can have up to 20 team members. Remove someone first.");
+
+    public static readonly Error MemberNotFound = Error.NotFound(
+        "sellers.team.member_not_found",
+        "That person is not on your team.");
+
+    public static readonly Error NotApprovedShop = Error.Conflict(
+        "sellers.team.not_approved",
+        "Your shop needs to be approved before you add a team.");
+
     public static readonly Error ConcurrentChange = Error.Conflict(
         "sellers.concurrent_change",
         "The seller was changed by someone else at the same time. Reload and try again.");

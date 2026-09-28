@@ -5,9 +5,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthService, CurrentUserStore } from '@upbazaar/auth';
+import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
-import { SellerAccess } from './core/seller-access';
+import { SellerAccess, SellerPermissions } from './core/seller-access';
 
 @Component({
   selector: 'upb-root',
@@ -15,6 +15,7 @@ import { SellerAccess } from './core/seller-access';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    HasPermissionDirective,
     TranslocoPipe,
     LanguageSwitcher,
     ToastHost,
@@ -40,13 +41,15 @@ import { SellerAccess } from './core/seller-access';
 
       <!-- A seller not yet approved has only their application to look at. -->
       @if (canSell()) {
+      <!-- Team members see only the areas their role opens; the owner sees all of them. -->
       <a mat-button routerLink="/orders" routerLinkActive="!bg-white/10" [routerLinkActiveOptions]="{ exact: true }">{{ 'sellerPortal.ordersTitle' | transloco }}</a>
       <a mat-button routerLink="/orders/returns" routerLinkActive="!bg-white/10">{{ 'nav.returns' | transloco }}</a>
-      <a mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
-      <a mat-button routerLink="/earnings" routerLinkActive="!bg-white/10">{{ 'nav.earnings' | transloco }}</a>
-      <a mat-button routerLink="/reviews" routerLinkActive="!bg-white/10">{{ 'nav.reviews' | transloco }}</a>
-      <a mat-button routerLink="/coupons" routerLinkActive="!bg-white/10">{{ 'nav.coupons' | transloco }}</a>
-      <a mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
+      <a *hasPermission="p.Products" mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
+      <a *hasPermission="p.Earnings" mat-button routerLink="/earnings" routerLinkActive="!bg-white/10">{{ 'nav.earnings' | transloco }}</a>
+      <a *hasPermission="p.Reviews" mat-button routerLink="/reviews" routerLinkActive="!bg-white/10">{{ 'nav.reviews' | transloco }}</a>
+      <a *hasPermission="p.Coupons" mat-button routerLink="/coupons" routerLinkActive="!bg-white/10">{{ 'nav.coupons' | transloco }}</a>
+      <a *hasPermission="p.Manage" mat-button routerLink="/team" routerLinkActive="!bg-white/10">{{ 'nav.team' | transloco }}</a>
+      <a *hasPermission="p.Manage" mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
       } @else {
       <a mat-button routerLink="/apply">{{ 'sellerPortal.applyTitle' | transloco }}</a>
       }
@@ -82,6 +85,7 @@ export class App {
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;
   protected readonly canSell = this.access.canSell;
+  protected readonly p = SellerPermissions;
 
   constructor() {
     // Restores the header for someone returning with a stored session, without waiting for a

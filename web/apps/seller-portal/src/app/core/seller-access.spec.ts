@@ -3,8 +3,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { AuthService, CurrentUserStore } from '@upbazaar/auth';
-import { Api, SellerDto } from '@upbazaar/data-access';
-import { SELLER_OWN_PRODUCTS, SellerAccess, approvedSellerGuard } from './seller-access';
+import { Api, SellerAccessDto, SellerDto, apiV1SellersMeAccessGet } from '@upbazaar/data-access';
+import { SellerAccess, SellerPermissions, approvedSellerGuard } from './seller-access';
 
 function seller(status: string): SellerDto {
   return {
@@ -25,24 +25,28 @@ function seller(status: string): SellerDto {
 
 describe('approvedSellerGuard', () => {
   let answer: () => Promise<SellerDto>;
+  let accessAnswer: () => Promise<SellerAccessDto>;
+  let invoke: ReturnType<typeof vi.fn>;
   let permissions: ReturnType<typeof signal<readonly string[]>>;
   let refresh: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     permissions = signal<readonly string[]>([]);
     refresh = vi.fn(async () => true);
+    invoke = vi.fn((fn: unknown) => (fn === apiV1SellersMeAccessGet ? accessAnswer() : answer()));
+    accessAnswer = async () => { const s = await answer(); return { sellerId: s.id, shopName: s.shopName, status: s.status, role: 'Owner' }; };
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: Api, useValue: { invoke: vi.fn(() => answer()) } },
+        { provide: Api, useValue: { invoke } },
         { provide: AuthService, useValue: { refresh } },
         {
           provide: CurrentUserStore,
           useValue: {
             has: (p: string) => permissions().includes(p),
             // Refreshing the profile is when newly granted permissions arrive.
-            refresh: vi.fn(async () => permissions.set([SELLER_OWN_PRODUCTS])),
+            refresh: vi.fn(async () => permissions.set([SellerPermissions.Orders, SellerPermissions.Manage])),
           },
         },
       ],
@@ -80,9 +84,24 @@ describe('approvedSellerGuard', () => {
     expect(TestBed.inject(SellerAccess).canSell()).toBe(true);
   });
 
+  it('lets a team member of an approved shop in without loading the owner record', async () => {
+    accessAnswer = async () => ({ sellerId: 's1', shopName: 'Shri Krishna Gaushala', status: 'Approved', role: 'Dispatch' });
+    permissions.set([SellerPermissions.Orders]);
+
+    expect(await run()).toBe(true);
+    expect(invoke).toHaveBeenCalledOnce();
+    expect(TestBed.inject(SellerAccess).seller()).toBeNull();
+  });
+
+  it('turns away a team member whose shop is no longer approved', async () => {
+    accessAnswer = async () => ({ sellerId: 's1', shopName: 'Shri Krishna Gaushala', status: 'Rejected', role: 'Manager' });
+
+    expect(urlOf(await run())).toBe('/forbidden');
+  });
+
   it('lets an approved seller whose session already knows straight in', async () => {
     answer = async () => seller('Approved');
-    permissions.set([SELLER_OWN_PRODUCTS]);
+    permissions.set([SellerPermissions.Orders, SellerPermissions.Manage]);
 
     expect(await run()).toBe(true);
     expect(refresh).not.toHaveBeenCalled();

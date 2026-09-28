@@ -165,6 +165,7 @@ public static class PermissionCatalog
             RoleNames.SellerOwner,
             "Owns a seller account and everything under it. Granted when the seller is approved.",
             [
+                SellersPermissions.OwnManage,
                 CatalogPermissions.OwnProductsWrite,
                 InventoryPermissions.OwnStockWrite,
                 OrdersPermissions.SellerRead,
@@ -172,6 +173,26 @@ public static class PermissionCatalog
                 SettlementsPermissions.OwnRead,
                 ReviewsPermissions.SellerReply,
                 PromotionsPermissions.OwnWrite,
+            ]),
+
+        new(
+            RoleNames.SellerManager,
+            "Runs a shop for its owner: products, stock, orders, dispatch, coupons and reviews. Not its team, earnings or details.",
+            [
+                CatalogPermissions.OwnProductsWrite,
+                InventoryPermissions.OwnStockWrite,
+                OrdersPermissions.SellerRead,
+                ShippingPermissions.OwnShipmentsWrite,
+                ReviewsPermissions.SellerReply,
+                PromotionsPermissions.OwnWrite,
+            ]),
+
+        new(
+            RoleNames.SellerDispatch,
+            "Packs and ships a shop's orders and handles its returns. Nothing else.",
+            [
+                OrdersPermissions.SellerRead,
+                ShippingPermissions.OwnShipmentsWrite,
             ]),
 
         new(
@@ -198,6 +219,8 @@ public static class PermissionCatalog
         public const string SupportSupervisor = "SupportSupervisor";
         public const string AcademyAuthor = "AcademyAuthor";
         public const string SellerOwner = "SellerOwner";
+        public const string SellerManager = "SellerManager";
+        public const string SellerDispatch = "SellerDispatch";
         public const string Buyer = "Buyer";
     }
 }

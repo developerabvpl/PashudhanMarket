@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using UPBazaar.Infrastructure.Api;
 using UPBazaar.Modules.Orders.Contracts;
 using UPBazaar.Modules.Sellers.Contracts;
+using UPBazaar.Modules.Sellers.Contracts.Permissions;
 using UPBazaar.Modules.Shipping.Application;
 using UPBazaar.Modules.Shipping.Contracts.Dtos;
 using UPBazaar.Modules.Shipping.Contracts.Permissions;
@@ -104,8 +105,9 @@ public sealed class SellerShippingController(
 
     /// <summary>Sets the seller's own pickup location.</summary>
     [HttpPut("pickup-location")]
+    [Authorize(SellersPermissions.OwnManage)]
     [EndpointSummary("Set my pickup location")]
-    [EndpointDescription("The name of a pickup location registered for the shop in the Shiprocket dashboard.")]
+    [EndpointDescription("The name of a pickup location registered for the shop in the Shiprocket dashboard. The owner's to set, not their team's.")]
     [ProducesResponseType<PickupLocationDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public Task<ActionResult<PickupLocationDto>> SetPickupLocation(SellerPickupLocationRequest request, CancellationToken cancellationToken)

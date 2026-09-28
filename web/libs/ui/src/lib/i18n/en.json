@@ -31,7 +31,8 @@
     "reviews": "Reviews",
     "buyerReviews": "Buyer reviews",
     "coupons": "Coupons",
-    "cod": "Cash on delivery"
+    "cod": "Cash on delivery",
+    "team": "Team"
   },
   "state": {
     "loading": "Loading",
@@ -968,5 +969,27 @@
     "amount": "Amount",
     "notMatched": "Not matched yet",
     "noRemittances": "No remittances uploaded yet."
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "People who work in your seller portal with their own sign-in. Only you manage the team, see earnings and change the shop’s details.",
+    "email": "Their account email",
+    "role": "Role",
+    "roles": {
+      "Manager": "Manager",
+      "Dispatch": "Dispatch"
+    },
+    "roleHelp": {
+      "Manager": "Products, stock, orders, dispatch, coupons and reviews.",
+      "Dispatch": "Orders, packing and returns only."
+    },
+    "add": "Add to team",
+    "addHint": "They register on the seller portal first, then you add them by that email. Their access starts the next time they sign in.",
+    "addedOn": "added {{date}}",
+    "added": "Added to your team.",
+    "changed": "Role changed.",
+    "remove": "Remove",
+    "removed": "Removed from your team.",
+    "none": "No one else is on your team yet."
   }
 }

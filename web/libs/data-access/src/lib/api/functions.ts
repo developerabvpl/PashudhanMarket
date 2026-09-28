@@ -233,6 +233,16 @@ export type { ApiV1SellersMeApplicationPost$Params as ApiV1SellersMeApplicationP
 export { apiV1SellersMeApplicationPost as apiV1SellersMeApplicationPost } from './fn/my-seller/api-v-1-sellers-me-application-post';
 export type { ApiV1SellersMeProfilePut$Params as ApiV1SellersMeProfilePut$Params } from './fn/my-seller/api-v-1-sellers-me-profile-put';
 export { apiV1SellersMeProfilePut as apiV1SellersMeProfilePut } from './fn/my-seller/api-v-1-sellers-me-profile-put';
+export type { ApiV1SellersMeAccessGet$Params as ApiV1SellersMeAccessGet$Params } from './fn/my-seller/api-v-1-sellers-me-access-get';
+export { apiV1SellersMeAccessGet as apiV1SellersMeAccessGet } from './fn/my-seller/api-v-1-sellers-me-access-get';
+export type { ApiV1SellersMeTeamGet$Params as ApiV1SellersMeTeamGet$Params } from './fn/my-seller/api-v-1-sellers-me-team-get';
+export { apiV1SellersMeTeamGet as apiV1SellersMeTeamGet } from './fn/my-seller/api-v-1-sellers-me-team-get';
+export type { ApiV1SellersMeTeamPost$Params as ApiV1SellersMeTeamPost$Params } from './fn/my-seller/api-v-1-sellers-me-team-post';
+export { apiV1SellersMeTeamPost as apiV1SellersMeTeamPost } from './fn/my-seller/api-v-1-sellers-me-team-post';
+export type { ApiV1SellersMeTeamMemberIdPut$Params as ApiV1SellersMeTeamMemberIdPut$Params } from './fn/my-seller/api-v-1-sellers-me-team-member-id-put';
+export { apiV1SellersMeTeamMemberIdPut as apiV1SellersMeTeamMemberIdPut } from './fn/my-seller/api-v-1-sellers-me-team-member-id-put';
+export type { ApiV1SellersMeTeamMemberIdDelete$Params as ApiV1SellersMeTeamMemberIdDelete$Params } from './fn/my-seller/api-v-1-sellers-me-team-member-id-delete';
+export { apiV1SellersMeTeamMemberIdDelete as apiV1SellersMeTeamMemberIdDelete } from './fn/my-seller/api-v-1-sellers-me-team-member-id-delete';
 export type { ApiV1AdminSellersGet$Params as ApiV1AdminSellersGet$Params } from './fn/admin-sellers/api-v-1-admin-sellers-get';
 export { apiV1AdminSellersGet as apiV1AdminSellersGet } from './fn/admin-sellers/api-v-1-admin-sellers-get';
 export type { ApiV1AdminSellersSellerIdGet$Params as ApiV1AdminSellersSellerIdGet$Params } from './fn/admin-sellers/api-v-1-admin-sellers-seller-id-get';

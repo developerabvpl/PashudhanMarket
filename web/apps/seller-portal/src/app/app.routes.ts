@@ -7,8 +7,9 @@ import {
   TwoFactorChallengePage,
   anonymousOnlyGuard,
   authGuard,
+  permissionGuard,
 } from '@upbazaar/auth';
-import { approvedSellerGuard } from './core/seller-access';
+import { SellerPermissions, approvedSellerGuard } from './core/seller-access';
 
 export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'orders' },
@@ -25,27 +26,32 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'products',
-    canActivate: [authGuard, approvedSellerGuard],
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Products)],
     loadChildren: () => import('./features/products/products.routes').then((m) => m.productRoutes),
   },
   {
     path: 'earnings',
-    canActivate: [authGuard, approvedSellerGuard],
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Earnings)],
     loadComponent: () => import('./features/earnings/earnings.page').then((m) => m.EarningsPage),
   },
   {
     path: 'reviews',
-    canActivate: [authGuard, approvedSellerGuard],
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Reviews)],
     loadComponent: () => import('./features/reviews/reviews.page').then((m) => m.ReviewsPage),
   },
   {
     path: 'coupons',
-    canActivate: [authGuard, approvedSellerGuard],
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Coupons)],
     loadComponent: () => import('./features/coupons/coupons.page').then((m) => m.CouponsPage),
   },
   {
+    path: 'team',
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Manage)],
+    loadComponent: () => import('./features/team/team.page').then((m) => m.TeamPage),
+  },
+  {
     path: 'settings',
-    canActivate: [authGuard, approvedSellerGuard],
+    canActivate: [authGuard, approvedSellerGuard, permissionGuard(SellerPermissions.Manage)],
     loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage),
   },
   {

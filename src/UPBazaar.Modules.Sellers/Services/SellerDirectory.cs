@@ -37,15 +37,17 @@ internal sealed class SellerDirectory(UPBazaarDbContext dbContext, IUserDirector
         return new SellerContactDto(seller.ShopName, user.IsSuccess ? user.Value.Email : null);
     }
 
-    public async Task<Guid?> GetApprovedSellerIdAsync(Guid ownerUserId, CancellationToken cancellationToken)
+    public async Task<Guid?> GetApprovedSellerIdAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var id = await dbContext.Set<Seller>()
+        // The owner's shop, or the shop they are on the team of. Asked on every seller request, so
+        // someone taken off a team loses the shop at once, whatever their token still says.
+        var members = dbContext.Set<SellerMember>().Where(m => m.UserId == userId).Select(m => m.SellerId);
+
+        return await dbContext.Set<Seller>()
             .AsNoTracking()
-            .Where(s => s.OwnerUserId == ownerUserId && s.Status == SellerStatus.Approved)
+            .Where(s => (s.OwnerUserId == userId || members.Contains(s.Id)) && s.Status == SellerStatus.Approved)
             .Select(s => (Guid?)s.PublicId)
             .FirstOrDefaultAsync(cancellationToken);
-
-        return id;
     }
 
     public async Task<IReadOnlyDictionary<Guid, string>> GetShopNamesAsync(

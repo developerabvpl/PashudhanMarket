@@ -24,11 +24,18 @@ public static class SellersPermissions
     /// </summary>
     public const string KycApprove = "sellers.kyc.approve";
 
+    /// <summary>
+    /// A shop's owner running the shop itself: its team and where couriers collect from. Staff the
+    /// owner adds can do the shop's work but not this.
+    /// </summary>
+    public const string OwnManage = "sellers.own.manage";
+
     /// <summary>Every permission this module defines, for seeding and policy generation.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         Read,
         Write,
         KycApprove,
+        OwnManage,
     ];
 }

@@ -80,11 +80,82 @@ public sealed class MySellerController(IDispatcher dispatcher, ICurrentUser curr
             cancellationToken));
     }
 
+    /// <summary>Which shop the caller works for, and as what.</summary>
+    [HttpGet("access")]
+    [EndpointSummary("Get my seller access")]
+    [EndpointDescription(
+        "The shop the caller owns or is on the team of, its status, and their role: Owner, Manager "
+        + "or Dispatch. Not found if they have neither applied nor been added to a team.")]
+    [ProducesResponseType<SellerAccessDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<SellerAccessDto>> Access(CancellationToken cancellationToken) =>
+        AsOwner(user => dispatcher.QueryAsync(new GetMyAccessQuery(user), cancellationToken));
+
+    /// <summary>Lists the shop's team.</summary>
+    [HttpGet("team")]
+    [Authorize(SellersPermissions.OwnManage)]
+    [EndpointSummary("List my team")]
+    [ProducesResponseType<IReadOnlyList<SellerMemberDto>>(StatusCodes.Status200OK)]
+    public Task<ActionResult<IReadOnlyList<SellerMemberDto>>> Team(CancellationToken cancellationToken) =>
+        AsOwner(owner => dispatcher.QueryAsync(new ListTeamQuery(owner), cancellationToken));
+
+    /// <summary>Adds someone to the team.</summary>
+    [HttpPost("team")]
+    [Authorize(SellersPermissions.OwnManage)]
+    [EndpointSummary("Add a team member")]
+    [EndpointDescription(
+        "By the email of the seller-portal account they registered. Manager: products, stock, orders, "
+        + "dispatch, coupons and reviews. Dispatch: orders, packing and returns. Neither sees earnings, "
+        + "the team or the shop's details. Their access starts when their session next refreshes.")]
+    [ProducesResponseType<SellerMemberDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public Task<ActionResult<SellerMemberDto>> AddMember(TeamMemberRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsOwner(owner => dispatcher.SendAsync(new AddTeamMemberCommand(owner, request.Email, request.Role), cancellationToken));
+    }
+
+    /// <summary>Changes a team member's role.</summary>
+    [HttpPut("team/{memberId:guid}")]
+    [Authorize(SellersPermissions.OwnManage)]
+    [EndpointSummary("Change a team member's role")]
+    [ProducesResponseType<SellerMemberDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<SellerMemberDto>> ChangeRole(Guid memberId, TeamRoleRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return AsOwner(owner => dispatcher.SendAsync(new ChangeTeamMemberRoleCommand(owner, memberId, request.Role), cancellationToken));
+    }
+
+    /// <summary>Takes someone off the team.</summary>
+    [HttpDelete("team/{memberId:guid}")]
+    [Authorize(SellersPermissions.OwnManage)]
+    [EndpointSummary("Remove a team member")]
+    [EndpointDescription("They lose access to the shop at once.")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> RemoveMember(Guid memberId, CancellationToken cancellationToken) =>
+        Guid.TryParse(currentUser.UserId, out var owner)
+            ? (await dispatcher.SendAsync(new RemoveTeamMemberCommand(owner, memberId), cancellationToken)).ToActionResult()
+            : Result.Failure(SellerErrors.NotSignedIn).ToActionResult();
+
     private async Task<ActionResult<T>> AsOwner<T>(Func<Guid, Task<Result<T>>> action) =>
         Guid.TryParse(currentUser.UserId, out var owner)
             ? (await action(owner)).ToActionResult()
             : Result.Failure<T>(SellerErrors.NotSignedIn).ToActionResult();
 }
+
+/// <param name="Email">The email of the seller-portal account to add.</param>
+/// <param name="Role">Manager or Dispatch.</param>
+public sealed record TeamMemberRequest(string Email, string Role);
+
+/// <param name="Role">Manager or Dispatch.</param>
+public sealed record TeamRoleRequest(string Role);
 
 /// <summary>Staff reviewing and managing sellers.</summary>
 [ApiController]

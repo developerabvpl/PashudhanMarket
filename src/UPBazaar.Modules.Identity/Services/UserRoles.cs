@@ -14,7 +14,12 @@ internal sealed class UserRoles(UPBazaarDbContext dbContext, IClock clock) : IUs
     /// The roles another module may hand out. A module granting Admin because its own logic said
     /// so would be an escalation path no one reviewed, so the list is short and explicit.
     /// </summary>
-    private static readonly string[] Grantable = [PermissionCatalog.RoleNames.SellerOwner];
+    private static readonly string[] Grantable =
+    [
+        PermissionCatalog.RoleNames.SellerOwner,
+        PermissionCatalog.RoleNames.SellerManager,
+        PermissionCatalog.RoleNames.SellerDispatch,
+    ];
 
     public async Task<Result> StageGrantAsync(
         Guid userId,
@@ -41,6 +46,30 @@ internal sealed class UserRoles(UPBazaarDbContext dbContext, IClock clock) : IUs
             ?? throw new InvalidOperationException($"Role '{roleName}' does not exist.");
 
         user.AssignRole(role, clock.UtcNow, grantedBy);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> StageRevokeAsync(Guid userId, string roleName, CancellationToken cancellationToken)
+    {
+        if (!Grantable.Contains(roleName, StringComparer.Ordinal))
+        {
+            throw new ArgumentException($"Role '{roleName}' cannot be revoked by another module.", nameof(roleName));
+        }
+
+        var user = await dbContext.Set<User>()
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.PublicId == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return Result.Failure(IdentityErrors.UserNotFound);
+        }
+
+        var role = await dbContext.Set<Role>().FirstOrDefaultAsync(r => r.Name == roleName, cancellationToken)
+            ?? throw new InvalidOperationException($"Role '{roleName}' does not exist.");
+
+        user.RemoveRole(role.Id);
 
         return Result.Success();
     }

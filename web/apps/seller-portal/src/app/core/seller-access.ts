@@ -1,18 +1,31 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { AuthService, CurrentUserStore } from '@upbazaar/auth';
-import { Api, SellerDto, apiV1SellersMeGet, toApiProblem } from '@upbazaar/data-access';
-
-/** The permission SellerOwner carries that every seller page needs; mirrors CatalogPermissions.OwnProductsWrite. */
-export const SELLER_OWN_PRODUCTS = 'catalog.products.own.write';
+import { Api, SellerAccessDto, SellerDto, apiV1SellersMeAccessGet, apiV1SellersMeGet, toApiProblem } from '@upbazaar/data-access';
 
 /**
- * The caller's shop and whether they may act for it yet.
+ * The permissions the seller portal's areas depend on, mirroring the API's. Every role - owner,
+ * manager, dispatch - has {@link SellerPermissions.Orders}; the rest decide which areas show.
+ */
+export const SellerPermissions = {
+  Orders: 'orders.seller.read',
+  Products: 'catalog.products.own.write',
+  Earnings: 'settlements.own.read',
+  Reviews: 'reviews.seller.reply',
+  Coupons: 'promotions.own.write',
+  Manage: 'sellers.own.manage',
+} as const;
+
+/**
+ * The caller's shop, their place in it, and whether they may act for it yet.
  *
- * Two things must both be true to sell: the shop is Approved, and the session carries the
- * SellerOwner permissions. Approval happens on the server while the seller's token was issued
- * before it, so after approval the token has to be refreshed - {@link refreshAccess} does that,
- * and the application page calls it the moment it sees the shop approved.
+ * Someone works for a shop as its owner or as a member of its team. Two things must both be true
+ * to work: the shop is Approved, and the session carries the seller permissions. Those arrive on
+ * the server - at approval, or when the owner adds someone - after the session's token was issued,
+ * so the token has to be refreshed: {@link refreshAccess} does that, and the guard calls it.
+ *
+ * The owner's full shop record - application, KYC - is theirs alone, and is loaded only for them
+ * and for someone who has not applied yet.
  */
 @Injectable({ providedIn: 'root' })
 export class SellerAccess {
@@ -20,27 +33,33 @@ export class SellerAccess {
   private readonly auth = inject(AuthService);
   private readonly user = inject(CurrentUserStore);
 
+  private readonly accessSignal = signal<SellerAccessDto | null>(null);
   private readonly sellerSignal = signal<SellerDto | null>(null);
   private readonly loadedSignal = signal(false);
 
+  /** Which shop, and as what: Owner, Manager or Dispatch. Null for someone with no shop. */
+  readonly access = this.accessSignal.asReadonly();
+
+  /** The owner's shop in full; null for team members and for someone who has not applied. */
   readonly seller = this.sellerSignal.asReadonly();
   readonly loaded = this.loadedSignal.asReadonly();
 
-  readonly isApproved = computed(() => this.sellerSignal()?.status === 'Approved');
+  readonly role = computed(() => this.accessSignal()?.role ?? null);
+  readonly isOwner = computed(() => this.role() === 'Owner');
+  readonly isApproved = computed(() => this.accessSignal()?.status === 'Approved');
 
   /** Approved on the server and the session already knows it. */
-  readonly canSell = computed(() => this.isApproved() && this.user.has(SELLER_OWN_PRODUCTS));
+  readonly canSell = computed(() => this.isApproved() && this.user.has(SellerPermissions.Orders));
 
-  /** Loads the caller's shop; null when they have not applied. */
+  /** Loads the caller's place in a shop, and the owner's shop record; returns the latter. */
   async load(): Promise<SellerDto | null> {
     try {
-      this.sellerSignal.set(await this.api.invoke(apiV1SellersMeGet, {}));
-    } catch (error) {
-      if (toApiProblem(error).status !== 404) {
-        throw error;
-      }
-
-      this.sellerSignal.set(null);
+      this.accessSignal.set(await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeAccessGet, {})));
+      this.sellerSignal.set(
+        this.role() === null || this.role() === 'Owner'
+          ? await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeGet, {}))
+          : null
+      );
     } finally {
       this.loadedSignal.set(true);
     }
@@ -48,9 +67,10 @@ export class SellerAccess {
     return this.sellerSignal();
   }
 
-  /** Replaces the held shop with one the API just returned. */
+  /** Replaces the held shop with one the API just returned to its owner. */
   set(seller: SellerDto): void {
     this.sellerSignal.set(seller);
+    this.accessSignal.set({ sellerId: seller.id, shopName: seller.shopName, status: seller.status, role: 'Owner' });
     this.loadedSignal.set(true);
   }
 
@@ -62,26 +82,44 @@ export class SellerAccess {
   }
 
   clear(): void {
+    this.accessSignal.set(null);
     this.sellerSignal.set(null);
     this.loadedSignal.set(false);
+  }
+
+  private async orNullIfMissing<T>(fetch: () => Promise<T>): Promise<T | null> {
+    try {
+      return await fetch();
+    } catch (error) {
+      if (toApiProblem(error).status !== 404) {
+        throw error;
+      }
+
+      return null;
+    }
   }
 }
 
 /**
- * Lets an approved seller through; anyone else goes to their application, which says where it
- * stands. An approved seller whose session predates approval has it refreshed on the way in.
+ * Lets someone working for an approved shop through. An owner whose shop is not approved goes to
+ * their application, which says where it stands; a session that predates approval, or being
+ * added to a team, is refreshed on the way in.
  */
 export const approvedSellerGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
   const access = inject(SellerAccess);
   const router = inject(Router);
+  const user = inject(CurrentUserStore);
 
-  const seller = access.loaded() ? access.seller() : await access.load();
-
-  if (seller?.status !== 'Approved') {
-    return router.createUrlTree(['/apply']);
+  if (!access.loaded()) {
+    await access.load();
   }
 
-  if (!access.canSell()) {
+  if (!access.isApproved()) {
+    return router.createUrlTree([access.role() === null || access.isOwner() ? '/apply' : '/forbidden']);
+  }
+
+  // An owner from before teams existed lacks the permission to manage one until refreshed.
+  if (!access.canSell() || (access.isOwner() && !user.has(SellerPermissions.Manage))) {
     await access.refreshAccess();
   }
 

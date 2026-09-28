@@ -15,4 +15,7 @@ public interface IUserDirectory
     Task<Result<IReadOnlyList<UserSummaryDto>>> GetUsersAsync(
         IReadOnlyCollection<Guid> userIds,
         CancellationToken cancellationToken);
+
+    /// <summary>The account registered with this email address, compared as sign-in compares it.</summary>
+    Task<Result<UserSummaryDto>> FindByEmailAsync(string email, CancellationToken cancellationToken);
 }

@@ -39,3 +39,26 @@ internal sealed class SellerConfiguration : IEntityTypeConfiguration<Seller>
         builder.Property(x => x.RowVersion).IsRowVersion();
     }
 }
+
+internal sealed class SellerMemberConfiguration : IEntityTypeConfiguration<SellerMember>
+{
+    public void Configure(EntityTypeBuilder<SellerMember> builder)
+    {
+        builder.ToTable("SellerMembers", SellersModule.SchemaName);
+
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.PublicId).IsUnique();
+
+        // One shop per account: how a member's requests find their shop.
+        builder.HasIndex(x => x.UserId).IsUnique();
+        builder.HasIndex(x => x.SellerId);
+
+        builder.HasOne<Seller>()
+            .WithMany()
+            .HasForeignKey(x => x.SellerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(x => x.Role).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(x => x.AddedBy).HasMaxLength(64);
+    }
+}

@@ -46,4 +46,20 @@ internal sealed class UserDirectory(UPBazaarDbContext dbContext) : IUserDirector
 
         return Result.Success<IReadOnlyList<UserSummaryDto>>([.. users.Select(u => u.ToSummary())]);
     }
+
+    public async Task<Result<UserSummaryDto>> FindByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        var normalized = User.Normalize(email);
+        var user = await dbContext.Set<User>()
+            .AsNoTracking()
+            .Include(u => u.Roles)
+            .ThenInclude(r => r.Role)
+            .FirstOrDefaultAsync(u => u.Email == normalized, cancellationToken);
+
+        return user is null
+            ? Result.Failure<UserSummaryDto>(IdentityErrors.UserNotFound)
+            : user.ToSummary();
+    }
 }

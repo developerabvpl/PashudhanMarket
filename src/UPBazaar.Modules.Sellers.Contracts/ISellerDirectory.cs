@@ -11,10 +11,11 @@ namespace UPBazaar.Modules.Sellers.Contracts;
 public interface ISellerDirectory
 {
     /// <summary>
-    /// The approved seller this user owns, or null. Null too while the application is pending or
-    /// after it was rejected: an unapproved seller may not act as one anywhere.
+    /// The approved seller this user owns or is on the team of, or null. Null too while the
+    /// application is pending or after it was rejected: an unapproved seller may not act as one
+    /// anywhere. What the user may do there is their permissions' business.
     /// </summary>
-    Task<Guid?> GetApprovedSellerIdAsync(Guid ownerUserId, CancellationToken cancellationToken);
+    Task<Guid?> GetApprovedSellerIdAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Shop names for the given sellers, whatever their status, so staff screens can show a name

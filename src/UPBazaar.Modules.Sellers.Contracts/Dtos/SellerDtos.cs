@@ -86,3 +86,19 @@ public sealed record SellerPayoutAccountDto(string ShopName, string AccountHolde
 /// The shop's contact email, or failing that its owner's sign-in email; null when it has neither.
 /// </param>
 public sealed record SellerContactDto(string ShopName, string? Email);
+
+/// <summary>Which shop the caller works for, and as what: what the seller portal is built around.</summary>
+/// <param name="SellerId">The shop.</param>
+/// <param name="ShopName">Its name.</param>
+/// <param name="Status">Pending, Approved or Rejected. Only an approved shop can be worked for.</param>
+/// <param name="Role">Owner, Manager or Dispatch.</param>
+public sealed record SellerAccessDto(Guid SellerId, string ShopName, string Status, string Role);
+
+/// <summary>Someone on a shop's team.</summary>
+/// <param name="Id">Public id of the membership.</param>
+/// <param name="UserId">Their account.</param>
+/// <param name="DisplayName">Their name, as they gave it.</param>
+/// <param name="Email">The email they sign in with.</param>
+/// <param name="Role">Manager or Dispatch.</param>
+/// <param name="AddedAtUtc">When the owner added them.</param>
+public sealed record SellerMemberDto(Guid Id, Guid UserId, string DisplayName, string? Email, string Role, DateTime AddedAtUtc);
