@@ -8,6 +8,7 @@ import {
   apiV1AdminSettlementsPayoutsGet,
 } from '@upbazaar/data-access';
 import { provideI18n, ToastService } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { PayoutsPage } from './payouts.page';
 
 const payout: PayoutSummaryDto = {
@@ -43,7 +44,7 @@ describe('PayoutsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
       ],

@@ -7,6 +7,7 @@ import {
   apiV1SellerCatalogProductsProductIdSalePut,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { SaleForm } from './sale-form';
 
 const product: ProductDto = {
@@ -41,7 +42,7 @@ async function render(shown: ProductDto) {
   const invoke = vi.fn(async (fn: unknown) => (fn === apiV1SellerCatalogProductsProductIdSalePut ? onSale : product));
 
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(SaleForm);

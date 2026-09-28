@@ -9,6 +9,7 @@ import {
   apiV1SellerPromotionsCouponsPost,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { CouponsPage } from './coupons.page';
 
 function coupon(overrides: Partial<CouponDto>): CouponDto {
@@ -48,7 +49,7 @@ async function render() {
   });
 
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(CouponsPage);

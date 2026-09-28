@@ -8,6 +8,7 @@ import {
   apiV1SellersMeTeamPost,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { TeamPage } from './team.page';
 
 const ravi: SellerMemberDto = {
@@ -23,7 +24,7 @@ async function render() {
   const invoke = vi.fn(async (fn: unknown) => (fn === apiV1SellersMeTeamGet ? [ravi] : ravi));
 
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(TeamPage);

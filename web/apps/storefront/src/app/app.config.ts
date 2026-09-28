@@ -17,6 +17,7 @@ import { authInterceptor } from '@upbazaar/auth';
 import { provideDataAccess } from '@upbazaar/data-access';
 import { provideI18n, provideInitialLanguage } from '@upbazaar/ui';
 import { appRoutes } from './app.routes';
+import { translations } from './i18n/translations';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -39,7 +40,7 @@ export const appConfig: ApplicationConfig = {
     // Same origin: the dev server proxies /api to the .NET API, so the bearer token never
     // leaves it. The prerenderer overrides this with an absolute origin.
     provideDataAccess({ interceptors: [authInterceptor] }),
-    provideI18n(),
+    provideI18n(translations),
     provideInitialLanguage(),
   ],
 };

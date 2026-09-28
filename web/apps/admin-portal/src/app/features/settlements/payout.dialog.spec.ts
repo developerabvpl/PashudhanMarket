@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CurrentUserStore } from '@upbazaar/auth';
 import { Api, PayoutDto, apiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { PayoutDialog } from './payout.dialog';
 
 const payout: PayoutDto = {
@@ -36,7 +37,7 @@ describe('PayoutDialog', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: MAT_DIALOG_DATA, useValue: payout },
         { provide: MatDialogRef, useValue: { close } },

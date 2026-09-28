@@ -9,6 +9,7 @@ import {
   apiV1CatalogCategoriesGet,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ProductsPage } from './products.page';
 
 const diya: AdminProductSummaryDto = {
@@ -47,7 +48,7 @@ describe('ProductsPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
       ],

@@ -3,11 +3,12 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Api, apiV1PromotionsCouponsPreviewPost } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { CouponField } from './coupon-field';
 
 async function render(invoke: ReturnType<typeof vi.fn>) {
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(CouponField);

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, SellerOrderDto, apiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { cameBack } from './came-back';
 import { ReturnInspection } from './return-inspection';
 
@@ -28,7 +29,7 @@ describe('ReturnInspection', () => {
     const invoke = vi.fn(async () => order);
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+      providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
     });
 
     const fixture = TestBed.createComponent(ReturnInspection);

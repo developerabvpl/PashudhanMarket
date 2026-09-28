@@ -9,6 +9,7 @@ import {
   apiV1ReviewsMineProductIdPut,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReviewPanel } from './review-panel';
 
 const review: ReviewDto = {
@@ -36,7 +37,7 @@ async function render(state: MyReviewDto, onCall: (fn: unknown, params: unknown)
   const invoke = vi.fn(async (fn: unknown, params: unknown) => (fn === apiV1ReviewsMineProductIdGet ? state : onCall(fn, params)));
 
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(ReviewPanel);

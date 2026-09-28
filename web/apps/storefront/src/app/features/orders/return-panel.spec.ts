@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, OrderDto, OrderPartDto, apiV1OrdersOrderIdPartsPartIdReturnPost } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReturnPanel } from './return-panel';
 
 const inAWeek = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
@@ -29,7 +30,7 @@ const order = {
 
 function render(p: OrderPartDto, invoke = vi.fn()) {
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(ReturnPanel);

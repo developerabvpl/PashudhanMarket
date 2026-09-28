@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { SalePrice } from './sale-price';
 
 async function render(regular: number, current: number) {
-  TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideI18n()] });
+  TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideI18n(translations)] });
 
   const fixture = TestBed.createComponent(SalePrice);
   fixture.componentRef.setInput('regular', regular);

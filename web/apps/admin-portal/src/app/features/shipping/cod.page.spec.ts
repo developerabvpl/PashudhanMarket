@@ -12,6 +12,7 @@ import {
   apiV1AdminShippingCodSummaryGet,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { CodPage } from './cod.page';
 
 const owed: CodReceivableDto = {
@@ -60,7 +61,7 @@ async function render(canWrite: boolean) {
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       { provide: CurrentUserStore, useValue: { has: () => canWrite, hasAll: () => canWrite } },
     ],

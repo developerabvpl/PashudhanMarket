@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, OrderDto, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { OrderLookup } from './order-lookup';
 
 const order: OrderDto = {
@@ -85,7 +86,7 @@ describe('OrderLookup', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
       ],
     });

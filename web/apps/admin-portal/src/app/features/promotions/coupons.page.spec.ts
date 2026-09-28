@@ -9,6 +9,7 @@ import {
   apiV1AdminPromotionsCouponsPost,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { CouponsPage } from './coupons.page';
 
 const campaign: CouponDto = {
@@ -38,7 +39,7 @@ async function render(canWrite: boolean, overrides: Partial<CouponDto> = {}) {
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       { provide: CurrentUserStore, useValue: { has: () => canWrite, hasAll: () => canWrite } },
     ],

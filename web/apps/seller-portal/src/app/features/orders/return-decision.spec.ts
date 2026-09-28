@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, SellerOrderDto, apiV1SellerOrdersOrderIdPartsPartIdReturnDecisionPost } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReturnDecision } from './return-decision';
 
 const order = {
@@ -27,7 +28,7 @@ describe('ReturnDecision', () => {
     invoke = vi.fn(async () => ({ ...order, status: 'Returning' }));
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+      providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
     });
   });
 

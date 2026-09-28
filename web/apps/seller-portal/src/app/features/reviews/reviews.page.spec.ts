@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, ReviewDto, apiV1SellerReviewsGet, apiV1SellerReviewsReviewIdReplyPut } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReviewsPage } from './reviews.page';
 
 function review(id: string, overrides: Partial<ReviewDto> = {}): ReviewDto {
@@ -37,7 +38,7 @@ async function render(items: ReviewDto[]) {
   });
 
   TestBed.configureTestingModule({
-    providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+    providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
   });
 
   const fixture = TestBed.createComponent(ReviewsPage);

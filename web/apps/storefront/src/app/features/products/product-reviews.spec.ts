@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { Api, ProductReviewsDto, PublicReviewDto, apiV1ReviewsProductsProductIdGet } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ProductReviews } from './product-reviews';
 
 function review(id: string, overrides: Partial<PublicReviewDto> = {}): PublicReviewDto {
@@ -33,7 +34,7 @@ async function render(invoke: ReturnType<typeof vi.fn>, platform = 'browser') {
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       { provide: PLATFORM_ID, useValue: platform },
     ],
@@ -82,7 +83,7 @@ describe('ProductReviews', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke: vi.fn(async () => page([review('r1')], 1, 3)) } },
         { provide: PLATFORM_ID, useValue: 'browser' },
       ],

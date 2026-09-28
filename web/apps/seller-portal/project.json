@@ -10,6 +10,7 @@
   ],
   "targets": {
     "build": {
+      "dependsOn": ["^build", "i18n"],
       "executor": "@angular/build:application",
       "outputs": [
         "{options.outputPath}"
@@ -69,8 +70,14 @@
         "port": 4201
       }
     },
+    "i18n": {
+      "command": "node tools/scripts/split-translations.mjs --check --app=seller-portal",
+      "inputs": ["{workspaceRoot}/libs/*/src/**/*", "{projectRoot}/src/**/*", "{workspaceRoot}/tools/scripts/split-translations.mjs"],
+      "cache": true
+    },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "executor": "@nx/eslint:lint",
+      "dependsOn": ["i18n"]
     },
     "test": {
       "executor": "@angular/build:unit-test",

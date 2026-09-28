@@ -13,6 +13,7 @@ import {
   catalogGetProduct,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ProductEditPage } from './product-edit.page';
 
 const product: ProductDto = {
@@ -61,7 +62,7 @@ function setUp(permissions: readonly string[]) {
     providers: [
       provideZonelessChangeDetection(),
       provideRouter([]),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       {
         provide: CurrentUserStore,

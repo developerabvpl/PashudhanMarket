@@ -7,6 +7,7 @@ import {
   apiV1SellerSettlementsPayoutsGet,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { EarningsPage } from './earnings.page';
 
 describe('EarningsPage', () => {
@@ -53,7 +54,7 @@ describe('EarningsPage', () => {
     });
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideI18n(), { provide: Api, useValue: { invoke } }],
+      providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
     });
 
     const fixture = TestBed.createComponent(EarningsPage);

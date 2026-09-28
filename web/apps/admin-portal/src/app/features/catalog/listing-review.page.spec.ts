@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { CurrentUserStore } from '@upbazaar/auth';
 import { Api, apiV1AdminCatalogProductsGet } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ListingReviewPage } from './listing-review.page';
 
 describe('ListingReviewPage', () => {
@@ -37,7 +38,7 @@ describe('ListingReviewPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
       ],

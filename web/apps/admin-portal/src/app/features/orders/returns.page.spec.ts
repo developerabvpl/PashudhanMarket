@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { CurrentUserStore } from '@upbazaar/auth';
 import { Api, ReturnRequestSummaryDto, apiV1AdminOrdersReturnsGet } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReturnsPage } from './returns.page';
 
 const request: ReturnRequestSummaryDto = {
@@ -29,7 +30,7 @@ describe('ReturnsPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
       ],

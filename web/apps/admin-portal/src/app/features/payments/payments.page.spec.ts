@@ -9,6 +9,7 @@ import {
   apiV1AdminPaymentsRefundsGet,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { PaymentsPage } from './payments.page';
 
 const refund: RefundDto = {
@@ -82,7 +83,7 @@ describe('PaymentsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideI18n(),
+        provideI18n(translations),
         { provide: Api, useValue: { invoke } },
         { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
       ],

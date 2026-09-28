@@ -9,6 +9,7 @@ import {
   apiV1AdminReviewsReviewIdRejectPost,
 } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ReviewsPage } from './reviews.page';
 
 const pending: ReviewDto = {
@@ -36,7 +37,7 @@ async function render(canModerate: boolean) {
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       { provide: CurrentUserStore, useValue: { has: () => canModerate, hasAll: () => canModerate } },
     ],

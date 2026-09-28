@@ -1,0 +1,394 @@
+{
+  "app": {
+    "sellerPortal": "UP Bazaar Seller",
+    "skipToContent": "Skip to main content",
+    "languageLabel": "Language",
+    "english": "English",
+    "hindi": "हिन्दी"
+  },
+  "nav": {
+    "signOut": "Sign out",
+    "returns": "Returns",
+    "earnings": "Earnings",
+    "reviews": "Reviews",
+    "coupons": "Coupons",
+    "team": "Team"
+  },
+  "state": {
+    "loading": "Loading",
+    "error": "Something went wrong.",
+    "empty": "Nothing to show yet.",
+    "retry": "Try again"
+  },
+  "toast": {
+    "region": "Notifications",
+    "dismiss": "Dismiss notification"
+  },
+  "common": {
+    "save": "Save",
+    "optional": "optional",
+    "working": "Working..."
+  },
+  "errors": {
+    "unexpected": "Something went wrong. Please try again.",
+    "offline": "Cannot reach the server. Check your connection.",
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You do not have permission to do that.",
+    "notFound": "We could not find what you were looking for.",
+    "conflict": "That conflicts with the current state. Refresh and retry."
+  },
+  "validation": {
+    "required": "This field is required.",
+    "gstin": "Enter a valid 15-character GSTIN.",
+    "pan": "Enter a valid PAN, for example ABCDE1234F.",
+    "ifsc": "Enter a valid IFSC code, for example SBIN0001234.",
+    "pincode": "Enter a valid 6-digit PIN code.",
+    "mobile": "Enter a valid 10-digit mobile number.",
+    "email": "Enter a valid email address.",
+    "password": "Choose a password of at least 12 characters.",
+    "passwordsDiffer": "The new password must be different from the current one.",
+    "totpCode": "Enter the 6-digit code from your authenticator app."
+  },
+  "auth": {
+    "verifying": "Verifying...",
+    "nameLabel": "Your name",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "currentPasswordLabel": "Current password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "noAccount": "New to UP Bazaar?",
+    "forgotPassword": "Forgot your password?",
+    "signedOut": "You have been signed out."
+  },
+  "twoFactor": {
+    "challengeTitle": "Two-factor verification",
+    "challengeBody": "Enter the 6-digit code from your authenticator app.",
+    "codeLabel": "Authenticator code",
+    "verify": "Verify"
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "body": "Enter your email address and we will send you a link to choose a new password.",
+    "submit": "Send reset link",
+    "sent": "If that address has an account, a reset link is on its way.",
+    "backToSignIn": "Back to sign in"
+  },
+  "changePassword": {
+    "title": "Change password",
+    "body": "Changing your password signs you out everywhere else.",
+    "submit": "Change password",
+    "changed": "Your password has been changed."
+  },
+  "seller": {
+    "newProduct": "Add a product",
+    "productName": "Product name",
+    "sku": "SKU",
+    "description": "Description",
+    "price": "Price",
+    "category": "Category",
+    "initialStock": "Opening stock",
+    "created": "Product created as a draft."
+  },
+  "forbidden": {
+    "title": "You do not have access",
+    "body": "This page needs a permission your account does not have.",
+    "required": "Required: {{permissions}}",
+    "back": "Go back"
+  },
+  "cart": {
+    "itemCount": "{{count}} items"
+  },
+  "orders": {
+    "deliverTo": "Delivering to",
+    "partStatus": {
+      "AwaitingPayment": "Awaiting payment",
+      "Confirmed": "Confirmed",
+      "Packed": "Packed",
+      "Shipped": "Shipped",
+      "Delivered": "Delivered",
+      "Cancelled": "Cancelled",
+      "Returning": "Could not be delivered - going back",
+      "Returned": "Could not be delivered"
+    },
+    "returnStatus": {
+      "Returning": "Being returned",
+      "Returned": "Returned"
+    },
+    "return": {
+      "reasons": {
+        "Damaged": "It arrived damaged",
+        "WrongItem": "I received the wrong item",
+        "NotAsDescribed": "It is not as described",
+        "QualityIssue": "Poor quality or spoilt",
+        "NoLongerNeeded": "I no longer need it",
+        "Other": "Something else"
+      }
+    }
+  },
+  "payments": {
+    "status": "Status"
+  },
+  "shipping": {
+    "pickupFrom": "Collected from: {{location}}",
+    "noPickup": "no pickup location set up",
+    "missingPackages": "No package recorded for {{skus}}. Weigh and measure the box.",
+    "suggested": "Worked out from the products. Correct it if the box you used differs.",
+    "weightGrams": "Weight (g)",
+    "lengthCm": "Length (cm)",
+    "breadthCm": "Breadth (cm)",
+    "heightCm": "Height (cm)",
+    "packAndBook": "Pack and book courier",
+    "resumeBooking": "Finish booking",
+    "booking": "Booking...",
+    "booked": "Courier booked. Pickup requested.",
+    "statuses": {
+      "Booking": "Booking unfinished",
+      "PickupRequested": "Awaiting pickup",
+      "InTransit": "In transit",
+      "Delivered": "Delivered",
+      "Returned": "Returned",
+      "Cancelled": "Cancelled",
+      "ReturnInTransit": "Returning to seller"
+    },
+    "pickupName": "Name as registered in Shiprocket",
+    "pickupSaved": "Pickup location saved.",
+    "pincode": "PIN code"
+  },
+  "sellerPortal": {
+    "registerTitle": "Sell on UP Bazaar",
+    "registerIntro": "Create an account first. Then tell us about your shop, and we will review it.",
+    "registerSubmit": "Create account",
+    "haveAccount": "Already have an account? Sign in",
+    "applyTitle": "Your seller application",
+    "applyIntro": "Tell us about your shop. We review every application before a shop can sell.",
+    "pending": "Your application is being reviewed.",
+    "pendingNote": "We will get back to you soon. You cannot edit it while it is in review.",
+    "rejected": "Your application needs changes.",
+    "sectionShop": "Shop",
+    "sectionAddress": "Business address",
+    "sectionKyc": "Legal and payout details",
+    "sectionDetails": "Listing",
+    "shopName": "Shop name",
+    "description": "About the shop",
+    "contactMobile": "Contact mobile",
+    "contactEmail": "Contact email",
+    "addressLine1": "Address",
+    "addressLine2": "Area or locality",
+    "city": "City",
+    "state": "State",
+    "pincode": "PIN code",
+    "legalName": "Legal name",
+    "pan": "PAN",
+    "gstin": "GSTIN",
+    "bankAccountHolder": "Account holder name",
+    "bankAccountNumber": "Bank account number",
+    "ifsc": "IFSC",
+    "kycNote": "Your legal and bank details cannot be changed after approval without contacting support.",
+    "submit": "Submit application",
+    "resubmit": "Resubmit application",
+    "submitted": "Application submitted.",
+    "productsTitle": "Products",
+    "allProducts": "All",
+    "productStatus": {
+      "Draft": "Draft",
+      "InReview": "In review",
+      "Active": "Live",
+      "Archived": "Archived"
+    },
+    "inStock": "{{count}} available",
+    "noProducts": "No products here yet.",
+    "brand": "Brand",
+    "liveLocked": "This listing is live. To change its wording or category, contact a moderator. Price, stock and package can be changed below.",
+    "sentBack": "A moderator sent this back:",
+    "submitForReview": "Submit for review",
+    "submittedForReview": "Sent for review.",
+    "updatePrice": "Update price",
+    "stock": "Stock",
+    "stockNow": "{{onHand}} on hand, {{reserved}} held for checkouts.",
+    "countedOnHand": "Counted on hand",
+    "recordCount": "Record count",
+    "package": "Package",
+    "packageNote": "One unit, packed. Couriers price on this, so weigh the packed box.",
+    "savePackage": "Save package",
+    "saved": "Saved.",
+    "ordersTitle": "Orders",
+    "noOrders": "Nothing here.",
+    "codCollect": "Collect {{amount}} on delivery",
+    "toPack": "To pack",
+    "partValue": "Value {{amount}}",
+    "courier": "Courier",
+    "settingsTitle": "Settings",
+    "pickupTitle": "Pickup location",
+    "pickupOwn": "Couriers collect from your pickup location \"{{name}}\".",
+    "pickupWarehouse": "You ship from the platform warehouse, \"{{name}}\".",
+    "pickupHelp": "To collect from your own address, register it as a pickup location in Shiprocket and enter its name here exactly.",
+    "sale": {
+      "title": "Sale",
+      "note": "A lower price for a while. You are paid on the sale price. Buyers see the regular price struck through beside it.",
+      "running": "On sale at {{price}} until {{ends}}.",
+      "scheduled": "On sale at {{price}} from {{starts}} until {{ends}}.",
+      "end": "End sale",
+      "price": "Sale price (₹)",
+      "startsOn": "Starts on",
+      "endsOn": "Ends on",
+      "set": "Put on sale",
+      "replace": "Replace sale",
+      "startsHint": "Leave the start empty to begin now. The sale runs to the end of its last day.",
+      "saved": "Sale set.",
+      "ended": "Sale ended.",
+      "onSale": "On sale {{price}}"
+    }
+  },
+  "settlements": {
+    "payoutsTitle": "Payouts",
+    "statuses": {
+      "Pending": "To pay",
+      "Paid": "Paid"
+    },
+    "gross": "Sales",
+    "parcels": "Parcels",
+    "commission": "Commission",
+    "order": "Order",
+    "delivered": "Delivered",
+    "payableFrom": "Payable from",
+    "earningStatuses": {
+      "Accruing": "In return window",
+      "OnHold": "Return asked",
+      "Cancelled": "Returned",
+      "Settled": "Paid out"
+    },
+    "earningsTitle": "Earnings",
+    "earningsNote": "You are paid for a parcel once the buyer's return window has closed. Payouts are made every Monday to your bank account.",
+    "balanceAccruing": "In return window",
+    "balanceOnHold": "Return asked",
+    "balancePayable": "In next Monday's payout",
+    "balancePending": "Being transferred",
+    "balancePaid": "Paid so far",
+    "youGet": "You get",
+    "noEarnings": "No earnings yet.",
+    "kindDelivery": "delivery charge",
+    "courier": {
+      "Delivery": "courier: delivery",
+      "Rto": "courier: returned undelivered",
+      "ReturnPickup": "courier: return pickup"
+    },
+    "awaitingCash": "Waiting for the courier to pay over the cash",
+    "adjustment": {
+      "CouponRevoked": "coupon discount given back to you"
+    }
+  },
+  "returns": {
+    "title": "Returns",
+    "subtitle": "Buyers asking to send delivered parcels back. The refund falls due when the parcel is back with the seller.",
+    "none": "No return requests here.",
+    "statuses": {
+      "Requested": "Waiting for a decision",
+      "Approved": "Accepted",
+      "Rejected": "Refused"
+    },
+    "requestTitle": "The buyer wants to return this parcel",
+    "requestedOn": "Asked on {{date}}",
+    "buyerSays": "Buyer says: {{comment}}",
+    "approve": "Accept return",
+    "reject": "Refuse",
+    "rejectNote": "Why are you refusing? The buyer sees this.",
+    "approvedToast": "Return accepted. A courier pickup is being booked.",
+    "rejectedToast": "Return refused.",
+    "refusedNote": "Return refused: {{note}}",
+    "awaitingPickup": "Return accepted. The parcel is on its way back.",
+    "pickupFailed": "The return pickup is not booked yet: {{error}}",
+    "bookPickup": "Book pickup again",
+    "pickupBooked": "Return pickup booked.",
+    "inspectTitleBuyerReturn": "The buyer's return has arrived",
+    "inspectTitle": "This parcel came back undelivered",
+    "inspectBody": "Check it. If it can be sold again, its stock goes back on sale.",
+    "note": "What did you find?",
+    "good": "Good - put it back on sale",
+    "damaged": "Damaged - do not restock",
+    "restocked": "Back on sale.",
+    "recordedDamaged": "Recorded as damaged.",
+    "inspectedAs": {
+      "Good": "Returned and put back on sale.",
+      "Damaged": "Returned damaged; not restocked."
+    },
+    "unitsBack": "{{count}} coming back",
+    "recordInspection": "Record inspection"
+  },
+  "reviews": {
+    "starsLabel": "{{rating}} out of 5 stars",
+    "photoAlt": "Photo from {{name}}",
+    "sellerTitle": "Reviews",
+    "sellerSubtitle": "What buyers say about your products. Their words and photos appear here once our staff approve them.",
+    "unanswered": "Only reviews without a reply",
+    "noneForSeller": "No reviews yet.",
+    "waitingForApproval": "The buyer's words are waiting for our approval.",
+    "notPublished": "The buyer's words were not approved.",
+    "replyLabel": "Your public reply",
+    "replyHint": "Shown under the review on your product page. Keep it polite: our staff can hide replies.",
+    "postReply": "Post reply",
+    "updateReply": "Update reply",
+    "replied": "Reply posted.",
+    "replyHidden": "Our staff have hidden this reply from the storefront."
+  },
+  "coupons": {
+    "code": "Code",
+    "description": "What it is for",
+    "discountType": "Discount",
+    "types": {
+      "Percent": "Percentage off",
+      "Flat": "Amount off",
+      "FreeDelivery": "Free delivery"
+    },
+    "percent": "Percent off",
+    "rupees": "Rupees off",
+    "minOrderValue": "Minimum order (₹)",
+    "endsOn": "Ends on",
+    "totalLimit": "Uses in all",
+    "create": "Create coupon",
+    "created": "Coupon created.",
+    "ended": "ended",
+    "percentOff": "{{value}}% off",
+    "flatOff": "{{amount}} off",
+    "upTo": "up to {{amount}}",
+    "uses": "used {{uses}} of {{limit}}",
+    "until": "until {{date}}",
+    "end": "End",
+    "endedToast": "Coupon ended.",
+    "sellerTitle": "Coupons",
+    "sellerSubtitle": "Codes for money off your products, and platform campaigns you can join. Both come out of what you are paid.",
+    "youPay": "You pay for the discount: you are paid on the discounted price.",
+    "noneOwn": "You have no coupons yet.",
+    "campaignsTitle": "Platform campaigns",
+    "campaignsSubtitle": "Join one and its discount applies to your products while you are in it. You pay for it, as with your own coupons.",
+    "join": "Join",
+    "leave": "Leave",
+    "joinedToast": "You have joined the campaign.",
+    "leftToast": "You have left the campaign.",
+    "noCampaigns": "No campaigns to join right now."
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "People who work in your seller portal with their own sign-in. Only you manage the team, see earnings and change the shop’s details.",
+    "email": "Their account email",
+    "role": "Role",
+    "roles": {
+      "Manager": "Manager",
+      "Dispatch": "Dispatch"
+    },
+    "roleHelp": {
+      "Manager": "Products, stock, orders, dispatch, coupons and reviews.",
+      "Dispatch": "Orders, packing and returns only."
+    },
+    "add": "Add to team",
+    "addHint": "They register on the seller portal first, then you add them by that email. Their access starts the next time they sign in.",
+    "addedOn": "added {{date}}",
+    "added": "Added to your team.",
+    "changed": "Role changed.",
+    "remove": "Remove",
+    "removed": "Removed from your team.",
+    "none": "No one else is on your team yet."
+  }
+}

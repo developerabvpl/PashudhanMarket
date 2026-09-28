@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { CurrentUserStore } from '@upbazaar/auth';
 import { Api, ShipmentDto, apiV1AdminShippingShipmentsShipmentIdChargesTripPut } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
+import { translations } from '../../i18n/translations';
 import { ShipmentCharges } from './shipment-charges';
 
 function shipment(overrides: Partial<ShipmentDto> = {}): ShipmentDto {
@@ -36,7 +37,7 @@ async function render(value: ShipmentDto, invoke = vi.fn()) {
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideI18n(),
+      provideI18n(translations),
       { provide: Api, useValue: { invoke } },
       { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
     ],
