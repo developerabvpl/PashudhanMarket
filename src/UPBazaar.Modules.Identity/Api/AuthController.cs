@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using UPBazaar.Infrastructure.Api;
 using UPBazaar.Modules.Identity.Application.Auth;
 using UPBazaar.Modules.Identity.Application.TwoFactor;
@@ -20,6 +21,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 {
     /// <summary>Registers a buyer with an email address and password.</summary>
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Register a buyer")]
     [EndpointDescription("Creates a buyer account from an email and password and signs them in.")]
@@ -44,6 +47,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Signs in with email and password.</summary>
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Sign in with a password")]
     [EndpointDescription(
@@ -65,6 +70,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Sends a one-time code to a mobile number.</summary>
     [HttpPost("request-otp")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Request a sign-in code")]
     [EndpointDescription(
@@ -86,6 +93,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Exchanges a mobile code for tokens, creating the buyer on first use.</summary>
     [HttpPost("verify-otp")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Verify a sign-in code")]
     [EndpointDescription(
@@ -146,6 +155,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Changes the signed-in user's password.</summary>
     [HttpPost("change-password")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [Authorize]
     [EndpointSummary("Change password")]
     [EndpointDescription("Requires the current password, and ends every other session on success.")]
@@ -169,6 +180,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Starts a password reset.</summary>
     [HttpPost("forgot-password")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Request a password reset")]
     [EndpointDescription(
@@ -188,6 +201,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Completes a password reset with the emailed token.</summary>
     [HttpPost("reset-password")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Complete a password reset")]
     [EndpointDescription("Sets a new password using the token from the reset email.")]
@@ -206,6 +221,8 @@ public sealed class AuthController(IDispatcher dispatcher) : ControllerBase
 
     /// <summary>Completes a sign-in that stopped at the two-factor prompt.</summary>
     [HttpPost("verify-2fa")]
+    [EnableRateLimiting(RateLimitPolicies.SignIn)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [AllowAnonymous]
     [EndpointSummary("Verify a two-factor code")]
     [EndpointDescription("Exchanges the two-factor token from /auth/login plus a TOTP code for tokens.")]

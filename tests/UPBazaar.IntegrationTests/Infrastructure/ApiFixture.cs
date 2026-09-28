@@ -157,6 +157,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         // delivery tests switch the charge on for themselves with WithDeliveryCharge.
         builder.UseSetting("Orders:DeliveryFee", "0");
 
+        // Every test signs in from the same address; the sign-in cap has its own test.
+        builder.UseSetting("RateLimits:SignIn:PermitLimit", "1000000");
+
         // Review photos go to a folder of this run's own, removed with the database.
         builder.UseSetting("Reviews:PhotoFolder", PhotoFolder);
 

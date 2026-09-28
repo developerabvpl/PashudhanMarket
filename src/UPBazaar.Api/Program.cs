@@ -52,6 +52,9 @@ builder.Services.AddModules(builder.Configuration, builder.Environment);
 
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
 
+// A per-address cap on the sign-in endpoints, on top of each account's own attempt limits.
+builder.Services.AddSignInRateLimiting(builder.Configuration);
+
 // One policy per catalogued permission, plus a deny-by-default fallback so an endpoint that
 // forgets to state its policy is unreachable rather than accidentally public.
 builder.Services.AddPermissionPolicies();
@@ -80,6 +83,8 @@ app.UseSerilogRequestLogging(options =>
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {
