@@ -14,7 +14,7 @@ export interface ApiV1PaymentsOrdersOrderIdCheckoutPost$Params {
 }
 
 export function apiV1PaymentsOrdersOrderIdCheckoutPost(http: HttpClient, rootUrl: string, params: ApiV1PaymentsOrdersOrderIdCheckoutPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CheckoutSessionDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1PaymentsOrdersOrderIdCheckoutPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/payments/orders/{orderId}/checkout', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1PaymentsOrdersOrderIdCheckoutPost(http: HttpClient, rootUrl
   );
 }
 
-apiV1PaymentsOrdersOrderIdCheckoutPost.PATH = '/api/v1/payments/orders/{orderId}/checkout';

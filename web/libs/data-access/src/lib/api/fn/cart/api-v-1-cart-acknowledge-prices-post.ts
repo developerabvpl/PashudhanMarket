@@ -13,7 +13,7 @@ export interface ApiV1CartAcknowledgePricesPost$Params {
 }
 
 export function apiV1CartAcknowledgePricesPost(http: HttpClient, rootUrl: string, params?: ApiV1CartAcknowledgePricesPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CartDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartAcknowledgePricesPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart/acknowledge-prices', 'post');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1CartAcknowledgePricesPost(http: HttpClient, rootUrl: string
   );
 }
 
-apiV1CartAcknowledgePricesPost.PATH = '/api/v1/cart/acknowledge-prices';

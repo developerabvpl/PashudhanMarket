@@ -14,7 +14,7 @@ export interface ApiV1SellerShippingOrdersOrderIdShipmentsGet$Params {
 }
 
 export function apiV1SellerShippingOrdersOrderIdShipmentsGet(http: HttpClient, rootUrl: string, params: ApiV1SellerShippingOrdersOrderIdShipmentsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<ShipmentDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerShippingOrdersOrderIdShipmentsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/shipping/orders/{orderId}/shipments', 'get');
   if (params) {
     rb.path('orderId', params.orderId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1SellerShippingOrdersOrderIdShipmentsGet(http: HttpClient, r
   );
 }
 
-apiV1SellerShippingOrdersOrderIdShipmentsGet.PATH = '/api/v1/seller/shipping/orders/{orderId}/shipments';

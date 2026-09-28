@@ -17,7 +17,7 @@ export interface ApiPaymentsPaymentIdRefundsPost$Params {
 }
 
 export function apiPaymentsPaymentIdRefundsPost(http: HttpClient, rootUrl: string, params: ApiPaymentsPaymentIdRefundsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<RefundDto>> {
-  const rb = new RequestBuilder(rootUrl, apiPaymentsPaymentIdRefundsPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/payments/{paymentId}/refunds', 'post');
   if (params) {
     rb.path('paymentId', params.paymentId, {});
     rb.header('Idempotency-Key', params['Idempotency-Key'], {});
@@ -34,4 +34,3 @@ export function apiPaymentsPaymentIdRefundsPost(http: HttpClient, rootUrl: strin
   );
 }
 
-apiPaymentsPaymentIdRefundsPost.PATH = '/api/payments/{paymentId}/refunds';

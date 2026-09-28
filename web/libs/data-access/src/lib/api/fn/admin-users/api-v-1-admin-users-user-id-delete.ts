@@ -13,7 +13,7 @@ export interface ApiV1AdminUsersUserIdDelete$Params {
 }
 
 export function apiV1AdminUsersUserIdDelete(http: HttpClient, rootUrl: string, params: ApiV1AdminUsersUserIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminUsersUserIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/users/{userId}', 'delete');
   if (params) {
     rb.path('userId', params.userId, {});
   }
@@ -28,4 +28,3 @@ export function apiV1AdminUsersUserIdDelete(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1AdminUsersUserIdDelete.PATH = '/api/v1/admin/users/{userId}';

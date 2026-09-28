@@ -13,7 +13,7 @@ export interface ApiV1CartGet$Params {
 }
 
 export function apiV1CartGet(http: HttpClient, rootUrl: string, params?: ApiV1CartGet$Params, context?: HttpContext): Observable<StrictHttpResponse<CartDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1CartGet(http: HttpClient, rootUrl: string, params?: ApiV1Ca
   );
 }
 
-apiV1CartGet.PATH = '/api/v1/cart';

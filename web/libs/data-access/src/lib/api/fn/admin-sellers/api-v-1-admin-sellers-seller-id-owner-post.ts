@@ -16,7 +16,7 @@ export interface ApiV1AdminSellersSellerIdOwnerPost$Params {
 }
 
 export function apiV1AdminSellersSellerIdOwnerPost(http: HttpClient, rootUrl: string, params: ApiV1AdminSellersSellerIdOwnerPost$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSellersSellerIdOwnerPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/sellers/{sellerId}/owner', 'post');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminSellersSellerIdOwnerPost(http: HttpClient, rootUrl: st
   );
 }
 
-apiV1AdminSellersSellerIdOwnerPost.PATH = '/api/v1/admin/sellers/{sellerId}/owner';

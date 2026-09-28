@@ -16,7 +16,7 @@ export interface ApiV1ReviewsProductsProductIdGet$Params {
 }
 
 export function apiV1ReviewsProductsProductIdGet(http: HttpClient, rootUrl: string, params: ApiV1ReviewsProductsProductIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductReviewsDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1ReviewsProductsProductIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/reviews/products/{productId}', 'get');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.query('page', params.page, {});
@@ -33,4 +33,3 @@ export function apiV1ReviewsProductsProductIdGet(http: HttpClient, rootUrl: stri
   );
 }
 
-apiV1ReviewsProductsProductIdGet.PATH = '/api/v1/reviews/products/{productId}';

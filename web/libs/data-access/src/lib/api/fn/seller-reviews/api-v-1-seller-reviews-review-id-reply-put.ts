@@ -16,7 +16,7 @@ export interface ApiV1SellerReviewsReviewIdReplyPut$Params {
 }
 
 export function apiV1SellerReviewsReviewIdReplyPut(http: HttpClient, rootUrl: string, params: ApiV1SellerReviewsReviewIdReplyPut$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerReviewsReviewIdReplyPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/reviews/{reviewId}/reply', 'put');
   if (params) {
     rb.path('reviewId', params.reviewId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1SellerReviewsReviewIdReplyPut(http: HttpClient, rootUrl: st
   );
 }
 
-apiV1SellerReviewsReviewIdReplyPut.PATH = '/api/v1/seller/reviews/{reviewId}/reply';

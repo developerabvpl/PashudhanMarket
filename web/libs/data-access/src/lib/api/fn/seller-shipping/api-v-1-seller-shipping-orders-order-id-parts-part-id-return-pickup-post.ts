@@ -15,7 +15,7 @@ export interface ApiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost$Par
 }
 
 export function apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost(http: HttpClient, rootUrl: string, params: ApiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ShipmentDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/shipping/orders/{orderId}/parts/{partId}/return-pickup', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -31,4 +31,3 @@ export function apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost(http
   );
 }
 
-apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost.PATH = '/api/v1/seller/shipping/orders/{orderId}/parts/{partId}/return-pickup';

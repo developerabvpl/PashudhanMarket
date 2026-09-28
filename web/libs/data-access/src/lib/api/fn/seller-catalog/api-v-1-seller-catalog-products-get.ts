@@ -17,7 +17,7 @@ export interface ApiV1SellerCatalogProductsGet$Params {
 }
 
 export function apiV1SellerCatalogProductsGet(http: HttpClient, rootUrl: string, params?: ApiV1SellerCatalogProductsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfProductSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerCatalogProductsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/catalog/products', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -35,4 +35,3 @@ export function apiV1SellerCatalogProductsGet(http: HttpClient, rootUrl: string,
   );
 }
 
-apiV1SellerCatalogProductsGet.PATH = '/api/v1/seller/catalog/products';

@@ -16,7 +16,7 @@ export interface ApiV1AdminInventoryStockGet$Params {
 }
 
 export function apiV1AdminInventoryStockGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminInventoryStockGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfStockLevelDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminInventoryStockGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/inventory/stock', 'get');
   if (params) {
     rb.query('page', params.page, {});
     rb.query('pageSize', params.pageSize, {});
@@ -33,4 +33,3 @@ export function apiV1AdminInventoryStockGet(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1AdminInventoryStockGet.PATH = '/api/v1/admin/inventory/stock';

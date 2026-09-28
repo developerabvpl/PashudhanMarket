@@ -13,7 +13,7 @@ export interface ApiV1AdminShippingCodSummaryGet$Params {
 }
 
 export function apiV1AdminShippingCodSummaryGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminShippingCodSummaryGet$Params, context?: HttpContext): Observable<StrictHttpResponse<CodSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodSummaryGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/summary', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminShippingCodSummaryGet(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1AdminShippingCodSummaryGet.PATH = '/api/v1/admin/shipping/cod/summary';

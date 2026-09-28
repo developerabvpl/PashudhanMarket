@@ -16,7 +16,7 @@ export interface ApiV1AdminShippingCodReceivablesGet$Params {
 }
 
 export function apiV1AdminShippingCodReceivablesGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminShippingCodReceivablesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfCodReceivableDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodReceivablesGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/receivables', 'get');
   if (params) {
     rb.query('filter', params.filter, {});
     rb.query('page', params.page, {});
@@ -33,4 +33,3 @@ export function apiV1AdminShippingCodReceivablesGet(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminShippingCodReceivablesGet.PATH = '/api/v1/admin/shipping/cod/receivables';

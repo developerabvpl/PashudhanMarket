@@ -13,7 +13,7 @@ export interface ApiV1UsersMeGet$Params {
 }
 
 export function apiV1UsersMeGet(http: HttpClient, rootUrl: string, params?: ApiV1UsersMeGet$Params, context?: HttpContext): Observable<StrictHttpResponse<UserDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1UsersMeGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/users/me', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1UsersMeGet(http: HttpClient, rootUrl: string, params?: ApiV
   );
 }
 
-apiV1UsersMeGet.PATH = '/api/v1/users/me';

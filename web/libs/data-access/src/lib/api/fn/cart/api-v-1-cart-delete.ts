@@ -13,7 +13,7 @@ export interface ApiV1CartDelete$Params {
 }
 
 export function apiV1CartDelete(http: HttpClient, rootUrl: string, params?: ApiV1CartDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<CartDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart', 'delete');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1CartDelete(http: HttpClient, rootUrl: string, params?: ApiV
   );
 }
 
-apiV1CartDelete.PATH = '/api/v1/cart';

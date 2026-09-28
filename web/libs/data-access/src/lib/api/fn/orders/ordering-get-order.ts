@@ -14,7 +14,7 @@ export interface OrderingGetOrder$Params {
 }
 
 export function orderingGetOrder(http: HttpClient, rootUrl: string, params: OrderingGetOrder$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, orderingGetOrder.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/ordering/orders/{orderId}', 'get');
   if (params) {
     rb.path('orderId', params.orderId, {});
   }
@@ -29,4 +29,3 @@ export function orderingGetOrder(http: HttpClient, rootUrl: string, params: Orde
   );
 }
 
-orderingGetOrder.PATH = '/api/ordering/orders/{orderId}';

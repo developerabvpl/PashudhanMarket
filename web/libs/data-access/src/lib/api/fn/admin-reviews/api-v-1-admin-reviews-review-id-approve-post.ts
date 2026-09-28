@@ -14,7 +14,7 @@ export interface ApiV1AdminReviewsReviewIdApprovePost$Params {
 }
 
 export function apiV1AdminReviewsReviewIdApprovePost(http: HttpClient, rootUrl: string, params: ApiV1AdminReviewsReviewIdApprovePost$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminReviewsReviewIdApprovePost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/reviews/{reviewId}/approve', 'post');
   if (params) {
     rb.path('reviewId', params.reviewId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminReviewsReviewIdApprovePost(http: HttpClient, rootUrl: 
   );
 }
 
-apiV1AdminReviewsReviewIdApprovePost.PATH = '/api/v1/admin/reviews/{reviewId}/approve';

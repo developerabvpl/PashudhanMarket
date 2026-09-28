@@ -16,7 +16,7 @@ export interface ApiV1AdminInventoryStockProductIdReceiptsPost$Params {
 }
 
 export function apiV1AdminInventoryStockProductIdReceiptsPost(http: HttpClient, rootUrl: string, params: ApiV1AdminInventoryStockProductIdReceiptsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<StockLevelDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminInventoryStockProductIdReceiptsPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/inventory/stock/{productId}/receipts', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminInventoryStockProductIdReceiptsPost(http: HttpClient, 
   );
 }
 
-apiV1AdminInventoryStockProductIdReceiptsPost.PATH = '/api/v1/admin/inventory/stock/{productId}/receipts';

@@ -14,7 +14,7 @@ export interface ApiV1SellerInventoryStockProductIdGet$Params {
 }
 
 export function apiV1SellerInventoryStockProductIdGet(http: HttpClient, rootUrl: string, params: ApiV1SellerInventoryStockProductIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<StockDetailDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerInventoryStockProductIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/inventory/stock/{productId}', 'get');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1SellerInventoryStockProductIdGet(http: HttpClient, rootUrl:
   );
 }
 
-apiV1SellerInventoryStockProductIdGet.PATH = '/api/v1/seller/inventory/stock/{productId}';

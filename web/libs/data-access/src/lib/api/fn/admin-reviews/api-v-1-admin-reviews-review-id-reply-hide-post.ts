@@ -14,7 +14,7 @@ export interface ApiV1AdminReviewsReviewIdReplyHidePost$Params {
 }
 
 export function apiV1AdminReviewsReviewIdReplyHidePost(http: HttpClient, rootUrl: string, params: ApiV1AdminReviewsReviewIdReplyHidePost$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminReviewsReviewIdReplyHidePost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/reviews/{reviewId}/reply/hide', 'post');
   if (params) {
     rb.path('reviewId', params.reviewId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminReviewsReviewIdReplyHidePost(http: HttpClient, rootUrl
   );
 }
 
-apiV1AdminReviewsReviewIdReplyHidePost.PATH = '/api/v1/admin/reviews/{reviewId}/reply/hide';

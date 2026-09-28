@@ -17,7 +17,7 @@ export interface ApiV1AdminShippingShipmentsGet$Params {
 }
 
 export function apiV1AdminShippingShipmentsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminShippingShipmentsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfShipmentDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingShipmentsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/shipments', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -35,4 +35,3 @@ export function apiV1AdminShippingShipmentsGet(http: HttpClient, rootUrl: string
   );
 }
 
-apiV1AdminShippingShipmentsGet.PATH = '/api/v1/admin/shipping/shipments';

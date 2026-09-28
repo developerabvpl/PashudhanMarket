@@ -13,7 +13,7 @@ export interface ApiV1AdminSettlementsCommissionsSellerIdDelete$Params {
 }
 
 export function apiV1AdminSettlementsCommissionsSellerIdDelete(http: HttpClient, rootUrl: string, params: ApiV1AdminSettlementsCommissionsSellerIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsCommissionsSellerIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/commissions/{sellerId}', 'delete');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
   }
@@ -28,4 +28,3 @@ export function apiV1AdminSettlementsCommissionsSellerIdDelete(http: HttpClient,
   );
 }
 
-apiV1AdminSettlementsCommissionsSellerIdDelete.PATH = '/api/v1/admin/settlements/commissions/{sellerId}';

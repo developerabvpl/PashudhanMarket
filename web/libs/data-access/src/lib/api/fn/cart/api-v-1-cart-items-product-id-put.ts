@@ -16,7 +16,7 @@ export interface ApiV1CartItemsProductIdPut$Params {
 }
 
 export function apiV1CartItemsProductIdPut(http: HttpClient, rootUrl: string, params: ApiV1CartItemsProductIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<CartDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartItemsProductIdPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart/items/{productId}', 'put');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1CartItemsProductIdPut(http: HttpClient, rootUrl: string, pa
   );
 }
 
-apiV1CartItemsProductIdPut.PATH = '/api/v1/cart/items/{productId}';

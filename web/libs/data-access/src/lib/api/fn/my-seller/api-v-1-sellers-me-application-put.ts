@@ -15,7 +15,7 @@ export interface ApiV1SellersMeApplicationPut$Params {
 }
 
 export function apiV1SellersMeApplicationPut(http: HttpClient, rootUrl: string, params: ApiV1SellersMeApplicationPut$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeApplicationPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me/application', 'put');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1SellersMeApplicationPut(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1SellersMeApplicationPut.PATH = '/api/v1/sellers/me/application';

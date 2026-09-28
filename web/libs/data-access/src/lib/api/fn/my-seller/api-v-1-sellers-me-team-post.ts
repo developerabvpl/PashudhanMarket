@@ -15,7 +15,7 @@ export interface ApiV1SellersMeTeamPost$Params {
 }
 
 export function apiV1SellersMeTeamPost(http: HttpClient, rootUrl: string, params: ApiV1SellersMeTeamPost$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerMemberDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeTeamPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me/team', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1SellersMeTeamPost(http: HttpClient, rootUrl: string, params
   );
 }
 
-apiV1SellersMeTeamPost.PATH = '/api/v1/sellers/me/team';

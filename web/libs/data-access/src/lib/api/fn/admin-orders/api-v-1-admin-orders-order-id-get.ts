@@ -14,7 +14,7 @@ export interface ApiV1AdminOrdersOrderIdGet$Params {
 }
 
 export function apiV1AdminOrdersOrderIdGet(http: HttpClient, rootUrl: string, params: ApiV1AdminOrdersOrderIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminOrdersOrderIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/orders/{orderId}', 'get');
   if (params) {
     rb.path('orderId', params.orderId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminOrdersOrderIdGet(http: HttpClient, rootUrl: string, pa
   );
 }
 
-apiV1AdminOrdersOrderIdGet.PATH = '/api/v1/admin/orders/{orderId}';

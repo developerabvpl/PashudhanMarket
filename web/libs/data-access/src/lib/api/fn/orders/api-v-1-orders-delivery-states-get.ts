@@ -12,7 +12,7 @@ export interface ApiV1OrdersDeliveryStatesGet$Params {
 }
 
 export function apiV1OrdersDeliveryStatesGet(http: HttpClient, rootUrl: string, params?: ApiV1OrdersDeliveryStatesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<string>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1OrdersDeliveryStatesGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/orders/delivery-states', 'get');
   if (params) {
   }
 
@@ -26,4 +26,3 @@ export function apiV1OrdersDeliveryStatesGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1OrdersDeliveryStatesGet.PATH = '/api/v1/orders/delivery-states';

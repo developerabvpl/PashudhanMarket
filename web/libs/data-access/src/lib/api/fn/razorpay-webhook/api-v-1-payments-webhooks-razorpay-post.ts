@@ -14,7 +14,7 @@ export interface ApiV1PaymentsWebhooksRazorpayPost$Params {
 }
 
 export function apiV1PaymentsWebhooksRazorpayPost(http: HttpClient, rootUrl: string, params?: ApiV1PaymentsWebhooksRazorpayPost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, apiV1PaymentsWebhooksRazorpayPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/payments/webhooks/razorpay', 'post');
   if (params) {
     rb.header('X-Razorpay-Signature', params['X-Razorpay-Signature'], {});
     rb.header('X-Razorpay-Event-Id', params['X-Razorpay-Event-Id'], {});
@@ -30,4 +30,3 @@ export function apiV1PaymentsWebhooksRazorpayPost(http: HttpClient, rootUrl: str
   );
 }
 
-apiV1PaymentsWebhooksRazorpayPost.PATH = '/api/v1/payments/webhooks/razorpay';

@@ -16,7 +16,7 @@ export interface ApiV1AdminSettlementsCommissionsSellerIdPut$Params {
 }
 
 export function apiV1AdminSettlementsCommissionsSellerIdPut(http: HttpClient, rootUrl: string, params: ApiV1AdminSettlementsCommissionsSellerIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerCommissionDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsCommissionsSellerIdPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/commissions/{sellerId}', 'put');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminSettlementsCommissionsSellerIdPut(http: HttpClient, ro
   );
 }
 
-apiV1AdminSettlementsCommissionsSellerIdPut.PATH = '/api/v1/admin/settlements/commissions/{sellerId}';

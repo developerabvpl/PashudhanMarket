@@ -22,7 +22,7 @@ export interface ApiV1AdminShippingCodRemittancesPost$Params {
 }
 
 export function apiV1AdminShippingCodRemittancesPost(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingCodRemittancesPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CodRemittanceDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodRemittancesPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/remittances', 'post');
   if (params) {
     rb.body(params.body, 'multipart/form-data');
   }
@@ -37,4 +37,3 @@ export function apiV1AdminShippingCodRemittancesPost(http: HttpClient, rootUrl: 
   );
 }
 
-apiV1AdminShippingCodRemittancesPost.PATH = '/api/v1/admin/shipping/cod/remittances';

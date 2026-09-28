@@ -16,7 +16,7 @@ export interface ApiV1AdminPaymentsRefundsGet$Params {
 }
 
 export function apiV1AdminPaymentsRefundsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminPaymentsRefundsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfRefundDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminPaymentsRefundsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/payments/refunds', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -33,4 +33,3 @@ export function apiV1AdminPaymentsRefundsGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1AdminPaymentsRefundsGet.PATH = '/api/v1/admin/payments/refunds';

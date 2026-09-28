@@ -16,7 +16,7 @@ export interface ApiV1SellerOrdersReturnsGet$Params {
 }
 
 export function apiV1SellerOrdersReturnsGet(http: HttpClient, rootUrl: string, params?: ApiV1SellerOrdersReturnsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfReturnRequestSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerOrdersReturnsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/orders/returns', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -33,4 +33,3 @@ export function apiV1SellerOrdersReturnsGet(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1SellerOrdersReturnsGet.PATH = '/api/v1/seller/orders/returns';

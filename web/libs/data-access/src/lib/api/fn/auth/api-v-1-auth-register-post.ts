@@ -15,7 +15,7 @@ export interface ApiV1AuthRegisterPost$Params {
 }
 
 export function apiV1AuthRegisterPost(http: HttpClient, rootUrl: string, params: ApiV1AuthRegisterPost$Params, context?: HttpContext): Observable<StrictHttpResponse<AuthTokensDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthRegisterPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/register', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AuthRegisterPost(http: HttpClient, rootUrl: string, params:
   );
 }
 
-apiV1AuthRegisterPost.PATH = '/api/v1/auth/register';

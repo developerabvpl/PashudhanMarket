@@ -15,7 +15,7 @@ export interface ApiV1AuthVerifyOtpPost$Params {
 }
 
 export function apiV1AuthVerifyOtpPost(http: HttpClient, rootUrl: string, params: ApiV1AuthVerifyOtpPost$Params, context?: HttpContext): Observable<StrictHttpResponse<AuthTokensDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthVerifyOtpPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/verify-otp', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AuthVerifyOtpPost(http: HttpClient, rootUrl: string, params
   );
 }
 
-apiV1AuthVerifyOtpPost.PATH = '/api/v1/auth/verify-otp';

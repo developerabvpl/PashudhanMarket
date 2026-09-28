@@ -13,7 +13,7 @@ export interface ApiV1AdminCatalogSellersGet$Params {
 }
 
 export function apiV1AdminCatalogSellersGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminCatalogSellersGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<SellerNameDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogSellersGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/sellers', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminCatalogSellersGet(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1AdminCatalogSellersGet.PATH = '/api/v1/admin/catalog/sellers';

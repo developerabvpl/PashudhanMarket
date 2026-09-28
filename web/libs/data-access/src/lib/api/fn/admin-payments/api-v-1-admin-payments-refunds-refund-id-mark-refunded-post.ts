@@ -16,7 +16,7 @@ export interface ApiV1AdminPaymentsRefundsRefundIdMarkRefundedPost$Params {
 }
 
 export function apiV1AdminPaymentsRefundsRefundIdMarkRefundedPost(http: HttpClient, rootUrl: string, params: ApiV1AdminPaymentsRefundsRefundIdMarkRefundedPost$Params, context?: HttpContext): Observable<StrictHttpResponse<RefundDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminPaymentsRefundsRefundIdMarkRefundedPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/payments/refunds/{refundId}/mark-refunded', 'post');
   if (params) {
     rb.path('refundId', params.refundId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminPaymentsRefundsRefundIdMarkRefundedPost(http: HttpClie
   );
 }
 
-apiV1AdminPaymentsRefundsRefundIdMarkRefundedPost.PATH = '/api/v1/admin/payments/refunds/{refundId}/mark-refunded';

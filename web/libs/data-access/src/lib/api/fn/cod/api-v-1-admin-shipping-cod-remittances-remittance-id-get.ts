@@ -14,7 +14,7 @@ export interface ApiV1AdminShippingCodRemittancesRemittanceIdGet$Params {
 }
 
 export function apiV1AdminShippingCodRemittancesRemittanceIdGet(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingCodRemittancesRemittanceIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<CodRemittanceDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodRemittancesRemittanceIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/remittances/{remittanceId}', 'get');
   if (params) {
     rb.path('remittanceId', params.remittanceId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminShippingCodRemittancesRemittanceIdGet(http: HttpClient
   );
 }
 
-apiV1AdminShippingCodRemittancesRemittanceIdGet.PATH = '/api/v1/admin/shipping/cod/remittances/{remittanceId}';

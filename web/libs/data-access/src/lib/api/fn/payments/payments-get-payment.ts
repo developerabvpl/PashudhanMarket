@@ -14,7 +14,7 @@ export interface PaymentsGetPayment$Params {
 }
 
 export function paymentsGetPayment(http: HttpClient, rootUrl: string, params: PaymentsGetPayment$Params, context?: HttpContext): Observable<StrictHttpResponse<PaymentDto>> {
-  const rb = new RequestBuilder(rootUrl, paymentsGetPayment.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/payments/{paymentId}', 'get');
   if (params) {
     rb.path('paymentId', params.paymentId, {});
   }
@@ -29,4 +29,3 @@ export function paymentsGetPayment(http: HttpClient, rootUrl: string, params: Pa
   );
 }
 
-paymentsGetPayment.PATH = '/api/payments/{paymentId}';

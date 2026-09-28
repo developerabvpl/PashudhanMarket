@@ -14,7 +14,7 @@ export interface ApiV1UsersMe2FaVerifyPost$Params {
 }
 
 export function apiV1UsersMe2FaVerifyPost(http: HttpClient, rootUrl: string, params: ApiV1UsersMe2FaVerifyPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1UsersMe2FaVerifyPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/users/me/2fa/verify', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1UsersMe2FaVerifyPost(http: HttpClient, rootUrl: string, par
   );
 }
 
-apiV1UsersMe2FaVerifyPost.PATH = '/api/v1/users/me/2fa/verify';

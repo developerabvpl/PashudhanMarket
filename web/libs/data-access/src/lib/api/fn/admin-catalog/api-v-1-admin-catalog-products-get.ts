@@ -20,7 +20,7 @@ export interface ApiV1AdminCatalogProductsGet$Params {
 }
 
 export function apiV1AdminCatalogProductsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminCatalogProductsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfAdminProductSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogProductsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/products', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -41,4 +41,3 @@ export function apiV1AdminCatalogProductsGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1AdminCatalogProductsGet.PATH = '/api/v1/admin/catalog/products';

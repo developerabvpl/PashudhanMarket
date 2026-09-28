@@ -15,7 +15,7 @@ export interface ApiV1SellerPromotionsCouponsPost$Params {
 }
 
 export function apiV1SellerPromotionsCouponsPost(http: HttpClient, rootUrl: string, params: ApiV1SellerPromotionsCouponsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CouponDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerPromotionsCouponsPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/promotions/coupons', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1SellerPromotionsCouponsPost(http: HttpClient, rootUrl: stri
   );
 }
 
-apiV1SellerPromotionsCouponsPost.PATH = '/api/v1/seller/promotions/coupons';

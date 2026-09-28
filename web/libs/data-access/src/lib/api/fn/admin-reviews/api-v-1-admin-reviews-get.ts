@@ -16,7 +16,7 @@ export interface ApiV1AdminReviewsGet$Params {
 }
 
 export function apiV1AdminReviewsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminReviewsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminReviewsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/reviews', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -33,4 +33,3 @@ export function apiV1AdminReviewsGet(http: HttpClient, rootUrl: string, params?:
   );
 }
 
-apiV1AdminReviewsGet.PATH = '/api/v1/admin/reviews';

@@ -14,7 +14,7 @@ export interface ShippingGetShipment$Params {
 }
 
 export function shippingGetShipment(http: HttpClient, rootUrl: string, params: ShippingGetShipment$Params, context?: HttpContext): Observable<StrictHttpResponse<ShipmentDto>> {
-  const rb = new RequestBuilder(rootUrl, shippingGetShipment.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/shipping/shipments/{shipmentId}', 'get');
   if (params) {
     rb.path('shipmentId', params.shipmentId, {});
   }
@@ -29,4 +29,3 @@ export function shippingGetShipment(http: HttpClient, rootUrl: string, params: S
   );
 }
 
-shippingGetShipment.PATH = '/api/shipping/shipments/{shipmentId}';

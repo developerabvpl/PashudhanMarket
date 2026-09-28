@@ -14,7 +14,7 @@ export interface ApiV1AuthChangePasswordPost$Params {
 }
 
 export function apiV1AuthChangePasswordPost(http: HttpClient, rootUrl: string, params: ApiV1AuthChangePasswordPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthChangePasswordPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/change-password', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1AuthChangePasswordPost(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1AuthChangePasswordPost.PATH = '/api/v1/auth/change-password';

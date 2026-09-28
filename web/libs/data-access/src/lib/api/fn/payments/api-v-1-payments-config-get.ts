@@ -13,7 +13,7 @@ export interface ApiV1PaymentsConfigGet$Params {
 }
 
 export function apiV1PaymentsConfigGet(http: HttpClient, rootUrl: string, params?: ApiV1PaymentsConfigGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PaymentsConfigDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1PaymentsConfigGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/payments/config', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1PaymentsConfigGet(http: HttpClient, rootUrl: string, params
   );
 }
 
-apiV1PaymentsConfigGet.PATH = '/api/v1/payments/config';

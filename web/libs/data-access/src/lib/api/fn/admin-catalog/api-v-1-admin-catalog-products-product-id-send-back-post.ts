@@ -16,7 +16,7 @@ export interface ApiV1AdminCatalogProductsProductIdSendBackPost$Params {
 }
 
 export function apiV1AdminCatalogProductsProductIdSendBackPost(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogProductsProductIdSendBackPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogProductsProductIdSendBackPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/products/{productId}/send-back', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminCatalogProductsProductIdSendBackPost(http: HttpClient,
   );
 }
 
-apiV1AdminCatalogProductsProductIdSendBackPost.PATH = '/api/v1/admin/catalog/products/{productId}/send-back';

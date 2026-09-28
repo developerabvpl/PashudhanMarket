@@ -1,10 +1,6 @@
 import { Route } from '@angular/router';
 import {
-  ChangePasswordPage,
   ForbiddenPage,
-  ForgotPasswordPage,
-  PortalSignInPage,
-  TwoFactorChallengePage,
   anonymousOnlyGuard,
   authGuard,
   permissionGuard,
@@ -57,11 +53,11 @@ export const appRoutes: Route[] = [
   {
     path: 'change-password',
     canActivate: [authGuard],
-    component: ChangePasswordPage,
+    loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.ChangePasswordPage),
   },
   {
     path: 'sign-in',
-    component: PortalSignInPage,
+    loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.PortalSignInPage),
     // The page names itself, so one shared component serves both portals.
     data: { title: 'app.sellerPortal', defaultReturnUrl: '/orders', registerUrl: '/register' },
   },
@@ -70,8 +66,8 @@ export const appRoutes: Route[] = [
     canActivate: [anonymousOnlyGuard],
     loadComponent: () => import('./features/account/register.page').then((m) => m.RegisterPage),
   },
-  { path: 'two-factor', component: TwoFactorChallengePage },
-  { path: 'forgot-password', component: ForgotPasswordPage },
+  { path: 'two-factor', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.TwoFactorChallengePage) },
+  { path: 'forgot-password', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.ForgotPasswordPage) },
   { path: 'forbidden', component: ForbiddenPage },
   { path: '**', redirectTo: 'orders' },
 ];

@@ -13,7 +13,7 @@ export interface ApiV1SellersMeTeamGet$Params {
 }
 
 export function apiV1SellersMeTeamGet(http: HttpClient, rootUrl: string, params?: ApiV1SellersMeTeamGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<SellerMemberDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeTeamGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me/team', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1SellersMeTeamGet(http: HttpClient, rootUrl: string, params?
   );
 }
 
-apiV1SellersMeTeamGet.PATH = '/api/v1/sellers/me/team';

@@ -16,7 +16,7 @@ export interface ApiV1AdminCatalogCategoriesCategoryIdPut$Params {
 }
 
 export function apiV1AdminCatalogCategoriesCategoryIdPut(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogCategoriesCategoryIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<CategoryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogCategoriesCategoryIdPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/categories/{categoryId}', 'put');
   if (params) {
     rb.path('categoryId', params.categoryId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminCatalogCategoriesCategoryIdPut(http: HttpClient, rootU
   );
 }
 
-apiV1AdminCatalogCategoriesCategoryIdPut.PATH = '/api/v1/admin/catalog/categories/{categoryId}';

@@ -14,7 +14,7 @@ export interface ApiV1AdminSellersSellerIdGet$Params {
 }
 
 export function apiV1AdminSellersSellerIdGet(http: HttpClient, rootUrl: string, params: ApiV1AdminSellersSellerIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSellersSellerIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/sellers/{sellerId}', 'get');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminSellersSellerIdGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1AdminSellersSellerIdGet.PATH = '/api/v1/admin/sellers/{sellerId}';

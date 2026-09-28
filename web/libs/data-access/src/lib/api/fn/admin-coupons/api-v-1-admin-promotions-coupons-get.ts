@@ -13,7 +13,7 @@ export interface ApiV1AdminPromotionsCouponsGet$Params {
 }
 
 export function apiV1AdminPromotionsCouponsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminPromotionsCouponsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<CouponDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminPromotionsCouponsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/promotions/coupons', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminPromotionsCouponsGet(http: HttpClient, rootUrl: string
   );
 }
 
-apiV1AdminPromotionsCouponsGet.PATH = '/api/v1/admin/promotions/coupons';

@@ -16,7 +16,7 @@ export interface ApiV1OrdersOrderIdCancelPost$Params {
 }
 
 export function apiV1OrdersOrderIdCancelPost(http: HttpClient, rootUrl: string, params: ApiV1OrdersOrderIdCancelPost$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1OrdersOrderIdCancelPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/orders/{orderId}/cancel', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1OrdersOrderIdCancelPost(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1OrdersOrderIdCancelPost.PATH = '/api/v1/orders/{orderId}/cancel';

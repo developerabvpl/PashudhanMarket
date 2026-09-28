@@ -15,7 +15,7 @@ export interface ApiV1ReviewsPhotosPhotoIdGet$Params {
 }
 
 export function apiV1ReviewsPhotosPhotoIdGet(http: HttpClient, rootUrl: string, params: ApiV1ReviewsPhotosPhotoIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, apiV1ReviewsPhotosPhotoIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/reviews/photos/{photoId}', 'get');
   if (params) {
     rb.path('photoId', params.photoId, {});
     rb.query('expires', params.expires, {});
@@ -32,4 +32,3 @@ export function apiV1ReviewsPhotosPhotoIdGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1ReviewsPhotosPhotoIdGet.PATH = '/api/v1/reviews/photos/{photoId}';

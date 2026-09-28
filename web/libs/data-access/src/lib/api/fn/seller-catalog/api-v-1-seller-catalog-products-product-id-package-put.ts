@@ -16,7 +16,7 @@ export interface ApiV1SellerCatalogProductsProductIdPackagePut$Params {
 }
 
 export function apiV1SellerCatalogProductsProductIdPackagePut(http: HttpClient, rootUrl: string, params: ApiV1SellerCatalogProductsProductIdPackagePut$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerCatalogProductsProductIdPackagePut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/catalog/products/{productId}/package', 'put');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1SellerCatalogProductsProductIdPackagePut(http: HttpClient, 
   );
 }
 
-apiV1SellerCatalogProductsProductIdPackagePut.PATH = '/api/v1/seller/catalog/products/{productId}/package';

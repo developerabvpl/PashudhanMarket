@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
+import { AccountMenu } from '@upbazaar/auth/portal';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
 import {
   CatalogPermissions,
@@ -17,6 +17,7 @@ import {
   SettlementsPermissions,
   ShippingPermissions,
 } from './core/permissions';
+import { CatalogueMenu, SettlementsMenu } from './core/nav-menus';
 
 @Component({
   selector: 'upb-root',
@@ -29,7 +30,9 @@ import {
     HasPermissionDirective,
     MatToolbarModule,
     MatButtonModule,
-    MatMenuModule,
+    AccountMenu,
+    SettlementsMenu,
+    CatalogueMenu,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -63,13 +66,11 @@ import {
         {{ 'nav.payments' | transloco }}
       </a>
       <ng-container *hasPermission="settlementsRead">
-        <button mat-button type="button" [matMenuTriggerFor]="settlementsMenu">
-          {{ 'nav.settlements' | transloco }}
-        </button>
-        <mat-menu #settlementsMenu="matMenu">
-          <a mat-menu-item routerLink="/settlements/payouts">{{ 'nav.payouts' | transloco }}</a>
-          <a mat-menu-item routerLink="/settlements/rates">{{ 'nav.settlementRates' | transloco }}</a>
-        </mat-menu>
+        @defer (on idle) {
+        <upb-settlements-menu />
+        } @placeholder {
+        <button mat-button type="button">{{ 'nav.settlements' | transloco }}</button>
+        }
       </ng-container>
       <a *hasPermission="shipmentsRead" mat-button routerLink="/shipping">
         {{ 'nav.shipments' | transloco }}
@@ -81,18 +82,11 @@ import {
         {{ 'nav.sellers' | transloco }}
       </a>
       <ng-container *hasPermission="productsRead">
-        <button mat-button type="button" [matMenuTriggerFor]="catalogMenu">
-          {{ 'nav.catalogue' | transloco }}
-        </button>
-        <mat-menu #catalogMenu="matMenu">
-          <a mat-menu-item routerLink="/catalog/products">{{ 'nav.products' | transloco }}</a>
-          <a *hasPermission="categoriesWrite" mat-menu-item routerLink="/catalog/categories">
-            {{ 'nav.categories' | transloco }}
-          </a>
-          <a *hasPermission="productsWrite" mat-menu-item routerLink="/catalog/review">
-            {{ 'nav.listingReview' | transloco }}
-          </a>
-        </mat-menu>
+        @defer (on idle) {
+        <upb-catalogue-menu />
+        } @placeholder {
+        <button mat-button type="button">{{ 'nav.catalogue' | transloco }}</button>
+        }
       </ng-container>
       <a *hasPermission="reviewsRead" mat-button routerLink="/reviews">
         {{ 'nav.buyerReviews' | transloco }}
@@ -103,15 +97,12 @@ import {
 
       <upb-language-switcher />
 
-      <button mat-button [matMenuTriggerFor]="accountMenu">{{ displayName() }}</button>
-      <mat-menu #accountMenu="matMenu">
-        <a mat-menu-item routerLink="/change-password">
-          {{ 'changePassword.title' | transloco }}
-        </a>
-        <button mat-menu-item type="button" (click)="signOut()">
-          {{ 'nav.signOut' | transloco }}
-        </button>
-      </mat-menu>
+      <!-- Loaded once the page settles: the menu brings Material's overlay, which the first screen does not need. -->
+      @defer (on idle) {
+      <upb-account-menu [displayName]="displayName()" (signOut)="signOut()" />
+      } @placeholder {
+      <button mat-button type="button">{{ displayName() }}</button>
+      }
     </mat-toolbar>
     }
 
@@ -136,8 +127,6 @@ export class App {
   protected readonly codRead = ShippingPermissions.CodRead;
   protected readonly sellersRead = SellersPermissions.Read;
   protected readonly productsRead = CatalogPermissions.ProductsRead;
-  protected readonly productsWrite = CatalogPermissions.ProductsWrite;
-  protected readonly categoriesWrite = CatalogPermissions.CategoriesWrite;
   protected readonly reviewsRead = ReviewsPermissions.Read;
   protected readonly couponsRead = PromotionsPermissions.CampaignsRead;
 

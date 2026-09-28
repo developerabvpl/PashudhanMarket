@@ -13,7 +13,7 @@ export interface ApiV1SellersMeGet$Params {
 }
 
 export function apiV1SellersMeGet(http: HttpClient, rootUrl: string, params?: ApiV1SellersMeGet$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1SellersMeGet(http: HttpClient, rootUrl: string, params?: Ap
   );
 }
 
-apiV1SellersMeGet.PATH = '/api/v1/sellers/me';

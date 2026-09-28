@@ -13,7 +13,7 @@ export interface ApiCatalogProductsProductIdPublishPost$Params {
 }
 
 export function apiCatalogProductsProductIdPublishPost(http: HttpClient, rootUrl: string, params: ApiCatalogProductsProductIdPublishPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiCatalogProductsProductIdPublishPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/catalog/products/{productId}/publish', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -28,4 +28,3 @@ export function apiCatalogProductsProductIdPublishPost(http: HttpClient, rootUrl
   );
 }
 
-apiCatalogProductsProductIdPublishPost.PATH = '/api/catalog/products/{productId}/publish';

@@ -14,7 +14,7 @@ export interface ApiV1AuthRequestOtpPost$Params {
 }
 
 export function apiV1AuthRequestOtpPost(http: HttpClient, rootUrl: string, params: ApiV1AuthRequestOtpPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthRequestOtpPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/request-otp', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1AuthRequestOtpPost(http: HttpClient, rootUrl: string, param
   );
 }
 
-apiV1AuthRequestOtpPost.PATH = '/api/v1/auth/request-otp';

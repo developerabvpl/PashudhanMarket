@@ -1,10 +1,6 @@
 import { Route } from '@angular/router';
 import {
-  ChangePasswordPage,
   ForbiddenPage,
-  ForgotPasswordPage,
-  PortalSignInPage,
-  TwoFactorChallengePage,
   authGuard,
 } from '@upbazaar/auth';
 
@@ -58,15 +54,15 @@ export const appRoutes: Route[] = [
   {
     path: 'change-password',
     canActivate: [authGuard],
-    component: ChangePasswordPage,
+    loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.ChangePasswordPage),
   },
   {
     path: 'sign-in',
-    component: PortalSignInPage,
+    loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.PortalSignInPage),
     data: { title: 'app.adminPortal', defaultReturnUrl: '/staff' },
   },
-  { path: 'two-factor', component: TwoFactorChallengePage },
-  { path: 'forgot-password', component: ForgotPasswordPage },
+  { path: 'two-factor', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.TwoFactorChallengePage) },
+  { path: 'forgot-password', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.ForgotPasswordPage) },
   { path: 'forbidden', component: ForbiddenPage },
   { path: '**', redirectTo: 'staff' },
 ];

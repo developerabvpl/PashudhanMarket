@@ -13,7 +13,7 @@ export interface ApiV1SystemInfoGet$Params {
 }
 
 export function apiV1SystemInfoGet(http: HttpClient, rootUrl: string, params?: ApiV1SystemInfoGet$Params, context?: HttpContext): Observable<StrictHttpResponse<SystemInfoResponse>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SystemInfoGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/system/info', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1SystemInfoGet(http: HttpClient, rootUrl: string, params?: A
   );
 }
 
-apiV1SystemInfoGet.PATH = '/api/v1/system/info';

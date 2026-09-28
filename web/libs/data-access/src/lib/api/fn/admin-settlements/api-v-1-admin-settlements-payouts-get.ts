@@ -17,7 +17,7 @@ export interface ApiV1AdminSettlementsPayoutsGet$Params {
 }
 
 export function apiV1AdminSettlementsPayoutsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminSettlementsPayoutsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfPayoutSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsPayoutsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/payouts', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -35,4 +35,3 @@ export function apiV1AdminSettlementsPayoutsGet(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1AdminSettlementsPayoutsGet.PATH = '/api/v1/admin/settlements/payouts';

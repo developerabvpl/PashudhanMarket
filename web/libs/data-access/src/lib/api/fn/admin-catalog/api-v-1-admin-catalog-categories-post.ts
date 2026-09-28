@@ -15,7 +15,7 @@ export interface ApiV1AdminCatalogCategoriesPost$Params {
 }
 
 export function apiV1AdminCatalogCategoriesPost(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogCategoriesPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CategoryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogCategoriesPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/categories', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AdminCatalogCategoriesPost(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1AdminCatalogCategoriesPost.PATH = '/api/v1/admin/catalog/categories';

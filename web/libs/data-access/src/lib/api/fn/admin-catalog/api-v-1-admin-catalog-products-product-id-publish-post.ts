@@ -14,7 +14,7 @@ export interface ApiV1AdminCatalogProductsProductIdPublishPost$Params {
 }
 
 export function apiV1AdminCatalogProductsProductIdPublishPost(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogProductsProductIdPublishPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogProductsProductIdPublishPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/products/{productId}/publish', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminCatalogProductsProductIdPublishPost(http: HttpClient, 
   );
 }
 
-apiV1AdminCatalogProductsProductIdPublishPost.PATH = '/api/v1/admin/catalog/products/{productId}/publish';

@@ -15,7 +15,7 @@ export interface ApiV1AdminUsersPost$Params {
 }
 
 export function apiV1AdminUsersPost(http: HttpClient, rootUrl: string, params: ApiV1AdminUsersPost$Params, context?: HttpContext): Observable<StrictHttpResponse<UserDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminUsersPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/users', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AdminUsersPost(http: HttpClient, rootUrl: string, params: A
   );
 }
 
-apiV1AdminUsersPost.PATH = '/api/v1/admin/users';

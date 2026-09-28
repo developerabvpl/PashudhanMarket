@@ -18,7 +18,7 @@ export interface ApiV1ReviewsMineProductIdPhotosPost$Params {
 }
 
 export function apiV1ReviewsMineProductIdPhotosPost(http: HttpClient, rootUrl: string, params: ApiV1ReviewsMineProductIdPhotosPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1ReviewsMineProductIdPhotosPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/reviews/mine/{productId}/photos', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'multipart/form-data');
@@ -34,4 +34,3 @@ export function apiV1ReviewsMineProductIdPhotosPost(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1ReviewsMineProductIdPhotosPost.PATH = '/api/v1/reviews/mine/{productId}/photos';

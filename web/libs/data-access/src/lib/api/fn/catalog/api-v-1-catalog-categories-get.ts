@@ -13,7 +13,7 @@ export interface ApiV1CatalogCategoriesGet$Params {
 }
 
 export function apiV1CatalogCategoriesGet(http: HttpClient, rootUrl: string, params?: ApiV1CatalogCategoriesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<CategoryDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CatalogCategoriesGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/catalog/categories', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1CatalogCategoriesGet(http: HttpClient, rootUrl: string, par
   );
 }
 
-apiV1CatalogCategoriesGet.PATH = '/api/v1/catalog/categories';

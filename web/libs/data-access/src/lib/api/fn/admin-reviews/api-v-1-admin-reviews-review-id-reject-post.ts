@@ -16,7 +16,7 @@ export interface ApiV1AdminReviewsReviewIdRejectPost$Params {
 }
 
 export function apiV1AdminReviewsReviewIdRejectPost(http: HttpClient, rootUrl: string, params: ApiV1AdminReviewsReviewIdRejectPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminReviewsReviewIdRejectPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/reviews/{reviewId}/reject', 'post');
   if (params) {
     rb.path('reviewId', params.reviewId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminReviewsReviewIdRejectPost(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminReviewsReviewIdRejectPost.PATH = '/api/v1/admin/reviews/{reviewId}/reject';

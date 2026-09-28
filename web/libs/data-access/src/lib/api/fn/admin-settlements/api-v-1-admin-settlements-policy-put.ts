@@ -15,7 +15,7 @@ export interface ApiV1AdminSettlementsPolicyPut$Params {
 }
 
 export function apiV1AdminSettlementsPolicyPut(http: HttpClient, rootUrl: string, params: ApiV1AdminSettlementsPolicyPut$Params, context?: HttpContext): Observable<StrictHttpResponse<SettlementPolicyDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsPolicyPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/policy', 'put');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AdminSettlementsPolicyPut(http: HttpClient, rootUrl: string
   );
 }
 
-apiV1AdminSettlementsPolicyPut.PATH = '/api/v1/admin/settlements/policy';

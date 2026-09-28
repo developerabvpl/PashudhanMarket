@@ -23,6 +23,9 @@
       "@upbazaar/auth": [
         "./libs/auth/src/index.ts"
       ],
+      "@upbazaar/auth/portal": [
+        "./libs/auth/src/portal.ts"
+      ],
       "@upbazaar/ui": [
         "./libs/ui/src/index.ts"
       ],

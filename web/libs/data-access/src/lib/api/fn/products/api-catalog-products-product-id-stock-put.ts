@@ -15,7 +15,7 @@ export interface ApiCatalogProductsProductIdStockPut$Params {
 }
 
 export function apiCatalogProductsProductIdStockPut(http: HttpClient, rootUrl: string, params: ApiCatalogProductsProductIdStockPut$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiCatalogProductsProductIdStockPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/catalog/products/{productId}/stock', 'put');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -31,4 +31,3 @@ export function apiCatalogProductsProductIdStockPut(http: HttpClient, rootUrl: s
   );
 }
 
-apiCatalogProductsProductIdStockPut.PATH = '/api/catalog/products/{productId}/stock';

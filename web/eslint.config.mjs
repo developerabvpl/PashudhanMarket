@@ -18,6 +18,10 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
+          // The portals load @upbazaar/auth/portal lazily while importing @upbazaar/auth statically.
+          // They are different files - the portal entry holds only the Material sign-in pages - so
+          // the lazy import does split them out, which is the rule's concern.
+          checkDynamicDependenciesExceptions: ['@upbazaar/auth'],
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           // Dependencies run one way only: util <- ui <- auth <- data-access <- apps.
           // This is the web mirror of the API's module rules; a library may never reach

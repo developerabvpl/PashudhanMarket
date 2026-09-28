@@ -15,7 +15,7 @@ export interface ApiV1PaymentsRazorpayVerifyPost$Params {
 }
 
 export function apiV1PaymentsRazorpayVerifyPost(http: HttpClient, rootUrl: string, params: ApiV1PaymentsRazorpayVerifyPost$Params, context?: HttpContext): Observable<StrictHttpResponse<PaymentResultDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1PaymentsRazorpayVerifyPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/payments/razorpay/verify', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1PaymentsRazorpayVerifyPost(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1PaymentsRazorpayVerifyPost.PATH = '/api/v1/payments/razorpay/verify';

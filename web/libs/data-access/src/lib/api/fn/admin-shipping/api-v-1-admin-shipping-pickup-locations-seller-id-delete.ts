@@ -13,7 +13,7 @@ export interface ApiV1AdminShippingPickupLocationsSellerIdDelete$Params {
 }
 
 export function apiV1AdminShippingPickupLocationsSellerIdDelete(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingPickupLocationsSellerIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingPickupLocationsSellerIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/pickup-locations/{sellerId}', 'delete');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
   }
@@ -28,4 +28,3 @@ export function apiV1AdminShippingPickupLocationsSellerIdDelete(http: HttpClient
   );
 }
 
-apiV1AdminShippingPickupLocationsSellerIdDelete.PATH = '/api/v1/admin/shipping/pickup-locations/{sellerId}';

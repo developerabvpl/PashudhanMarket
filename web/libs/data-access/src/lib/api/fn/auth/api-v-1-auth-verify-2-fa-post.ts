@@ -15,7 +15,7 @@ export interface ApiV1AuthVerify2FaPost$Params {
 }
 
 export function apiV1AuthVerify2FaPost(http: HttpClient, rootUrl: string, params: ApiV1AuthVerify2FaPost$Params, context?: HttpContext): Observable<StrictHttpResponse<AuthTokensDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthVerify2FaPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/verify-2fa', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AuthVerify2FaPost(http: HttpClient, rootUrl: string, params
   );
 }
 
-apiV1AuthVerify2FaPost.PATH = '/api/v1/auth/verify-2fa';

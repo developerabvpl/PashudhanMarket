@@ -13,7 +13,7 @@ export interface ApiV1AdminSettlementsSellersGet$Params {
 }
 
 export function apiV1AdminSettlementsSellersGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminSettlementsSellersGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<SellerNameDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsSellersGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/sellers', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminSettlementsSellersGet(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1AdminSettlementsSellersGet.PATH = '/api/v1/admin/settlements/sellers';

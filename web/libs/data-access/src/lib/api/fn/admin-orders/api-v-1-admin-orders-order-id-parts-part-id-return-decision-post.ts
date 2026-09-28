@@ -17,7 +17,7 @@ export interface ApiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost$Params {
 }
 
 export function apiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost(http: HttpClient, rootUrl: string, params: ApiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/orders/{orderId}/parts/{partId}/return-decision', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -34,4 +34,3 @@ export function apiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost(http: HttpC
   );
 }
 
-apiV1AdminOrdersOrderIdPartsPartIdReturnDecisionPost.PATH = '/api/v1/admin/orders/{orderId}/parts/{partId}/return-decision';

@@ -17,7 +17,7 @@ export interface ApiV1AdminSellersGet$Params {
 }
 
 export function apiV1AdminSellersGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminSellersGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfSellerSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSellersGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/sellers', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -35,4 +35,3 @@ export function apiV1AdminSellersGet(http: HttpClient, rootUrl: string, params?:
   );
 }
 
-apiV1AdminSellersGet.PATH = '/api/v1/admin/sellers';

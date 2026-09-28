@@ -13,7 +13,7 @@ export interface ApiV1OrdersDeliveryChargeGet$Params {
 }
 
 export function apiV1OrdersDeliveryChargeGet(http: HttpClient, rootUrl: string, params?: ApiV1OrdersDeliveryChargeGet$Params, context?: HttpContext): Observable<StrictHttpResponse<DeliveryChargeDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1OrdersDeliveryChargeGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/orders/delivery-charge', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1OrdersDeliveryChargeGet(http: HttpClient, rootUrl: string, 
   );
 }
 
-apiV1OrdersDeliveryChargeGet.PATH = '/api/v1/orders/delivery-charge';

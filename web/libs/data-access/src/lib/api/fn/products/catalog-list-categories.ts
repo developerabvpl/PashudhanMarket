@@ -13,7 +13,7 @@ export interface CatalogListCategories$Params {
 }
 
 export function catalogListCategories(http: HttpClient, rootUrl: string, params?: CatalogListCategories$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<CategoryDto>>> {
-  const rb = new RequestBuilder(rootUrl, catalogListCategories.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/catalog/categories', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function catalogListCategories(http: HttpClient, rootUrl: string, params?
   );
 }
 
-catalogListCategories.PATH = '/api/catalog/categories';

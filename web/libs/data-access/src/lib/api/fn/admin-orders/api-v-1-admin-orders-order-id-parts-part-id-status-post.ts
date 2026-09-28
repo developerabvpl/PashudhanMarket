@@ -17,7 +17,7 @@ export interface ApiV1AdminOrdersOrderIdPartsPartIdStatusPost$Params {
 }
 
 export function apiV1AdminOrdersOrderIdPartsPartIdStatusPost(http: HttpClient, rootUrl: string, params: ApiV1AdminOrdersOrderIdPartsPartIdStatusPost$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminOrdersOrderIdPartsPartIdStatusPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/orders/{orderId}/parts/{partId}/status', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -34,4 +34,3 @@ export function apiV1AdminOrdersOrderIdPartsPartIdStatusPost(http: HttpClient, r
   );
 }
 
-apiV1AdminOrdersOrderIdPartsPartIdStatusPost.PATH = '/api/v1/admin/orders/{orderId}/parts/{partId}/status';

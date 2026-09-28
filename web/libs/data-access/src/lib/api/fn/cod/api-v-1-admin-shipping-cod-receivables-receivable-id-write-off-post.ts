@@ -16,7 +16,7 @@ export interface ApiV1AdminShippingCodReceivablesReceivableIdWriteOffPost$Params
 }
 
 export function apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingCodReceivablesReceivableIdWriteOffPost$Params, context?: HttpContext): Observable<StrictHttpResponse<CodReceivableDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/receivables/{receivableId}/write-off', 'post');
   if (params) {
     rb.path('receivableId', params.receivableId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost(http: H
   );
 }
 
-apiV1AdminShippingCodReceivablesReceivableIdWriteOffPost.PATH = '/api/v1/admin/shipping/cod/receivables/{receivableId}/write-off';

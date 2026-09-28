@@ -16,7 +16,7 @@ export interface ApiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost$Params {
 }
 
 export function apiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost(http: HttpClient, rootUrl: string, params: ApiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost$Params, context?: HttpContext): Observable<StrictHttpResponse<PayoutDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/payouts/{payoutId}/mark-paid', 'post');
   if (params) {
     rb.path('payoutId', params.payoutId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost(http: HttpClien
   );
 }
 
-apiV1AdminSettlementsPayoutsPayoutIdMarkPaidPost.PATH = '/api/v1/admin/settlements/payouts/{payoutId}/mark-paid';

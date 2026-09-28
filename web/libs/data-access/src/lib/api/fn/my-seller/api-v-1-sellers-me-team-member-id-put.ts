@@ -16,7 +16,7 @@ export interface ApiV1SellersMeTeamMemberIdPut$Params {
 }
 
 export function apiV1SellersMeTeamMemberIdPut(http: HttpClient, rootUrl: string, params: ApiV1SellersMeTeamMemberIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerMemberDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeTeamMemberIdPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me/team/{memberId}', 'put');
   if (params) {
     rb.path('memberId', params.memberId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1SellersMeTeamMemberIdPut(http: HttpClient, rootUrl: string,
   );
 }
 
-apiV1SellersMeTeamMemberIdPut.PATH = '/api/v1/sellers/me/team/{memberId}';

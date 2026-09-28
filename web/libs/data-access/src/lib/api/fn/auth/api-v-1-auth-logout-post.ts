@@ -14,7 +14,7 @@ export interface ApiV1AuthLogoutPost$Params {
 }
 
 export function apiV1AuthLogoutPost(http: HttpClient, rootUrl: string, params: ApiV1AuthLogoutPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthLogoutPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/logout', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1AuthLogoutPost(http: HttpClient, rootUrl: string, params: A
   );
 }
 
-apiV1AuthLogoutPost.PATH = '/api/v1/auth/logout';

@@ -13,7 +13,7 @@ export interface ApiV1AdminSettlementsPolicyGet$Params {
 }
 
 export function apiV1AdminSettlementsPolicyGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminSettlementsPolicyGet$Params, context?: HttpContext): Observable<StrictHttpResponse<SettlementPolicyDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsPolicyGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/policy', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminSettlementsPolicyGet(http: HttpClient, rootUrl: string
   );
 }
 
-apiV1AdminSettlementsPolicyGet.PATH = '/api/v1/admin/settlements/policy';

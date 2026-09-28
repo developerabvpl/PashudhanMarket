@@ -14,7 +14,7 @@ export interface ApiV1SellerCatalogProductsProductIdSubmitPost$Params {
 }
 
 export function apiV1SellerCatalogProductsProductIdSubmitPost(http: HttpClient, rootUrl: string, params: ApiV1SellerCatalogProductsProductIdSubmitPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerCatalogProductsProductIdSubmitPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/catalog/products/{productId}/submit', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1SellerCatalogProductsProductIdSubmitPost(http: HttpClient, 
   );
 }
 
-apiV1SellerCatalogProductsProductIdSubmitPost.PATH = '/api/v1/seller/catalog/products/{productId}/submit';

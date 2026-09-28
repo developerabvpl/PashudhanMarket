@@ -16,7 +16,7 @@ export interface ApiV1AdminSellersSellerIdRejectPost$Params {
 }
 
 export function apiV1AdminSellersSellerIdRejectPost(http: HttpClient, rootUrl: string, params: ApiV1AdminSellersSellerIdRejectPost$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSellersSellerIdRejectPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/sellers/{sellerId}/reject', 'post');
   if (params) {
     rb.path('sellerId', params.sellerId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminSellersSellerIdRejectPost(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminSellersSellerIdRejectPost.PATH = '/api/v1/admin/sellers/{sellerId}/reject';

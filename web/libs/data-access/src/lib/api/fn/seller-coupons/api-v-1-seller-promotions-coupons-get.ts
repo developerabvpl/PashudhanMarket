@@ -13,7 +13,7 @@ export interface ApiV1SellerPromotionsCouponsGet$Params {
 }
 
 export function apiV1SellerPromotionsCouponsGet(http: HttpClient, rootUrl: string, params?: ApiV1SellerPromotionsCouponsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<CouponDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerPromotionsCouponsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/promotions/coupons', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1SellerPromotionsCouponsGet(http: HttpClient, rootUrl: strin
   );
 }
 
-apiV1SellerPromotionsCouponsGet.PATH = '/api/v1/seller/promotions/coupons';

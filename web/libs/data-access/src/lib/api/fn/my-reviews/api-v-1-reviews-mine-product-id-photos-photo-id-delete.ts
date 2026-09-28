@@ -15,7 +15,7 @@ export interface ApiV1ReviewsMineProductIdPhotosPhotoIdDelete$Params {
 }
 
 export function apiV1ReviewsMineProductIdPhotosPhotoIdDelete(http: HttpClient, rootUrl: string, params: ApiV1ReviewsMineProductIdPhotosPhotoIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<ReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1ReviewsMineProductIdPhotosPhotoIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/reviews/mine/{productId}/photos/{photoId}', 'delete');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.path('photoId', params.photoId, {});
@@ -31,4 +31,3 @@ export function apiV1ReviewsMineProductIdPhotosPhotoIdDelete(http: HttpClient, r
   );
 }
 
-apiV1ReviewsMineProductIdPhotosPhotoIdDelete.PATH = '/api/v1/reviews/mine/{productId}/photos/{photoId}';

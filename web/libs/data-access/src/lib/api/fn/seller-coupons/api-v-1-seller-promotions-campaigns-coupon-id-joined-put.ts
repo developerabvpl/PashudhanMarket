@@ -16,7 +16,7 @@ export interface ApiV1SellerPromotionsCampaignsCouponIdJoinedPut$Params {
 }
 
 export function apiV1SellerPromotionsCampaignsCouponIdJoinedPut(http: HttpClient, rootUrl: string, params: ApiV1SellerPromotionsCampaignsCouponIdJoinedPut$Params, context?: HttpContext): Observable<StrictHttpResponse<CouponDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerPromotionsCampaignsCouponIdJoinedPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/promotions/campaigns/{couponId}/joined', 'put');
   if (params) {
     rb.path('couponId', params.couponId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1SellerPromotionsCampaignsCouponIdJoinedPut(http: HttpClient
   );
 }
 
-apiV1SellerPromotionsCampaignsCouponIdJoinedPut.PATH = '/api/v1/seller/promotions/campaigns/{couponId}/joined';

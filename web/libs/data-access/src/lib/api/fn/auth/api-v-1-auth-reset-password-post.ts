@@ -14,7 +14,7 @@ export interface ApiV1AuthResetPasswordPost$Params {
 }
 
 export function apiV1AuthResetPasswordPost(http: HttpClient, rootUrl: string, params: ApiV1AuthResetPasswordPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthResetPasswordPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/reset-password', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1AuthResetPasswordPost(http: HttpClient, rootUrl: string, pa
   );
 }
 
-apiV1AuthResetPasswordPost.PATH = '/api/v1/auth/reset-password';

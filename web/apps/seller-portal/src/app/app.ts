@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
+import { AccountMenu } from '@upbazaar/auth/portal';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
 import { SellerAccess, SellerPermissions } from './core/seller-access';
 
@@ -15,13 +15,13 @@ import { SellerAccess, SellerPermissions } from './core/seller-access';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    AccountMenu,
     HasPermissionDirective,
     TranslocoPipe,
     LanguageSwitcher,
     ToastHost,
     MatToolbarModule,
     MatButtonModule,
-    MatMenuModule,
     MatIconModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,15 +56,12 @@ import { SellerAccess, SellerPermissions } from './core/seller-access';
 
       <upb-language-switcher />
 
-      <button mat-button [matMenuTriggerFor]="accountMenu">{{ displayName() }}</button>
-      <mat-menu #accountMenu="matMenu">
-        <a mat-menu-item routerLink="/change-password">
-          {{ 'changePassword.title' | transloco }}
-        </a>
-        <button mat-menu-item type="button" (click)="signOut()">
-          {{ 'nav.signOut' | transloco }}
-        </button>
-      </mat-menu>
+      <!-- Loaded once the page settles: the menu brings Material's overlay, which the first screen does not need. -->
+      @defer (on idle) {
+      <upb-account-menu [displayName]="displayName()" (signOut)="signOut()" />
+      } @placeholder {
+      <button mat-button type="button">{{ displayName() }}</button>
+      }
     </mat-toolbar>
     }
 

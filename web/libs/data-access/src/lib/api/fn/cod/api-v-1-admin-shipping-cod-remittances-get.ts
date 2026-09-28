@@ -15,7 +15,7 @@ export interface ApiV1AdminShippingCodRemittancesGet$Params {
 }
 
 export function apiV1AdminShippingCodRemittancesGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminShippingCodRemittancesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfCodRemittanceDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingCodRemittancesGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/cod/remittances', 'get');
   if (params) {
     rb.query('page', params.page, {});
     rb.query('pageSize', params.pageSize, {});
@@ -31,4 +31,3 @@ export function apiV1AdminShippingCodRemittancesGet(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminShippingCodRemittancesGet.PATH = '/api/v1/admin/shipping/cod/remittances';

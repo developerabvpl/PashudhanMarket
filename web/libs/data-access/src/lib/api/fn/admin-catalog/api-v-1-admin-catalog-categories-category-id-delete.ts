@@ -13,7 +13,7 @@ export interface ApiV1AdminCatalogCategoriesCategoryIdDelete$Params {
 }
 
 export function apiV1AdminCatalogCategoriesCategoryIdDelete(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogCategoriesCategoryIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogCategoriesCategoryIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/categories/{categoryId}', 'delete');
   if (params) {
     rb.path('categoryId', params.categoryId, {});
   }
@@ -28,4 +28,3 @@ export function apiV1AdminCatalogCategoriesCategoryIdDelete(http: HttpClient, ro
   );
 }
 
-apiV1AdminCatalogCategoriesCategoryIdDelete.PATH = '/api/v1/admin/catalog/categories/{categoryId}';

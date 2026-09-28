@@ -15,7 +15,7 @@ export interface ApiV1AuthLoginPost$Params {
 }
 
 export function apiV1AuthLoginPost(http: HttpClient, rootUrl: string, params: ApiV1AuthLoginPost$Params, context?: HttpContext): Observable<StrictHttpResponse<AuthResultDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthLoginPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/login', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AuthLoginPost(http: HttpClient, rootUrl: string, params: Ap
   );
 }
 
-apiV1AuthLoginPost.PATH = '/api/v1/auth/login';

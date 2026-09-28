@@ -17,7 +17,7 @@ export interface ApiV1AdminUsersGet$Params {
 }
 
 export function apiV1AdminUsersGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminUsersGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfUserSummaryDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminUsersGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/users', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -35,4 +35,3 @@ export function apiV1AdminUsersGet(http: HttpClient, rootUrl: string, params?: A
   );
 }
 
-apiV1AdminUsersGet.PATH = '/api/v1/admin/users';

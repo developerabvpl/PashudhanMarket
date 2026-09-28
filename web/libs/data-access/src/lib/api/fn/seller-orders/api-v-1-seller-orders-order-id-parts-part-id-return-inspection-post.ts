@@ -17,7 +17,7 @@ export interface ApiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost$Params 
 }
 
 export function apiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost(http: HttpClient, rootUrl: string, params: ApiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerOrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/orders/{orderId}/parts/{partId}/return-inspection', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -34,4 +34,3 @@ export function apiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost(http: Ht
   );
 }
 
-apiV1SellerOrdersOrderIdPartsPartIdReturnInspectionPost.PATH = '/api/v1/seller/orders/{orderId}/parts/{partId}/return-inspection';

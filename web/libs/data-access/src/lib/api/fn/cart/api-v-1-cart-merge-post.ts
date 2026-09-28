@@ -15,7 +15,7 @@ export interface ApiV1CartMergePost$Params {
 }
 
 export function apiV1CartMergePost(http: HttpClient, rootUrl: string, params: ApiV1CartMergePost$Params, context?: HttpContext): Observable<StrictHttpResponse<CartMergeResultDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartMergePost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart/merge', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1CartMergePost(http: HttpClient, rootUrl: string, params: Ap
   );
 }
 
-apiV1CartMergePost.PATH = '/api/v1/cart/merge';

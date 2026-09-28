@@ -13,7 +13,7 @@ export interface ApiV1AdminSettlementsCommissionsGet$Params {
 }
 
 export function apiV1AdminSettlementsCommissionsGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminSettlementsCommissionsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<SellerCommissionDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsCommissionsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/commissions', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminSettlementsCommissionsGet(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminSettlementsCommissionsGet.PATH = '/api/v1/admin/settlements/commissions';

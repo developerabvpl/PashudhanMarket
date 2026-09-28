@@ -15,7 +15,7 @@ export interface ApiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet$Params {
 }
 
 export function apiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ParcelSuggestionDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/orders/{orderId}/parts/{partId}/parcel', 'get');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -31,4 +31,3 @@ export function apiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet(http: HttpCl
   );
 }
 
-apiV1AdminShippingOrdersOrderIdPartsPartIdParcelGet.PATH = '/api/v1/admin/shipping/orders/{orderId}/parts/{partId}/parcel';

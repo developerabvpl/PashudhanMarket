@@ -17,7 +17,7 @@ export interface ApiV1AdminShippingOrdersOrderIdPartsPartIdPackPost$Params {
 }
 
 export function apiV1AdminShippingOrdersOrderIdPartsPartIdPackPost(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingOrdersOrderIdPartsPartIdPackPost$Params, context?: HttpContext): Observable<StrictHttpResponse<ShipmentDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingOrdersOrderIdPartsPartIdPackPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/orders/{orderId}/parts/{partId}/pack', 'post');
   if (params) {
     rb.path('orderId', params.orderId, {});
     rb.path('partId', params.partId, {});
@@ -34,4 +34,3 @@ export function apiV1AdminShippingOrdersOrderIdPartsPartIdPackPost(http: HttpCli
   );
 }
 
-apiV1AdminShippingOrdersOrderIdPartsPartIdPackPost.PATH = '/api/v1/admin/shipping/orders/{orderId}/parts/{partId}/pack';

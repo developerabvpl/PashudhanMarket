@@ -17,7 +17,7 @@ export interface ApiV1AdminShippingShipmentsShipmentIdChargesTripPut$Params {
 }
 
 export function apiV1AdminShippingShipmentsShipmentIdChargesTripPut(http: HttpClient, rootUrl: string, params: ApiV1AdminShippingShipmentsShipmentIdChargesTripPut$Params, context?: HttpContext): Observable<StrictHttpResponse<ShipmentDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminShippingShipmentsShipmentIdChargesTripPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/shipping/shipments/{shipmentId}/charges/{trip}', 'put');
   if (params) {
     rb.path('shipmentId', params.shipmentId, {});
     rb.path('trip', params.trip, {});
@@ -34,4 +34,3 @@ export function apiV1AdminShippingShipmentsShipmentIdChargesTripPut(http: HttpCl
   );
 }
 
-apiV1AdminShippingShipmentsShipmentIdChargesTripPut.PATH = '/api/v1/admin/shipping/shipments/{shipmentId}/charges/{trip}';

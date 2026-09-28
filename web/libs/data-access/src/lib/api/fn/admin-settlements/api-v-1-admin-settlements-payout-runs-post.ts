@@ -13,7 +13,7 @@ export interface ApiV1AdminSettlementsPayoutRunsPost$Params {
 }
 
 export function apiV1AdminSettlementsPayoutRunsPost(http: HttpClient, rootUrl: string, params?: ApiV1AdminSettlementsPayoutRunsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<PayoutRunResultDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminSettlementsPayoutRunsPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/settlements/payout-runs', 'post');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminSettlementsPayoutRunsPost(http: HttpClient, rootUrl: s
   );
 }
 
-apiV1AdminSettlementsPayoutRunsPost.PATH = '/api/v1/admin/settlements/payout-runs';

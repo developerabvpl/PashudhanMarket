@@ -16,7 +16,7 @@ export interface ApiV1AdminUsersUserIdPut$Params {
 }
 
 export function apiV1AdminUsersUserIdPut(http: HttpClient, rootUrl: string, params: ApiV1AdminUsersUserIdPut$Params, context?: HttpContext): Observable<StrictHttpResponse<UserDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminUsersUserIdPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/users/{userId}', 'put');
   if (params) {
     rb.path('userId', params.userId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminUsersUserIdPut(http: HttpClient, rootUrl: string, para
   );
 }
 
-apiV1AdminUsersUserIdPut.PATH = '/api/v1/admin/users/{userId}';

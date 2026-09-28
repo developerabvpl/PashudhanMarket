@@ -14,7 +14,7 @@ export interface ApiV1SellerCatalogProductsProductIdGet$Params {
 }
 
 export function apiV1SellerCatalogProductsProductIdGet(http: HttpClient, rootUrl: string, params: ApiV1SellerCatalogProductsProductIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerCatalogProductsProductIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/catalog/products/{productId}', 'get');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1SellerCatalogProductsProductIdGet(http: HttpClient, rootUrl
   );
 }
 
-apiV1SellerCatalogProductsProductIdGet.PATH = '/api/v1/seller/catalog/products/{productId}';

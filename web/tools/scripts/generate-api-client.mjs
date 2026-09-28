@@ -19,6 +19,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inlineApiPaths } from './inline-api-paths.mjs';
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -155,5 +156,8 @@ execFileSync(
   [resolveGeneratorBin(), '--input', MERGED_CONTRACT, '--output', GENERATED_DIR],
   { cwd: workspaceRoot, stdio: 'inherit' }
 );
+
+const inlined = inlineApiPaths(resolve(GENERATED_DIR, 'fn'));
+process.stdout.write(`Inlined the paths of ${inlined} endpoint functions, so unused ones drop out of bundles\n`);
 
 process.stdout.write(`Generated client in ${GENERATED_DIR}\n`);

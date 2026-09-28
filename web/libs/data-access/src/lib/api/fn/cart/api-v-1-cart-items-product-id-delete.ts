@@ -14,7 +14,7 @@ export interface ApiV1CartItemsProductIdDelete$Params {
 }
 
 export function apiV1CartItemsProductIdDelete(http: HttpClient, rootUrl: string, params: ApiV1CartItemsProductIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<CartDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1CartItemsProductIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/cart/items/{productId}', 'delete');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1CartItemsProductIdDelete(http: HttpClient, rootUrl: string,
   );
 }
 
-apiV1CartItemsProductIdDelete.PATH = '/api/v1/cart/items/{productId}';

@@ -14,7 +14,7 @@ export interface ApiV1AuthForgotPasswordPost$Params {
 }
 
 export function apiV1AuthForgotPasswordPost(http: HttpClient, rootUrl: string, params: ApiV1AuthForgotPasswordPost$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthForgotPasswordPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/forgot-password', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -29,4 +29,3 @@ export function apiV1AuthForgotPasswordPost(http: HttpClient, rootUrl: string, p
   );
 }
 
-apiV1AuthForgotPasswordPost.PATH = '/api/v1/auth/forgot-password';

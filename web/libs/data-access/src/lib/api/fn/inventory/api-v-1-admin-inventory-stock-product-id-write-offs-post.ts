@@ -16,7 +16,7 @@ export interface ApiV1AdminInventoryStockProductIdWriteOffsPost$Params {
 }
 
 export function apiV1AdminInventoryStockProductIdWriteOffsPost(http: HttpClient, rootUrl: string, params: ApiV1AdminInventoryStockProductIdWriteOffsPost$Params, context?: HttpContext): Observable<StrictHttpResponse<StockLevelDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminInventoryStockProductIdWriteOffsPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/inventory/stock/{productId}/write-offs', 'post');
   if (params) {
     rb.path('productId', params.productId, {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiV1AdminInventoryStockProductIdWriteOffsPost(http: HttpClient,
   );
 }
 
-apiV1AdminInventoryStockProductIdWriteOffsPost.PATH = '/api/v1/admin/inventory/stock/{productId}/write-offs';

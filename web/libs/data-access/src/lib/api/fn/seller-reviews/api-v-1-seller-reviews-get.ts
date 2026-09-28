@@ -16,7 +16,7 @@ export interface ApiV1SellerReviewsGet$Params {
 }
 
 export function apiV1SellerReviewsGet(http: HttpClient, rootUrl: string, params?: ApiV1SellerReviewsGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PagedListOfReviewDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerReviewsGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/reviews', 'get');
   if (params) {
     rb.query('Page', params.Page, {});
     rb.query('PageSize', params.PageSize, {});
@@ -33,4 +33,3 @@ export function apiV1SellerReviewsGet(http: HttpClient, rootUrl: string, params?
   );
 }
 
-apiV1SellerReviewsGet.PATH = '/api/v1/seller/reviews';

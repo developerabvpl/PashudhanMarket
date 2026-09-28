@@ -14,7 +14,7 @@ export interface ApiV1PaymentsFakeGatewayOrderIdPayPost$Params {
 }
 
 export function apiV1PaymentsFakeGatewayOrderIdPayPost(http: HttpClient, rootUrl: string, params: ApiV1PaymentsFakeGatewayOrderIdPayPost$Params, context?: HttpContext): Observable<StrictHttpResponse<PaymentResultDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1PaymentsFakeGatewayOrderIdPayPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/payments/fake/{gatewayOrderId}/pay', 'post');
   if (params) {
     rb.path('gatewayOrderId', params.gatewayOrderId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1PaymentsFakeGatewayOrderIdPayPost(http: HttpClient, rootUrl
   );
 }
 
-apiV1PaymentsFakeGatewayOrderIdPayPost.PATH = '/api/v1/payments/fake/{gatewayOrderId}/pay';

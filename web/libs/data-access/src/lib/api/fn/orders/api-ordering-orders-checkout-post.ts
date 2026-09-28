@@ -16,7 +16,7 @@ export interface ApiOrderingOrdersCheckoutPost$Params {
 }
 
 export function apiOrderingOrdersCheckoutPost(http: HttpClient, rootUrl: string, params: ApiOrderingOrdersCheckoutPost$Params, context?: HttpContext): Observable<StrictHttpResponse<OrderDto>> {
-  const rb = new RequestBuilder(rootUrl, apiOrderingOrdersCheckoutPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/ordering/orders/checkout', 'post');
   if (params) {
     rb.header('Idempotency-Key', params['Idempotency-Key'], {});
     rb.body(params.body, 'application/*+json');
@@ -32,4 +32,3 @@ export function apiOrderingOrdersCheckoutPost(http: HttpClient, rootUrl: string,
   );
 }
 
-apiOrderingOrdersCheckoutPost.PATH = '/api/ordering/orders/checkout';

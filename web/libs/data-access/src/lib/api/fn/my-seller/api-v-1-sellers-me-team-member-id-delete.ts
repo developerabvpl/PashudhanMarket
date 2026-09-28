@@ -13,7 +13,7 @@ export interface ApiV1SellersMeTeamMemberIdDelete$Params {
 }
 
 export function apiV1SellersMeTeamMemberIdDelete(http: HttpClient, rootUrl: string, params: ApiV1SellersMeTeamMemberIdDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellersMeTeamMemberIdDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/sellers/me/team/{memberId}', 'delete');
   if (params) {
     rb.path('memberId', params.memberId, {});
   }
@@ -28,4 +28,3 @@ export function apiV1SellersMeTeamMemberIdDelete(http: HttpClient, rootUrl: stri
   );
 }
 
-apiV1SellersMeTeamMemberIdDelete.PATH = '/api/v1/sellers/me/team/{memberId}';

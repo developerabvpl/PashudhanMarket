@@ -14,7 +14,7 @@ export interface ApiV1SellerSettlementsPayoutsPayoutIdGet$Params {
 }
 
 export function apiV1SellerSettlementsPayoutsPayoutIdGet(http: HttpClient, rootUrl: string, params: ApiV1SellerSettlementsPayoutsPayoutIdGet$Params, context?: HttpContext): Observable<StrictHttpResponse<PayoutDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerSettlementsPayoutsPayoutIdGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/settlements/payouts/{payoutId}', 'get');
   if (params) {
     rb.path('payoutId', params.payoutId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1SellerSettlementsPayoutsPayoutIdGet(http: HttpClient, rootU
   );
 }
 
-apiV1SellerSettlementsPayoutsPayoutIdGet.PATH = '/api/v1/seller/settlements/payouts/{payoutId}';

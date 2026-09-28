@@ -13,7 +13,7 @@ export interface ApiV1UsersMe2FaSetupPost$Params {
 }
 
 export function apiV1UsersMe2FaSetupPost(http: HttpClient, rootUrl: string, params?: ApiV1UsersMe2FaSetupPost$Params, context?: HttpContext): Observable<StrictHttpResponse<TotpSetupDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1UsersMe2FaSetupPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/users/me/2fa/setup', 'post');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1UsersMe2FaSetupPost(http: HttpClient, rootUrl: string, para
   );
 }
 
-apiV1UsersMe2FaSetupPost.PATH = '/api/v1/users/me/2fa/setup';

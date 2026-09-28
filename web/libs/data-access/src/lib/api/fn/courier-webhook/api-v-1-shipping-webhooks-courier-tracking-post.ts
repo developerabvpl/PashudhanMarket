@@ -13,7 +13,7 @@ export interface ApiV1ShippingWebhooksCourierTrackingPost$Params {
 }
 
 export function apiV1ShippingWebhooksCourierTrackingPost(http: HttpClient, rootUrl: string, params?: ApiV1ShippingWebhooksCourierTrackingPost$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, apiV1ShippingWebhooksCourierTrackingPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/shipping/webhooks/courier-tracking', 'post');
   if (params) {
     rb.header('x-api-key', params['x-api-key'], {});
   }
@@ -28,4 +28,3 @@ export function apiV1ShippingWebhooksCourierTrackingPost(http: HttpClient, rootU
   );
 }
 
-apiV1ShippingWebhooksCourierTrackingPost.PATH = '/api/v1/shipping/webhooks/courier-tracking';

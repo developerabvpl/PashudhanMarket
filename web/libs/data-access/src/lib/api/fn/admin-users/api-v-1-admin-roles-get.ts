@@ -13,7 +13,7 @@ export interface ApiV1AdminRolesGet$Params {
 }
 
 export function apiV1AdminRolesGet(http: HttpClient, rootUrl: string, params?: ApiV1AdminRolesGet$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<RoleDto>>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminRolesGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/roles', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1AdminRolesGet(http: HttpClient, rootUrl: string, params?: A
   );
 }
 
-apiV1AdminRolesGet.PATH = '/api/v1/admin/roles';

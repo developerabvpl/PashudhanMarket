@@ -14,7 +14,7 @@ export interface ApiV1AdminCatalogProductsProductIdSaleDelete$Params {
 }
 
 export function apiV1AdminCatalogProductsProductIdSaleDelete(http: HttpClient, rootUrl: string, params: ApiV1AdminCatalogProductsProductIdSaleDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<ProductDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AdminCatalogProductsProductIdSaleDelete.PATH, 'delete');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/catalog/products/{productId}/sale', 'delete');
   if (params) {
     rb.path('productId', params.productId, {});
   }
@@ -29,4 +29,3 @@ export function apiV1AdminCatalogProductsProductIdSaleDelete(http: HttpClient, r
   );
 }
 
-apiV1AdminCatalogProductsProductIdSaleDelete.PATH = '/api/v1/admin/catalog/products/{productId}/sale';

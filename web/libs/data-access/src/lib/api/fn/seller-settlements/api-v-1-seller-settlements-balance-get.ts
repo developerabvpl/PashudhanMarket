@@ -13,7 +13,7 @@ export interface ApiV1SellerSettlementsBalanceGet$Params {
 }
 
 export function apiV1SellerSettlementsBalanceGet(http: HttpClient, rootUrl: string, params?: ApiV1SellerSettlementsBalanceGet$Params, context?: HttpContext): Observable<StrictHttpResponse<SellerBalanceDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerSettlementsBalanceGet.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/settlements/balance', 'get');
   if (params) {
   }
 
@@ -27,4 +27,3 @@ export function apiV1SellerSettlementsBalanceGet(http: HttpClient, rootUrl: stri
   );
 }
 
-apiV1SellerSettlementsBalanceGet.PATH = '/api/v1/seller/settlements/balance';

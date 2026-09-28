@@ -15,7 +15,7 @@ export interface ApiV1AuthRefreshPost$Params {
 }
 
 export function apiV1AuthRefreshPost(http: HttpClient, rootUrl: string, params: ApiV1AuthRefreshPost$Params, context?: HttpContext): Observable<StrictHttpResponse<AuthTokensDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1AuthRefreshPost.PATH, 'post');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/auth/refresh', 'post');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1AuthRefreshPost(http: HttpClient, rootUrl: string, params: 
   );
 }
 
-apiV1AuthRefreshPost.PATH = '/api/v1/auth/refresh';

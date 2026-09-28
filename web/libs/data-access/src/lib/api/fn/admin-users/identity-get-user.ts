@@ -14,7 +14,7 @@ export interface IdentityGetUser$Params {
 }
 
 export function identityGetUser(http: HttpClient, rootUrl: string, params: IdentityGetUser$Params, context?: HttpContext): Observable<StrictHttpResponse<UserDto>> {
-  const rb = new RequestBuilder(rootUrl, identityGetUser.PATH, 'get');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/admin/users/{userId}', 'get');
   if (params) {
     rb.path('userId', params.userId, {});
   }
@@ -29,4 +29,3 @@ export function identityGetUser(http: HttpClient, rootUrl: string, params: Ident
   );
 }
 
-identityGetUser.PATH = '/api/v1/admin/users/{userId}';

@@ -15,7 +15,7 @@ export interface ApiV1SellerShippingPickupLocationPut$Params {
 }
 
 export function apiV1SellerShippingPickupLocationPut(http: HttpClient, rootUrl: string, params: ApiV1SellerShippingPickupLocationPut$Params, context?: HttpContext): Observable<StrictHttpResponse<PickupLocationDto>> {
-  const rb = new RequestBuilder(rootUrl, apiV1SellerShippingPickupLocationPut.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, '/api/v1/seller/shipping/pickup-location', 'put');
   if (params) {
     rb.body(params.body, 'application/*+json');
   }
@@ -30,4 +30,3 @@ export function apiV1SellerShippingPickupLocationPut(http: HttpClient, rootUrl: 
   );
 }
 
-apiV1SellerShippingPickupLocationPut.PATH = '/api/v1/seller/shipping/pickup-location';
