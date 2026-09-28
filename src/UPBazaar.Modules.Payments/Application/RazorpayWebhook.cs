@@ -106,6 +106,16 @@ internal sealed partial class HandleRazorpayWebhookCommandHandler(
                     return Result.Success();
                 }
 
+                // A second payment captured on an order already paid - a retry that went through late.
+                // Retrying the webhook cannot change that, and a webhook that keeps failing gets
+                // switched off by Razorpay, so it is acknowledged and logged for staff to refund.
+                if (settled.IsFailure && settled.Error == PaymentErrors.PaidWithAnotherPayment)
+                {
+                    LogSecondPayment(logger, webhook.GatewayOrderId, webhook.GatewayPaymentId);
+
+                    return Result.Success();
+                }
+
                 return settled.IsSuccess ? Result.Success() : Result.Failure(settled.Error);
             }
 
@@ -133,6 +143,9 @@ internal sealed partial class HandleRazorpayWebhookCommandHandler(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Razorpay webhook for unknown gateway order {GatewayOrderId}")]
     private static partial void LogUnknownOrder(ILogger logger, string gatewayOrderId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Second payment {GatewayPaymentId} captured on already-paid gateway order {GatewayOrderId}: refund it in the Razorpay dashboard")]
+    private static partial void LogSecondPayment(ILogger logger, string gatewayOrderId, string gatewayPaymentId);
 }
 
 /// <summary>

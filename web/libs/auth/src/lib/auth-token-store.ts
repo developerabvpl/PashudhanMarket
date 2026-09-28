@@ -56,6 +56,17 @@ export class AuthTokenStore {
 
   readonly isAuthenticated = computed(() => this.hasValidAccessToken() || this.canRefresh());
 
+  constructor() {
+    // Another tab of the same app refreshed, signed in or signed out. Refresh tokens are
+    // single-use and the server treats a used one as stolen - signing every tab out - so each
+    // tab must pick up the pair the other one was handed rather than spend its stale copy.
+    this.document.defaultView?.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY || event.key === null) {
+        this.session.set(this.restore());
+      }
+    });
+  }
+
   set(tokens: AuthTokensDto): void {
     const session: StoredSession = {
       accessToken: tokens.accessToken,

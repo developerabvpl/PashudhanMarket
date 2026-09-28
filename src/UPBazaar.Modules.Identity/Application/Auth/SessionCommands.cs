@@ -26,7 +26,22 @@ internal sealed class RefreshTokensCommandHandler(
     TokenService tokenService,
     LoginAuditWriter auditWriter) : ICommandHandler<RefreshTokensCommand, AuthTokensDto>
 {
-    public async Task<Result<AuthTokensDto>> HandleAsync(
+    public async Task<Result<AuthTokensDto>> HandleAsync(RefreshTokensCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await HandleCoreAsync(command, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another attempt at the same moment counted first. Answered as a wrong guess, whatever
+            // this one was, so firing guesses in parallel neither dodges the attempt limit nor
+            // reveals which guess was right.
+            return Result.Failure<AuthTokensDto>(IdentityErrors.RefreshTokenInvalid);
+        }
+    }
+
+    private async Task<Result<AuthTokensDto>> HandleCoreAsync(
         RefreshTokensCommand command,
         CancellationToken cancellationToken)
     {

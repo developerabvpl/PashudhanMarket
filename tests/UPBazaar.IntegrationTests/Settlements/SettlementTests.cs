@@ -143,6 +143,37 @@ public sealed class SettlementTests(ApiFixture fixture)
     }
 
     [DatabaseFact]
+    public async Task A_return_accepted_after_the_sale_was_paid_out_is_taken_back_from_the_next_payout()
+    {
+        var admin = await AdminClientAsync();
+        var (sellerId, _) = await SellerAsync(admin);
+        var order = await DeliveredAsync(admin, sellerId);
+        var part = order.Parts.Single();
+        await ProcessOutboxAsync();
+        await CloseReturnWindowsAsync(sellerId);
+
+        // Asked for in the window's last moments; the payout run gets there before the hold does.
+        (await Buyer(order).PostAsJsonAsync(
+                new Uri($"/api/v1/orders/{order.Id}/parts/{part.Id}/return", UriKind.Relative),
+                new { reason = "Damaged", refundUpiId = "asha@okicici" }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        await RunPayoutsAsync(admin);
+        await ProcessOutboxAsync();
+
+        var sale = (await EarningsAsync(admin, sellerId)).Single(e => e.Kind == "Sale");
+        sale.Status.ShouldBe("Settled");
+
+        (await admin.PostAsJsonAsync(new Uri($"/api/v1/admin/orders/{order.Id}/parts/{part.Id}/return-decision", UriKind.Relative), new { approve = true }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        await ProcessOutboxAsync();
+
+        var clawback = (await EarningsAsync(admin, sellerId)).Single(e => e.Kind == "Adjustment");
+        clawback.Detail.ShouldBe("Return");
+        clawback.GrossAmount.ShouldBe(-sale.GrossAmount);
+        clawback.NetAmount.ShouldBe(-sale.NetAmount);
+    }
+
+    [DatabaseFact]
     public async Task A_refused_return_releases_the_earning_to_be_paid()
     {
         var admin = await AdminClientAsync();

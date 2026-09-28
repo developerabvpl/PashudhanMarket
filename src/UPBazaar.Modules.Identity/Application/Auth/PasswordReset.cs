@@ -117,7 +117,22 @@ internal sealed class ResetPasswordCommandHandler(
     TokenService tokenService,
     IClock clock) : ICommandHandler<ResetPasswordCommand>
 {
-    public async Task<Result> HandleAsync(
+    public async Task<Result> HandleAsync(ResetPasswordCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await HandleCoreAsync(command, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another attempt at the same moment counted first. Answered as a wrong guess, whatever
+            // this one was, so firing guesses in parallel neither dodges the attempt limit nor
+            // reveals which guess was right.
+            return Result.Failure(IdentityErrors.OtpInvalid);
+        }
+    }
+
+    private async Task<Result> HandleCoreAsync(
         ResetPasswordCommand command,
         CancellationToken cancellationToken)
     {

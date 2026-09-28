@@ -10,6 +10,10 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("Users", IdentityModule.SchemaName);
 
+        // Failed sign-ins counted in parallel must not overwrite each other and slip under the
+        // lockout: the later save fails instead.
+        builder.Property(x => x.AccessFailedCount).IsConcurrencyToken();
+
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
 
@@ -118,6 +122,9 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
     {
         builder.ToTable("RefreshTokens", IdentityModule.SchemaName);
 
+        // A token presented twice at once must rotate once: the later save fails, and it is refused.
+        builder.Property(x => x.RevokedAtUtc).IsConcurrencyToken();
+
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();
 
@@ -147,6 +154,9 @@ internal sealed class OtpChallengeConfiguration : IEntityTypeConfiguration<OtpCh
     public void Configure(EntityTypeBuilder<OtpChallenge> builder)
     {
         builder.ToTable("OtpChallenges", IdentityModule.SchemaName);
+
+        // Two guesses at once must not both count as the first: the later save fails instead.
+        builder.Property(x => x.Attempts).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();

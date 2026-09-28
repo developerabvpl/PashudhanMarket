@@ -39,7 +39,7 @@ internal sealed class EarningConfiguration : IEntityTypeConfiguration<Earning>
     {
         builder.ToTable("Earnings", SettlementsModule.SchemaName, table =>
             // A courier cost is the one kind that takes money away.
-            table.HasCheckConstraint("CK_Earnings_NetAmount", "[NetAmount] >= 0 OR [Kind] = 'CourierCost'"));
+            table.HasCheckConstraint("CK_Earnings_NetAmount", "[NetAmount] >= 0 OR [Kind] IN ('CourierCost', 'Adjustment')"));
 
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.PublicId).IsUnique();

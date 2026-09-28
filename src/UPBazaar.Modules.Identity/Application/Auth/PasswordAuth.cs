@@ -112,7 +112,22 @@ internal sealed class LoginCommandHandler(
     LoginAuditWriter auditWriter,
     IClock clock) : ICommandHandler<LoginCommand, AuthResultDto>
 {
-    public async Task<Result<AuthResultDto>> HandleAsync(
+    public async Task<Result<AuthResultDto>> HandleAsync(LoginCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await HandleCoreAsync(command, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another attempt at the same moment counted first. Answered as a wrong guess, whatever
+            // this one was, so firing guesses in parallel neither dodges the attempt limit nor
+            // reveals which guess was right.
+            return Result.Failure<AuthResultDto>(IdentityErrors.InvalidCredentials);
+        }
+    }
+
+    private async Task<Result<AuthResultDto>> HandleCoreAsync(
         LoginCommand command,
         CancellationToken cancellationToken)
     {

@@ -57,7 +57,7 @@ internal sealed class ImportCodRemittanceCommandHandler(UPBazaarDbContext dbCont
         var awbs = remittance.Lines.Select(l => l.Awb).Distinct().ToList();
         var receivables = await dbContext.Set<CodReceivable>()
             .Where(r => awbs.Contains(r.Awb))
-            .ToDictionaryAsync(r => r.Awb, cancellationToken);
+            .ToDictionaryAsync(r => r.Awb, StringComparer.OrdinalIgnoreCase, cancellationToken);
 
         foreach (var line in remittance.Lines)
         {
@@ -82,6 +82,10 @@ internal sealed class ImportCodRemittanceCommandHandler(UPBazaarDbContext dbCont
             // Two uploads of the same report at once; the unique index on the reference let one through.
             return Result.Failure<CodRemittanceDto>(ShippingErrors.CodReferenceTaken);
         }
+
+        // A delivery reported while this was being saved may have missed these rows.
+        var unmatched = remittance.Lines.Where(l => l.ReceivableId is null).Select(l => l.Awb).Distinct().ToList();
+        await CodMatching.SweepAsync(dbContext, unmatched, now, cancellationToken);
 
         return remittance.ToDto(receivables.Values.ToDictionary(r => r.PublicId, r => r.OrderNumber));
     }

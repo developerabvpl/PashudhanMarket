@@ -54,12 +54,12 @@ internal sealed class OrderPartDeliveredEarningHandler(UPBazaarDbContext dbConte
     }
 }
 
-/// <summary>A return was asked for: hold the earning until it is decided.</summary>
+/// <summary>A return was asked for: hold what the goods earn - the sale and any adjustment to it - until it is decided.</summary>
 internal sealed class OrderPartReturnRequestedEarningHandler(UPBazaarDbContext dbContext)
     : IDomainEventHandler<OrderPartReturnRequestedDomainEvent>
 {
     public Task HandleAsync(OrderPartReturnRequestedDomainEvent e, CancellationToken cancellationToken) =>
-        EarningUpdate.ApplyAsync(dbContext, e.PartId, earning => earning.Hold(), cancellationToken);
+        EarningUpdate.ApplyAsync(dbContext, e.PartId, earnings => earnings.ForEach(x => x.Hold()), cancellationToken);
 }
 
 /// <summary>The return was refused: the sale stands and the earning is payable again.</summary>
@@ -67,30 +67,53 @@ internal sealed class OrderPartReturnRejectedEarningHandler(UPBazaarDbContext db
     : IDomainEventHandler<OrderPartReturnRejectedDomainEvent>
 {
     public Task HandleAsync(OrderPartReturnRejectedDomainEvent e, CancellationToken cancellationToken) =>
-        EarningUpdate.ApplyAsync(dbContext, e.PartId, earning => earning.Release(), cancellationToken);
+        EarningUpdate.ApplyAsync(dbContext, e.PartId, earnings => earnings.ForEach(x => x.Release()), cancellationToken);
 }
 
 /// <summary>
 /// The return was accepted: the returned goods go back to the seller and the buyer is refunded for
 /// them. The seller earns only on what the buyer keeps - nothing when the whole parcel goes back.
 /// Settled now rather than when the parcel arrives, so a return still in transit is never paid out.
+///
+/// What is not yet paid - the sale and any coupon adjustment - is cancelled, and the sale kept at
+/// what the buyer keeps. What was already paid - a request made in the last moments of the window,
+/// before its hold reached a payout run - is taken back by an adjustment against the next payout.
 /// </summary>
-internal sealed class OrderPartReturnApprovedEarningHandler(UPBazaarDbContext dbContext)
+internal sealed class OrderPartReturnApprovedEarningHandler(UPBazaarDbContext dbContext, IClock clock)
     : IDomainEventHandler<OrderPartReturnApprovedDomainEvent>
 {
+    private const string Reason = "Return";
+
     public Task HandleAsync(OrderPartReturnApprovedDomainEvent e, CancellationToken cancellationToken) =>
         EarningUpdate.ApplyAsync(
             dbContext,
             e.PartId,
-            earning =>
+            earnings =>
             {
-                if (e.KeptGross > 0)
+                var sale = earnings.FirstOrDefault(x => x.Kind == EarningKind.Sale);
+
+                if (sale is null || earnings.Any(x => x.Reference == Reason))
                 {
-                    earning.KeepOnly(e.KeptGross);
+                    return;
                 }
-                else
+
+                var paid = earnings.Where(x => x.Status == EarningStatus.Settled).Sum(x => x.GrossAmount);
+                var owed = e.KeptGross - paid;
+
+                earnings.Where(x => x.Kind == EarningKind.Adjustment).ToList().ForEach(x => x.Cancel());
+
+                if (sale.Status != EarningStatus.Settled && owed > 0)
                 {
-                    earning.Cancel();
+                    sale.KeepOnly(owed);
+
+                    return;
+                }
+
+                sale.Cancel();
+
+                if (owed != 0)
+                {
+                    dbContext.Set<Earning>().Add(Earning.AdjustmentOf(sale, owed, Reason, clock.UtcNow));
                 }
             },
             cancellationToken);
@@ -114,38 +137,49 @@ internal sealed class OrderPartDiscountRevokedEarningHandler(UPBazaarDbContext d
 
         var sale = earnings.FirstOrDefault(x => x.Kind == EarningKind.Sale);
 
-        if (sale is null || earnings.Any(x => x.Kind == EarningKind.Adjustment && x.Reference == Reason))
+        // Nothing is owed on goods that went back, and it is added once however often this arrives.
+        if (sale is null || sale.Status == EarningStatus.Cancelled || earnings.Any(x => x.Kind == EarningKind.Adjustment && x.Reference == Reason))
         {
             return;
         }
 
-        dbContext.Set<Earning>().Add(Earning.AdjustmentOf(sale, e.Amount, Reason, clock.UtcNow));
+        var adjustment = Earning.AdjustmentOf(sale, e.Amount, Reason, clock.UtcNow);
+
+        // A return asked for on this parcel holds this too until it is decided.
+        if (sale.Status == EarningStatus.OnHold)
+        {
+            adjustment.Hold();
+        }
+
+        dbContext.Set<Earning>().Add(adjustment);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
 
 /// <summary>
-/// Applies a return's change to a parcel's sale earning. The delivery earning is left alone: the
-/// delivery was made whatever happens to the goods. A parcel with no earning - delivered before Settlements
-/// existed - has nothing to change. A concurrency clash is left to propagate so the outbox retries.
+/// Applies a return's change to what a parcel's goods earn: its sale and any adjustments to it. The
+/// delivery earning is left alone: the delivery was made whatever happens to the goods. A parcel with
+/// no earning - delivered before Settlements existed - has nothing to change. A concurrency clash is
+/// left to propagate so the outbox retries.
 /// </summary>
 internal static class EarningUpdate
 {
     public static async Task ApplyAsync(
         UPBazaarDbContext dbContext,
         Guid partId,
-        Action<Earning> change,
+        Action<List<Earning>> change,
         CancellationToken cancellationToken)
     {
-        var earning = await dbContext.Set<Earning>()
-            .FirstOrDefaultAsync(x => x.OrderPartId == partId && x.Kind == EarningKind.Sale, cancellationToken);
+        var earnings = await dbContext.Set<Earning>()
+            .Where(x => x.OrderPartId == partId && (x.Kind == EarningKind.Sale || x.Kind == EarningKind.Adjustment))
+            .ToListAsync(cancellationToken);
 
-        if (earning is null)
+        if (earnings.Count == 0)
         {
             return;
         }
 
-        change(earning);
+        change(earnings);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

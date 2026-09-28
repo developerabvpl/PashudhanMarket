@@ -73,7 +73,7 @@ public sealed class SellerTeamTests(ApiFixture fixture)
         var admin = await AdminClientAsync();
         var (_, owner) = await ShopAsync(admin);
         var (_, other) = await ShopAsync(admin);
-        var (email, _) = await AccountAsync();
+        var (email, refresh) = await AccountAsync();
 
         (await owner.PostAsJsonAsync(TeamUri, new { email = $"nobody-{Guid.NewGuid():N}@example.com", role = "Manager" }))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -82,6 +82,17 @@ public sealed class SellerTeamTests(ApiFixture fixture)
 
         (await owner.PostAsJsonAsync(TeamUri, new { email, role = "Manager" })).EnsureSuccessStatusCode();
         (await other.PostAsJsonAsync(TeamUri, new { email, role = "Manager" }))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Nor, once on a team, can they open a shop of their own and hold two.
+        var (member, _) = await RefreshedAsync(refresh);
+        (await member.PostAsJsonAsync(new Uri("/api/v1/sellers/me/application", UriKind.Relative), new
+            {
+                shopName = "Side Shop", description = (string?)null, contactMobile = "9812345678", contactEmail = (string?)null,
+                addressLine1 = "Plot 4", addressLine2 = (string?)null, city = "Mathura", state = "Uttar Pradesh", pincode = "281001",
+                legalName = "Side Shop", gstin = (string?)null, pan = "ABCDE1234F", bankAccountHolder = "Side Shop",
+                bankAccountNumber = "123456789", ifsc = "SBIN0001234",
+            }))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 

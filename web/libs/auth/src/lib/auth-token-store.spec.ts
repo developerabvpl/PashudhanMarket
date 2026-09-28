@@ -26,6 +26,16 @@ describe('AuthTokenStore', () => {
     expect(store.accessToken()).toBeNull();
   });
 
+  it('picks up the pair another tab was given', () => {
+    store.set(tokens());
+    const other = { accessToken: 'newer-access', accessTokenExpiresAtUtc: Date.now() + 900_000, refreshToken: 'newer-refresh', refreshTokenExpiresAtUtc: Date.now() + 86_400_000 };
+    localStorage.setItem('upbazaar.session', JSON.stringify(other));
+
+    window.dispatchEvent(new StorageEvent('storage', { key: 'upbazaar.session' }));
+
+    expect(store.refreshToken()).toBe('newer-refresh');
+  });
+
   it('holds the pair it was given', () => {
     store.set(tokens());
 

@@ -241,6 +241,12 @@ internal static class BuyerReview
         {
             return Result.Failure<ReviewDto>(ReviewErrors.ConcurrentChange);
         }
+        catch (DbUpdateException) when (dbContext.Entry(review).State == EntityState.Added)
+        {
+            // A first review submitted twice at once - a double click, two tabs. The unique index
+            // on buyer and product let one through; the other is told to reload and find it.
+            return Result.Failure<ReviewDto>(ReviewErrors.ConcurrentChange);
+        }
 
         return review.ToDto(ReviewAudience.AuthorOrStaff, links);
     }

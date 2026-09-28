@@ -66,7 +66,13 @@ export class SeoService {
     const script = this.document.createElement('script');
     script.id = 'upb-jsonld';
     script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(schema);
+    // JSON.stringify leaves < and > as they are, and the prerenderer writes script text out
+    // unescaped: a product name containing </script> would end the tag and run whatever came
+    // next on every visit. Escaped as JSON unicode escapes, they mean the same to a crawler.
+    script.textContent = JSON.stringify(schema)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026');
 
     this.document.head.appendChild(script);
   }

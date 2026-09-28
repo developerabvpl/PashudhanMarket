@@ -135,7 +135,17 @@ internal sealed class ReturnPickupBooker(
             shipment = created.Value;
         }
 
-        var booked = await BookWithCarrierAsync(shipment, part, returnTo, cancellationToken);
+        Result booked;
+
+        try
+        {
+            booked = await BookWithCarrierAsync(shipment, part, returnTo, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Booked by someone else at the same moment; their progress was saved.
+            return Result.Failure<ShipmentDto>(ShippingErrors.ConcurrentChange);
+        }
 
         return booked.IsFailure ? Result.Failure<ShipmentDto>(booked.Error) : shipment.ToDto(courier);
     }

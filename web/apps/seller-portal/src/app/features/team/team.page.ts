@@ -131,9 +131,14 @@ export class TeamPage {
 
     try {
       await work();
-      await this.load();
     } catch (error) {
       this.error.set(toApiProblem(error).title);
+    }
+
+    // Reloaded either way: after a refused change the list must show what is actually saved,
+    // not the role the owner picked.
+    try {
+      await this.load();
     } finally {
       this.busy.set(false);
     }

@@ -15,6 +15,10 @@ public static class IdentityErrors
         "identity.auth.invalid_credentials",
         "The email or password is incorrect.");
 
+    public static readonly Error BeyondYourAccess = Error.Forbidden(
+        "identity.beyond_your_access",
+        "You can only grant, remove or suspend access you hold yourself.");
+
     public static readonly Error AccountLockedOut = Error.Forbidden(
         "identity.auth.locked_out",
         "Too many failed attempts. Try again in 15 minutes.");

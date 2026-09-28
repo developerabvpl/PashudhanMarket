@@ -76,7 +76,9 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
         var now = clock.UtcNow;
         var moved = shipment.ApplyCourierStatus(rawStatus, mapped, now);
 
-        if (moved && shipment is { Direction: ShipmentDirection.Forward, Status: ShipmentStatus.Delivered, CodAmount: > 0 })
+        var opensCod = moved && shipment is { Direction: ShipmentDirection.Forward, Status: ShipmentStatus.Delivered, CodAmount: > 0 };
+
+        if (opensCod)
         {
             await OpenCodReceivableAsync(shipment, now, cancellationToken);
         }
@@ -92,6 +94,12 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
             return Result.Failure(ShippingErrors.ConcurrentChange);
         }
 
+        if (opensCod)
+        {
+            // A remittance uploaded while this was being saved may have missed the parcel.
+            await CodMatching.SweepAsync(dbContext, [shipment.Awb!], now, cancellationToken);
+        }
+
         // A buyer's return moves its part only on arrival: the part has been Returning since the
         // return was approved, and a return reaching the seller is the part coming back.
         var partStatus = (isReturn, shipment.Status) switch
@@ -105,7 +113,10 @@ internal sealed partial class HandleCourierWebhookCommandHandler(
             _ => null,
         };
 
-        if (!moved || partStatus is null)
+        // Told to Orders whenever the shipment's status means something to the part, not only when
+        // this update moved it: if telling Orders failed last time - two parcels of one order
+        // delivered at once, say - the courier's retry must get through. Orders ignores repeats.
+        if (partStatus is null)
         {
             return Result.Success();
         }

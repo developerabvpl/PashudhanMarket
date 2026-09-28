@@ -133,7 +133,22 @@ internal sealed class VerifyTwoFactorCommandHandler(
     LoginAuditWriter auditWriter,
     IClock clock) : ICommandHandler<VerifyTwoFactorCommand, AuthTokensDto>
 {
-    public async Task<Result<AuthTokensDto>> HandleAsync(
+    public async Task<Result<AuthTokensDto>> HandleAsync(VerifyTwoFactorCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await HandleCoreAsync(command, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another attempt at the same moment counted first. Answered as a wrong guess, whatever
+            // this one was, so firing guesses in parallel neither dodges the attempt limit nor
+            // reveals which guess was right.
+            return Result.Failure<AuthTokensDto>(IdentityErrors.TwoFactorInvalid);
+        }
+    }
+
+    private async Task<Result<AuthTokensDto>> HandleCoreAsync(
         VerifyTwoFactorCommand command,
         CancellationToken cancellationToken)
     {

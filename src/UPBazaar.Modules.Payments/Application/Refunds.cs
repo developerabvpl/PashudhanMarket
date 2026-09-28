@@ -38,7 +38,7 @@ internal sealed partial class PartRefundRecorder(
 
         var payment = await dbContext.Set<Payment>()
             .Include(p => p.Refunds)
-            .Where(p => p.OrderId == orderId && p.Status == PaymentStatus.Paid)
+            .Where(p => p.OrderId == orderId && p.Status == PaymentStatus.Paid && p.OrderOutcome != OrderOutcome.Refused)
             .OrderByDescending(p => p.PaidAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 

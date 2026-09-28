@@ -115,7 +115,8 @@ internal sealed class PackPartCommandHandler(
 
         if (shipment is null)
         {
-            if (part.Status != "Confirmed")
+            // Packed with no live shipment: the courier cancelled the booking. It is booked afresh.
+            if (part.Status is not ("Confirmed" or "Packed"))
             {
                 return Result.Failure<ShipmentDto>(ShippingErrors.NotReadyToShip);
             }
@@ -130,7 +131,17 @@ internal sealed class PackPartCommandHandler(
             shipment = created.Value;
         }
 
-        var booked = await BookAsync(shipment, part, cancellationToken);
+        Result booked;
+
+        try
+        {
+            booked = await BookAsync(shipment, part, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Two people resumed the same booking at once; the other one's progress was saved.
+            return Result.Failure<ShipmentDto>(ShippingErrors.ConcurrentChange);
+        }
 
         if (booked.IsFailure)
         {

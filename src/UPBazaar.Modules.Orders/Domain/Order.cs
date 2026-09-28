@@ -441,8 +441,9 @@ public sealed class Order : AggregateRoot, IAuditable
             line.Return();
         }
 
-        var revoked = RevokeCouponIfBelowMinimum();
-        part.ReturnRequest.SetRefund(Math.Max(0m, part.Lines.Sum(l => l.ReturnedPaid) - revoked.Values.Sum()));
+        var returnedPaid = part.Lines.Sum(l => l.ReturnedPaid);
+        var revoked = RevokeCouponIfBelowMinimum(returnedPaid);
+        part.ReturnRequest.SetRefund(returnedPaid - revoked.Values.Sum());
 
         var sellerBears = CouponFundedBy == "Seller";
 
@@ -468,11 +469,17 @@ public sealed class Order : AggregateRoot, IAuditable
 
     /// <summary>
     /// When a return leaves the buyer keeping less of what the coupon covered than its minimum
-    /// order, they no longer qualified for it: the discount on everything they keep is taken back,
-    /// out of this refund. Once only - revoked lines have no discount left to take.
+    /// order, they no longer qualified for it: the discount on what they keep is taken back, out of
+    /// this refund. Once only - revoked lines have no discount left to take.
+    ///
+    /// Only goods already in the buyer's hands lose it. A parcel still on its way could yet be
+    /// cancelled or come back undelivered, and its refund would then have to find the discount
+    /// again; it keeps it instead. And never more than this refund can cover: what the refund
+    /// cannot take back is not taken, so every rupee revoked was actually recovered.
     /// </summary>
+    /// <param name="refund">What the returned goods would refund before any claw-back.</param>
     /// <returns>What was taken back, by part.</returns>
-    private Dictionary<OrderPart, decimal> RevokeCouponIfBelowMinimum()
+    private Dictionary<OrderPart, decimal> RevokeCouponIfBelowMinimum(decimal refund)
     {
         var kept = _parts.Where(p => p.IsKept).ToList();
         var covered = kept.SelectMany(p => p.Lines).Where(l => l.Discount > 0).ToList();
@@ -482,10 +489,34 @@ public sealed class Order : AggregateRoot, IAuditable
             return [];
         }
 
-        return kept
-            .Select(p => (Part: p, Amount: p.Lines.Where(l => l.Discount > 0).Sum(l => l.RevokeDiscount())))
-            .Where(x => x.Amount > 0)
-            .ToDictionary(x => x.Part, x => x.Amount);
+        var owned = kept
+            .Where(p => p.Status == OrderPartStatus.Delivered || p.IsBuyerReturn)
+            .SelectMany(p => p.Lines.Where(l => l.Discount > 0 && l.KeptQuantity > 0 && l.KeptDiscount > 0).Select(l => (Part: p, Line: l)))
+            .ToList();
+
+        var total = owned.Sum(x => x.Line.KeptDiscount);
+
+        if (total <= 0)
+        {
+            return [];
+        }
+
+        // Scaled down, rounded to the paisa, remainder on the largest, when the refund is smaller.
+        var take = Math.Min(total, refund);
+        var amounts = owned.Select(x => Math.Round(x.Line.KeptDiscount * take / total, 2, MidpointRounding.ToZero)).ToArray();
+        var largest = owned.Select((x, i) => (x.Line.KeptDiscount, i)).MaxBy(x => x.KeptDiscount).i;
+        amounts[largest] += take - amounts.Sum();
+
+        for (var i = 0; i < owned.Count; i++)
+        {
+            owned[i].Line.RevokeDiscount(amounts[i]);
+        }
+
+        return owned
+            .Select((x, i) => (x.Part, Amount: amounts[i]))
+            .GroupBy(x => x.Part)
+            .Where(g => g.Sum(x => x.Amount) > 0)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
     }
 
     /// <summary>The seller, or staff, refuse a return, saying why. The part stays delivered.</summary>
@@ -932,23 +963,23 @@ public sealed class OrderLine : Entity
 
     internal void AskToReturn(int quantity) => ReturnRequestedQuantity = quantity;
 
-    /// <summary>The return of the requested units is approved.</summary>
+    /// <summary>
+    /// The return of the requested units is approved. Their share of the discount is of what is
+    /// left of it: a discount already taken back, because an earlier return left the buyer below
+    /// the coupon's minimum, was paid for by the buyer and is theirs to have back with the goods.
+    /// </summary>
     internal void Return()
     {
+        var remaining = Discount - RevokedDiscount;
+
         ReturnedQuantity = ReturnRequestedQuantity;
         ReturnedDiscount = ReturnedQuantity == Quantity
-            ? Discount
-            : Math.Round(Discount * ReturnedQuantity / Quantity, 2, MidpointRounding.AwayFromZero);
+            ? remaining
+            : Math.Round(remaining * ReturnedQuantity / Quantity, 2, MidpointRounding.AwayFromZero);
     }
 
-    /// <summary>Takes back the discount on the kept units, and says how much that was.</summary>
-    internal decimal RevokeDiscount()
-    {
-        var amount = KeptQuantity > 0 ? KeptDiscount : 0m;
-        RevokedDiscount += amount;
-
-        return amount;
-    }
+    /// <summary>Takes back up to <paramref name="amount"/> of the discount on the kept units.</summary>
+    internal void RevokeDiscount(decimal amount) => RevokedDiscount += Math.Min(amount, KeptQuantity > 0 ? KeptDiscount : 0m);
 
     internal void RecordCondition(ReturnCondition condition) => ReturnCondition = condition;
 

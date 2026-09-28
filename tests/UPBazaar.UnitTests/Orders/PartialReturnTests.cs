@@ -126,13 +126,83 @@ public sealed class PartialReturnTests
         part.CameBack.Where(x => x.Line.ReturnCondition == ReturnCondition.Good).ShouldHaveSingleItem().Quantity.ShouldBe(2);
     }
 
+    [Fact]
+    public void Returning_goods_whose_discount_was_already_taken_back_refunds_what_was_paid_for_them()
+    {
+        var order = Delivered("Seller", minimum: 400m);
+        var a = PartOf(order, SellerA);
+        var b = PartOf(order, SellerB);
+        order.RequestReturn(a.PublicId, ReturnReason.NoLongerNeeded, null, null, Now, new Dictionary<Guid, int> { [Diya] = 1 });
+        order.ApproveReturn(a.PublicId, null, "seller", Now);
+
+        // The cake's 10 off came out of the first refund, so the buyer paid 100 for it in all.
+        order.RequestReturn(b.PublicId, ReturnReason.NoLongerNeeded, null, null, Now);
+        order.ClearDomainEvents();
+        order.ApproveReturn(b.PublicId, null, "seller", Now);
+
+        b.ReturnRequest!.RefundDue.ShouldBe(100m);
+        b.KeptDiscount.ShouldBe(0m);
+        order.Discount.ShouldBe(0m);
+        order.DomainEvents.OfType<OrderPartReturnApprovedDomainEvent>().Single().KeptGross.ShouldBe(0m);
+    }
+
+    [Fact]
+    public void A_parcel_still_on_its_way_keeps_its_discount()
+    {
+        var order = Delivered("Platform", minimum: 400m, deliverB: false);
+        var a = PartOf(order, SellerA);
+
+        order.RequestReturn(a.PublicId, ReturnReason.NoLongerNeeded, null, null, Now, new Dictionary<Guid, int> { [Diya] = 1 });
+        order.ApproveReturn(a.PublicId, null, "seller", Now);
+
+        // Only seller A's kept 25 is taken; the cake, not yet delivered, keeps its 10.
+        a.ReturnRequest!.RefundDue.ShouldBe(65m);
+        PartOf(order, SellerB).KeptDiscount.ShouldBe(10m);
+    }
+
+    [Fact]
+    public void No_more_is_taken_back_than_the_refund_can_cover()
+    {
+        var order = Order.Place(
+            OrderNumber.New(Now),
+            Guid.NewGuid(),
+            PaymentMethod.Online,
+            DeliveryAddress.Create("Asha Devi", "9876543210", "12 Gaushala Road", null, null, "Lucknow", null, "uttar pradesh", "226001"),
+            "INR",
+            [
+                new(SellerA, Diya, "A-1", "Gobar Diya", 1000m, 1, Discount: 100m),
+                new(SellerB, Cake, "B-1", "Gobar Cake", 50m, 1, Discount: 5m),
+            ],
+            deliveryFee: 0m,
+            ("WELCOME", "Seller"),
+            Guid.NewGuid(),
+            Now,
+            couponMinOrder: 1040m);
+        order.ConfirmPayment(945m, "pay_1", Now);
+
+        foreach (var part in order.Parts)
+        {
+            order.AdvancePart(part.PublicId, OrderPartStatus.Delivered, Now, Window);
+        }
+
+        var b = PartOf(order, SellerB);
+        order.RequestReturn(b.PublicId, ReturnReason.NoLongerNeeded, null, null, Now);
+        order.ClearDomainEvents();
+        order.ApproveReturn(b.PublicId, null, "seller", Now);
+
+        // The cake refunds 45; 45 of the diya's 100 off is taken back, not all of it.
+        b.ReturnRequest!.RefundDue.ShouldBe(0m);
+        PartOf(order, SellerA).KeptDiscount.ShouldBe(55m);
+        order.DomainEvents.OfType<OrderPartDiscountRevokedDomainEvent>().Single().Amount.ShouldBe(45m);
+    }
+
     private static OrderPart PartOf(Order order, Guid seller) => order.Parts.Single(p => p.SellerId == seller);
 
     /// <summary>
     /// Paid online and delivered. Seller A: three diya packs at 100 (30 off) and a dhoop at 50 (5
     /// off). Seller B: a 100 cake (10 off). A 10% coupon, by <paramref name="fundedBy"/>.
     /// </summary>
-    private static Order Delivered(string fundedBy, decimal? minimum)
+    private static Order Delivered(string fundedBy, decimal? minimum, bool deliverB = true)
     {
         var order = Order.Place(
             OrderNumber.New(Now),
@@ -153,7 +223,7 @@ public sealed class PartialReturnTests
 
         order.ConfirmPayment(405m, "pay_1", Now).IsSuccess.ShouldBeTrue();
 
-        foreach (var part in order.Parts)
+        foreach (var part in order.Parts.Where(p => deliverB || p.SellerId != SellerB))
         {
             order.AdvancePart(part.PublicId, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
         }

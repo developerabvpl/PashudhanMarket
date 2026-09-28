@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace UPBazaar.Api.Middleware;
 
@@ -64,6 +65,10 @@ public sealed class GlobalExceptionHandler(
     private static (int Status, string Title) Classify(Exception exception) => exception switch
     {
         BadHttpRequestException => (StatusCodes.Status400BadRequest, "The request could not be read."),
+
+        // Two changes to the same record at once, where the handler did not say what to do: the
+        // later one lost, and trying again on fresh data is the answer, not a server fault.
+        DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "It was changed by someone else at the same time. Reload and try again."),
         UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "You do not have access to this resource."),
         OperationCanceledException => (StatusCodesExtra.ClientClosedRequest, "The request was cancelled."),
         NotSupportedException => (StatusCodes.Status501NotImplemented, "That operation is not supported yet."),

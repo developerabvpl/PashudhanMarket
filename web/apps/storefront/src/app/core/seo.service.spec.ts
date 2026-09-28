@@ -46,6 +46,14 @@ describe('SeoService', () => {
     expect(meta('meta[name="robots"]')).toBe('noindex, nofollow');
   });
 
+  it('keeps structured data from closing its own script tag', () => {
+    seo.setJsonLd({ name: '</script><script>alert(1)</script>' });
+
+    const text = document.getElementById('upb-jsonld')!.textContent!;
+    expect(text).not.toContain('</script>');
+    expect(JSON.parse(text).name).toBe('</script><script>alert(1)</script>');
+  });
+
   it('defaults to indexable', () => {
     seo.apply({ title: 'A', description: 'a', canonicalPath: '/x' });
 

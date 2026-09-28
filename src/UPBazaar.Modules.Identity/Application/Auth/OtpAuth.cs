@@ -124,7 +124,22 @@ internal sealed class VerifyOtpCommandHandler(
     LoginAuditWriter auditWriter,
     IClock clock) : ICommandHandler<VerifyOtpCommand, AuthTokensDto>
 {
-    public async Task<Result<AuthTokensDto>> HandleAsync(
+    public async Task<Result<AuthTokensDto>> HandleAsync(VerifyOtpCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await HandleCoreAsync(command, cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another attempt at the same moment counted first. Answered as a wrong guess, whatever
+            // this one was, so firing guesses in parallel neither dodges the attempt limit nor
+            // reveals which guess was right.
+            return Result.Failure<AuthTokensDto>(IdentityErrors.OtpInvalid);
+        }
+    }
+
+    private async Task<Result<AuthTokensDto>> HandleCoreAsync(
         VerifyOtpCommand command,
         CancellationToken cancellationToken)
     {

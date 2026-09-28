@@ -174,6 +174,11 @@ internal sealed class LinkSellerOwnerCommandHandler(
             return Result.Failure<SellerDto>(SellerErrors.OwnerHasShop);
         }
 
+        if (await dbContext.Set<SellerMember>().AnyAsync(m => m.UserId == command.OwnerUserId, cancellationToken))
+        {
+            return Result.Failure<SellerDto>(SellerErrors.AlreadyInATeam);
+        }
+
         var seller = await dbContext.Set<Seller>().FirstOrDefaultAsync(s => s.PublicId == command.SellerId, cancellationToken);
 
         if (seller is null)

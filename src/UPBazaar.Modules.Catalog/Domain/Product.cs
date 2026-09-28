@@ -92,6 +92,12 @@ public sealed class Product : AggregateRoot, IAuditable
     /// <summary>Why a moderator sent the listing back, while it is back in Draft; cleared on publishing.</summary>
     public string? ReviewNote { get; private set; }
 
+    /// <summary>
+    /// Optimistic concurrency: a price change and a sale set at the same moment would each pass the
+    /// check that the sale is below the price, and together leave the sale above it.
+    /// </summary>
+    public byte[] RowVersion { get; private set; } = [];
+
     public DateTime CreatedAtUtc { get; set; }
 
     public string? CreatedBy { get; set; }

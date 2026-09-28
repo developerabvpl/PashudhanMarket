@@ -46,6 +46,13 @@ internal sealed class ApplyToSellCommandHandler(UPBazaarDbContext dbContext, ICl
             return Result.Failure<SellerDto>(SellerErrors.AlreadyApplied);
         }
 
+        // One shop per account: someone on another shop's team would otherwise hold both, and every
+        // seller request would have two shops to choose from.
+        if (await dbContext.Set<SellerMember>().AnyAsync(m => m.UserId == command.OwnerUserId, cancellationToken))
+        {
+            return Result.Failure<SellerDto>(SellerErrors.AlreadyInATeam);
+        }
+
         var seller = Seller.Apply(command.OwnerUserId, command.Application, clock.UtcNow);
         dbContext.Set<Seller>().Add(seller);
 

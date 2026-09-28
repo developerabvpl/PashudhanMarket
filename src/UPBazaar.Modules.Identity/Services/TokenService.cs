@@ -154,6 +154,12 @@ public sealed class TokenService(
     /// Short-lived token naming a half-finished sign-in, issued when a password was correct
     /// but a TOTP code is still outstanding. It grants nothing on its own.
     /// </summary>
+    /// <summary>
+    /// The audience a two-factor ticket is issued for: not the API's, so the API never accepts a
+    /// ticket as an access token. Only the second step of signing in reads it.
+    /// </summary>
+    private string TwoFactorAudience => $"{Audience}:two-factor";
+
     public string IssueTwoFactorTicket(User user)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -161,7 +167,7 @@ public sealed class TokenService(
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = Issuer,
-            Audience = Audience,
+            Audience = TwoFactorAudience,
             Expires = clock.UtcNow.AddMinutes(5),
             SigningCredentials = SigningCredentials,
             Claims = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -185,7 +191,7 @@ public sealed class TokenService(
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = Issuer,
-            ValidAudience = Audience,
+            ValidAudience = TwoFactorAudience,
             IssuerSigningKey = SigningKey,
             ClockSkew = TimeSpan.FromSeconds(30),
         });

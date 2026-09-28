@@ -62,6 +62,11 @@ internal sealed class CreateStaffUserCommandHandler(
             return Result.Failure<UserDto>(roles.Error);
         }
 
+        if (!UpdateStaffUserCommandHandler.Holds(currentUser, roles.Value))
+        {
+            return Result.Failure<UserDto>(IdentityErrors.BeyondYourAccess);
+        }
+
         var user = User.CreateWithPassword(
             UserType.Staff,
             email,
@@ -153,6 +158,11 @@ internal sealed class UpdateStaffUserCommandHandler(
             return Result.Failure<UserDto>(IdentityErrors.CannotModifySelf);
         }
 
+        if (status != user.Status && !Holds(currentUser, user.Roles.Select(r => r.Role)))
+        {
+            return Result.Failure<UserDto>(IdentityErrors.BeyondYourAccess);
+        }
+
         user.UpdateProfile(command.DisplayName.Trim(), command.PreferredLanguage);
         user.SetStatus(status);
 
@@ -182,6 +192,14 @@ internal sealed class UpdateStaffUserCommandHandler(
 
     internal static bool IsSelf(User user, ICurrentUser currentUser) =>
         string.Equals(currentUser.UserId, user.PublicId.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether the caller holds every permission these roles carry. Staff may grant, take away or
+    /// suspend only what they hold themselves - otherwise anyone who manages users could make an
+    /// account a SuperAdmin, or lock the real ones out. Roles must be loaded with their permissions.
+    /// </summary>
+    internal static bool Holds(ICurrentUser currentUser, IEnumerable<Role> roles) =>
+        roles.SelectMany(r => r.Permissions).All(p => currentUser.HasPermission(p.Permission.Name));
 }
 
 /// <summary>Replaces the set of roles a user holds.</summary>
@@ -234,6 +252,12 @@ internal sealed class AssignRolesCommandHandler(
             return Result.Failure<UserDto>(roles.Error);
         }
 
+        // The roles given, and the roles taken away, must both be within the caller's own reach.
+        if (!UpdateStaffUserCommandHandler.Holds(currentUser, roles.Value.Concat(user.Roles.Select(r => r.Role))))
+        {
+            return Result.Failure<UserDto>(IdentityErrors.BeyondYourAccess);
+        }
+
         user.ClearRoles();
 
         foreach (var role in roles.Value)
@@ -270,8 +294,7 @@ internal sealed class DeactivateUserCommandHandler(
         DeactivateUserCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Set<User>()
-            .FirstOrDefaultAsync(u => u.PublicId == command.UserId, cancellationToken);
+        var user = await UpdateStaffUserCommandHandler.LoadAsync(dbContext, command.UserId, cancellationToken);
 
         if (user is null)
         {
@@ -281,6 +304,11 @@ internal sealed class DeactivateUserCommandHandler(
         if (UpdateStaffUserCommandHandler.IsSelf(user, currentUser))
         {
             return Result.Failure(IdentityErrors.CannotModifySelf);
+        }
+
+        if (!UpdateStaffUserCommandHandler.Holds(currentUser, user.Roles.Select(r => r.Role)))
+        {
+            return Result.Failure(IdentityErrors.BeyondYourAccess);
         }
 
         user.SetStatus(UserStatus.Deactivated);
