@@ -62,7 +62,11 @@ internal sealed class RegisterBuyerCommandHandler(
 
         user.SetPassword(passwordHasher.HashPassword(user, command.Password));
 
+        // The permissions come too: the token issued below carries them as claims, and without
+        // them a new buyer is refused their own cart until they next sign in.
         var buyerRole = await dbContext.Set<Role>()
+            .Include(r => r.Permissions)
+            .ThenInclude(p => p.Permission)
             .FirstOrDefaultAsync(r => r.Name == PermissionCatalog.RoleNames.Buyer, cancellationToken);
 
         dbContext.Set<User>().Add(user);

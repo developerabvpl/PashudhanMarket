@@ -45,6 +45,18 @@ public sealed class PasswordAuthTests(ApiFixture fixture)
     }
 
     [DatabaseFact]
+    public async Task A_new_buyer_can_shop_with_the_token_registration_hands_back()
+    {
+        var registered = await RegisterAsync(AuthClient.NewEmail("fresh"));
+        var tokens = await registered.Content.ReadFromJsonAsync<AuthTokensDto>();
+
+        var cart = await fixture.CreateAuthenticatedClient(tokens!.AccessToken)
+            .GetAsync(new Uri("/api/v1/cart", UriKind.Relative));
+
+        cart.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [DatabaseFact]
     public async Task Registering_the_same_address_twice_is_a_conflict()
     {
         var email = AuthClient.NewEmail("dup");
