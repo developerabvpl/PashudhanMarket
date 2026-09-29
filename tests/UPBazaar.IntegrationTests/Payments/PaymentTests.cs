@@ -179,6 +179,7 @@ public sealed class PaymentTests(ApiFixture fixture)
         var refund = (await RefundsForAsync(order.Id)).ShouldHaveSingleItem();
         refund.Amount.ShouldBe(80m);
         refund.OrderPartId.ShouldBe(part.Id);
+        refund.Reason.ShouldBe("Part of the order was cancelled.");
 
         var marked = await (await admin.PostAsJsonAsync(
                 new Uri($"/api/v1/admin/payments/refunds/{refund.Id}/mark-refunded", UriKind.Relative),
@@ -188,6 +189,35 @@ public sealed class PaymentTests(ApiFixture fixture)
         marked!.Status.ShouldBe("Refunded");
         marked.GatewayRefundId.ShouldBe("rfnd_test_1");
         marked.RefundedBy.ShouldNotBeNull();
+    }
+
+    [DatabaseFact]
+    public async Task Cancelling_a_paid_order_shows_what_was_paid_and_refunded_and_marks_the_payment_cancelled()
+    {
+        var (admin, buyer, _, order) = await UnpaidOrderAsync(price: 119m, quantity: 4);
+        var session = await StartAsync(buyer, order.Id);
+        await VerifyAsync(buyer, session.GatewayOrderId, "pay_whole");
+
+        (await buyer.PostAsJsonAsync(new Uri($"/api/v1/orders/{order.Id}/cancel", UriKind.Relative), new { }))
+            .EnsureSuccessStatusCode();
+
+        await ProcessOutboxAsync();
+
+        // The total counts only what the buyer keeps; the money is told apart from it.
+        var cancelled = await OrderAsync(buyer, order.Id);
+        cancelled.Status.ShouldBe("Cancelled");
+        cancelled.Total.ShouldBe(0m);
+        cancelled.AmountPaid.ShouldBe(476m);
+        cancelled.RefundTotal.ShouldBe(476m);
+
+        var refund = (await RefundsForAsync(order.Id)).ShouldHaveSingleItem();
+        refund.Amount.ShouldBe(476m);
+        refund.Reason.ShouldBe("The order was cancelled.");
+
+        var payment = (await admin.GetFromJsonAsync<PagedList<PaymentDto>>(
+            new Uri($"/api/v1/admin/payments?search={order.Number}", UriKind.Relative)))!.Items.ShouldHaveSingleItem();
+        payment.OrderOutcome.ShouldBe("Cancelled");
+        payment.RefundDue.ShouldBe(476m);
     }
 
     [DatabaseFact]

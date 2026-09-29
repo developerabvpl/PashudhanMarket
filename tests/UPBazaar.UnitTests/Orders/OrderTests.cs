@@ -135,6 +135,9 @@ public sealed class OrderTests
         }
 
         order.Status.ShouldBe(OrderStatus.Cancelled);
+
+        // Only the last one took the order with it.
+        order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().Select(e => e.OrderCancelled).ShouldBe([false, true]);
     }
 
     [Fact]

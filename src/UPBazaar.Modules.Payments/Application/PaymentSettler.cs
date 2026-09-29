@@ -152,7 +152,8 @@ internal sealed class PaymentSettler(
         payment.OrderId,
         payment.OrderOutcome switch
         {
-            OrderOutcome.Confirmed => "Confirmed",
+            // Applied to the order, which was cancelled since: the order itself says so, and its refunds follow.
+            OrderOutcome.Confirmed or OrderOutcome.Cancelled => "Confirmed",
             OrderOutcome.Refused => "RefundDue",
             _ => "Processing",
         });

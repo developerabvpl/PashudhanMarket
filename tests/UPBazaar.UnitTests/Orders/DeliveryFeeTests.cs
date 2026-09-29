@@ -67,6 +67,39 @@ public sealed class DeliveryFeeTests
 
         order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().Sum(e => e.RefundDue).ShouldBe(359m);
         order.ShippingFee.ShouldBe(0m);
+
+        // The total counts only what is kept, which is nothing; what was paid and is coming back
+        // is what tells the buyer where their money is.
+        order.Total.ShouldBe(0m);
+        order.AmountPaid.ShouldBe(359m);
+        order.RefundTotal.ShouldBe(359m);
+        order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().ShouldAllBe(e => e.OrderCancelled);
+    }
+
+    [Fact]
+    public void A_part_cancelled_on_its_own_counts_the_delivery_it_gave_back_in_the_refund()
+    {
+        var order = Place(PaymentMethod.Online, 49m);
+        order.ConfirmPayment(359m, "pay_1", Now).IsSuccess.ShouldBeTrue();
+        order.AdvancePart(Part(order, SellerA), OrderPartStatus.Packed, Now, Window).IsSuccess.ShouldBeTrue();
+        order.ClearDomainEvents();
+
+        order.CancelPart(Part(order, SellerB), "Out of stock.", Now).IsSuccess.ShouldBeTrue();
+
+        order.AmountPaid.ShouldBe(359m);
+        order.RefundTotal.ShouldBe(60m + 9.48m);
+        order.DomainEvents.OfType<OrderPartCancelledDomainEvent>().Single().OrderCancelled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Cash_on_delivery_has_nothing_paid_and_nothing_to_refund()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery, 49m);
+
+        order.Cancel("Changed my mind.", Now).IsSuccess.ShouldBeTrue();
+
+        order.AmountPaid.ShouldBeNull();
+        order.RefundTotal.ShouldBe(0m);
     }
 
     [Fact]

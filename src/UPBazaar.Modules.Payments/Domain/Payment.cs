@@ -28,6 +28,12 @@ public enum OrderOutcome
     /// so the whole payment is owed back.
     /// </summary>
     Refused = 2,
+
+    /// <summary>
+    /// The order took it, and was cancelled later - by the buyer or staff, or because nothing in it
+    /// could be delivered. What is owed back is recorded as refunds, part by part.
+    /// </summary>
+    Cancelled = 3,
 }
 
 /// <summary>
@@ -156,6 +162,19 @@ public sealed class Payment : AggregateRoot, IAuditable
         if (OrderOutcome == OrderOutcome.Pending)
         {
             OrderOutcome = OrderOutcome.Confirmed;
+        }
+    }
+
+    /// <summary>
+    /// The order this payment confirmed has been cancelled since. Only a confirmed payment moves:
+    /// one still pending is refused when it reaches the cancelled order, and a refused one is
+    /// already owed back whole.
+    /// </summary>
+    public void RecordOrderCancelled()
+    {
+        if (OrderOutcome == OrderOutcome.Confirmed)
+        {
+            OrderOutcome = OrderOutcome.Cancelled;
         }
     }
 

@@ -29,6 +29,7 @@ public sealed class PartialReturnTests
 
         part.ReturnRequest!.RefundDue.ShouldBe(90m);
         order.Subtotal.ShouldBe(350m);
+        order.RefundTotal.ShouldBe(90m);
         order.Discount.ShouldBe(35m);
         order.DomainEvents.OfType<OrderPartReturnApprovedDomainEvent>().Single().KeptGross.ShouldBe(250m);
 
@@ -66,6 +67,7 @@ public sealed class PartialReturnTests
         // 10 on the other seller's parcel - comes back out of it.
         part.ReturnRequest!.RefundDue.ShouldBe(55m);
         order.Discount.ShouldBe(0m);
+        order.RefundTotal.ShouldBe(55m);
         order.DomainEvents.OfType<OrderPartReturnApprovedDomainEvent>().Single().KeptGross.ShouldBe(250m);
 
         // The other seller bore the discount on a delivered parcel, so it is theirs again.
@@ -192,6 +194,7 @@ public sealed class PartialReturnTests
 
         // The cake refunds 45; 45 of the diya's 100 off is taken back, not all of it.
         b.ReturnRequest!.RefundDue.ShouldBe(0m);
+        order.RefundTotal.ShouldBe(0m);
         PartOf(order, SellerA).KeptDiscount.ShouldBe(55m);
         order.DomainEvents.OfType<OrderPartDiscountRevokedDomainEvent>().Single().Amount.ShouldBe(45m);
     }

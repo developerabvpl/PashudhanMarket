@@ -50,6 +50,36 @@ public sealed class PaymentTests
     }
 
     [Fact]
+    public void A_confirmed_payment_whose_order_is_cancelled_says_so_and_still_takes_its_part_refunds()
+    {
+        var payment = NewPayment();
+        payment.MarkPaid("pay_1", Now);
+        payment.RecordOrderConfirmed();
+
+        payment.RecordOrderCancelled();
+
+        payment.OrderOutcome.ShouldBe(OrderOutcome.Cancelled);
+        payment.RecordPartRefundDue(Guid.NewGuid(), 500m, "The order was cancelled.", Now).IsSuccess.ShouldBeTrue();
+        payment.RefundDue.ShouldBe(500m);
+    }
+
+    [Fact]
+    public void Only_a_confirmed_payment_is_marked_cancelled()
+    {
+        // Pending: it will be refused, and owed back whole, when it reaches the cancelled order.
+        var pending = NewPayment();
+        pending.MarkPaid("pay_1", Now);
+        pending.RecordOrderCancelled();
+        pending.OrderOutcome.ShouldBe(OrderOutcome.Pending);
+
+        var refused = NewPayment();
+        refused.MarkPaid("pay_2", Now);
+        refused.RecordOrderRefused("Order was cancelled.", Now);
+        refused.RecordOrderCancelled();
+        refused.OrderOutcome.ShouldBe(OrderOutcome.Refused);
+    }
+
+    [Fact]
     public void A_refund_is_marked_made_only_once()
     {
         var payment = NewPayment();

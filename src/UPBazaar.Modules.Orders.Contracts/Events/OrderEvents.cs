@@ -27,6 +27,10 @@ public sealed record OrderConfirmedDomainEvent(
 /// One seller's part was cancelled. <see cref="RefundDue"/> is what Payments owes the buyer for
 /// it if the order was paid online, otherwise zero: the part's subtotal, plus its share of the
 /// delivery charge when no other part is left to carry that share.
+///
+/// <see cref="OrderCancelled"/> is true when this part was the last one coming, so the whole order
+/// is cancelled with it and the refund can say so. It defaults so that events written to the outbox
+/// before it existed still read as a part cancelled on its own.
 /// </summary>
 public sealed record OrderPartCancelledDomainEvent(
     Guid OrderId,
@@ -34,7 +38,8 @@ public sealed record OrderPartCancelledDomainEvent(
     Guid PartId,
     Guid SellerId,
     decimal RefundDue,
-    string Currency) : DomainEvent;
+    string Currency,
+    bool OrderCancelled = false) : DomainEvent;
 
 /// <summary>
 /// A seller's part is back with the seller: it came back undelivered (RTO), or the buyer sent it

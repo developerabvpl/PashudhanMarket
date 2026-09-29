@@ -29,6 +29,8 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="CancellationReason">Why, if it was.</param>
 /// <param name="CanCancel">True while the buyer may still cancel: nothing has shipped yet.</param>
 /// <param name="CouponCode">The coupon the order used, if any.</param>
+/// <param name="AmountPaid">What the buyer paid online, fixed when it was paid; null for cash on delivery or until paid. <paramref name="Total"/> falls as goods drop out, and this does not.</param>
+/// <param name="RefundTotal">What of <paramref name="AmountPaid"/> goes back to the buyer - cancelled parts, parcels that came back, approved returns - whether or not it has been sent yet. Zero unless paid online.</param>
 public sealed record OrderDto(
     Guid Id,
     string Number,
@@ -50,7 +52,9 @@ public sealed record OrderDto(
     DateTime? CancelledAtUtc,
     string? CancellationReason,
     bool CanCancel,
-    string? CouponCode);
+    string? CouponCode,
+    decimal? AmountPaid,
+    decimal RefundTotal);
 
 /// <summary>One seller's share of an order.</summary>
 /// <param name="Id">Public id.</param>

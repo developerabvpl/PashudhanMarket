@@ -57,6 +57,14 @@ public sealed class Order : AggregateRoot, IAuditable
     /// <summary>The payment provider's id for the payment, once paid online.</summary>
     public string? PaymentReference { get; private set; }
 
+    /// <summary>
+    /// What the buyer paid online, fixed when the payment was confirmed; null for cash on delivery
+    /// or before payment. Kept because <see cref="Total"/> falls as goods drop out, and a buyer whose
+    /// order was cancelled needs to see what they paid and what is coming back, not just a total of
+    /// nothing - and what a cancelled part gave back of the delivery charge is not kept anywhere else.
+    /// </summary>
+    public decimal? AmountPaid { get; private set; }
+
     public DateTime? CancelledAtUtc { get; private set; }
 
     public string? CancellationReason { get; private set; }
@@ -106,6 +114,18 @@ public sealed class Order : AggregateRoot, IAuditable
     public decimal DeliveryDiscount => _parts.Where(p => p.FreeDelivery).Sum(p => p.DeliveryFee);
 
     public decimal Total => Subtotal - Discount + ShippingFee - DeliveryDiscount;
+
+    /// <summary>
+    /// What of <see cref="AmountPaid"/> goes back to the buyer: cancelled parts with any delivery
+    /// they gave back, parcels the courier brought back, and approved returns - owed from the
+    /// moment the goods drop out of <see cref="Total"/>, whether or not the money has gone yet.
+    /// Payments records each refund and when it is made. Zero unless paid online.
+    ///
+    /// It is simply what was paid less what the buyer now keeps, because every refund is worked
+    /// out as exactly what dropped out of the total - a coupon discount taken back raises the
+    /// total and lowers the refund alike.
+    /// </summary>
+    public decimal RefundTotal => AmountPaid is { } paid ? Math.Max(0m, paid - Total) : 0m;
 
     /// <summary>
     /// A buyer may cancel until something has shipped. After that the goods are on a truck and
@@ -226,6 +246,7 @@ public sealed class Order : AggregateRoot, IAuditable
 
         PaymentStatus = PaymentStatus.Paid;
         PaymentReference = paymentReference;
+        AmountPaid = amount;
         PaymentDueAtUtc = null;
         Status = OrderStatus.Confirmed;
 
@@ -256,7 +277,7 @@ public sealed class Order : AggregateRoot, IAuditable
 
         foreach (var part in cancelled)
         {
-            CancelPartInternal(part, reason);
+            CancelPartInternal(part, reason, wholeOrder: true);
         }
 
         MarkCancelled(reason, now);
@@ -291,9 +312,12 @@ public sealed class Order : AggregateRoot, IAuditable
             return Result.Failure(OrderErrors.PartCannotCancel);
         }
 
-        CancelPartInternal(part, reason);
+        // The last live part takes the order with it, and its refund says so.
+        var last = _parts.All(p => p == part || p.Status == OrderPartStatus.Cancelled);
 
-        if (_parts.All(p => p.Status == OrderPartStatus.Cancelled))
+        CancelPartInternal(part, reason, wholeOrder: last);
+
+        if (last)
         {
             MarkCancelled(reason, now);
         }
@@ -685,8 +709,11 @@ public sealed class Order : AggregateRoot, IAuditable
     ///
     /// A share moves only between parts alike in whether a free-delivery coupon covers them, so
     /// the buyer never starts paying delivery a coupon lifted, nor stops paying what they paid.
+    ///
+    /// <paramref name="wholeOrder"/> is true when nothing is left coming after it, so Payments can
+    /// tell the buyer the order was cancelled rather than part of it.
     /// </summary>
-    private void CancelPartInternal(OrderPart part, string reason)
+    private void CancelPartInternal(OrderPart part, string reason, bool wholeOrder)
     {
         var share = part.DeliveryFee;
         var takers = _parts
@@ -713,7 +740,7 @@ public sealed class Order : AggregateRoot, IAuditable
         part.Cancel(reason);
 
         Raise(new OrderPartCancelledDomainEvent(
-            PublicId, Number, part.PublicId, part.SellerId, refund, Currency));
+            PublicId, Number, part.PublicId, part.SellerId, refund, Currency, OrderCancelled: wholeOrder));
     }
 
     /// <summary>Adds <paramref name="amount"/> of delivery charge to <paramref name="parts"/>, shared as <see cref="DeliveryShares"/> says.</summary>

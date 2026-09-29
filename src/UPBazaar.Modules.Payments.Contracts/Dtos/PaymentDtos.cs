@@ -41,7 +41,10 @@ public sealed record PaymentResultDto(Guid OrderId, string Outcome);
 /// <param name="Amount">Amount due or taken.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="Status">Created (awaiting the buyer) or Paid.</param>
-/// <param name="OrderOutcome">Pending, Confirmed, or Refused (money taken for an order that could not accept it).</param>
+/// <param name="OrderOutcome">
+/// Pending, Confirmed, Refused (money taken for an order that could not accept it), or Cancelled
+/// (the order took it and was cancelled later; its refunds are recorded part by part).
+/// </param>
 /// <param name="Gateway">Razorpay or Fake.</param>
 /// <param name="GatewayOrderId">Razorpay's order id.</param>
 /// <param name="GatewayPaymentId">Razorpay's payment id, once paid. What to search the dashboard for.</param>

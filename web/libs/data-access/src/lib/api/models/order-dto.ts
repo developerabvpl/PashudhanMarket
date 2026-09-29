@@ -4,6 +4,7 @@
 import { DeliveryAddressDto } from '../models/delivery-address-dto';
 import { OrderPartDto } from '../models/order-part-dto';
 export interface OrderDto {
+  amountPaid: (number | null);
   buyerId: string;
   canCancel: boolean;
   cancellationReason: (string | null);
@@ -21,6 +22,7 @@ export interface OrderDto {
   paymentReference: (string | null);
   paymentStatus: string;
   placedAtUtc: string;
+  refundTotal: number;
   shippingFee: number;
   status: string;
   subtotal: number;

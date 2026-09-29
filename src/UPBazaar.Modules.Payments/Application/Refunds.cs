@@ -91,12 +91,26 @@ internal sealed partial class PartRefundRecorder(
     private static partial void LogRefundRefused(ILogger logger, string number, string errorCode);
 }
 
-/// <summary>A part of a paid order was cancelled: its share is owed back.</summary>
+/// <summary>
+/// A part of a paid order was cancelled: its share is owed back. The reason says whether the whole
+/// order went with it, because staff read it to the buyer and "part of the order" on an order with
+/// nothing left in it reads like a mistake.
+/// </summary>
 internal sealed class OrderPartCancelledHandler(PartRefundRecorder refunds)
     : IDomainEventHandler<OrderPartCancelledDomainEvent>
 {
+    private const string OrderCancelledReason = "The order was cancelled.";
+
+    private const string PartCancelledReason = "Part of the order was cancelled.";
+
     public Task HandleAsync(OrderPartCancelledDomainEvent e, CancellationToken cancellationToken) =>
-        refunds.RecordAsync(e.OrderId, e.Number, e.PartId, e.RefundDue, "Part of the order was cancelled.", cancellationToken);
+        refunds.RecordAsync(
+            e.OrderId,
+            e.Number,
+            e.PartId,
+            e.RefundDue,
+            e.OrderCancelled ? OrderCancelledReason : PartCancelledReason,
+            cancellationToken);
 }
 
 /// <summary>

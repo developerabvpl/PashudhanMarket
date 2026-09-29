@@ -77,7 +77,9 @@ internal static class OrderMappings
         order.CancelledAtUtc,
         order.CancellationReason,
         order.CanCancel,
-        order.CouponCode);
+        order.CouponCode,
+        order.AmountPaid,
+        order.RefundTotal);
 
     private static OrderPartDto ToDto(OrderPart part) => new(
         part.PublicId,
