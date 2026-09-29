@@ -40,7 +40,7 @@ import { AuthService } from '../auth.service';
         <mat-progress-bar mode="indeterminate" />
         }
 
-        <mat-card-header class="block p-6 pb-0">
+        <mat-card-header class="p-6 pb-0">
           <h1 class="text-xl font-semibold">{{ title() | transloco }}</h1>
         </mat-card-header>
 

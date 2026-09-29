@@ -6,7 +6,7 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { authInterceptor } from '@upbazaar/auth';
 import { provideDataAccess } from '@upbazaar/data-access';
-import { provideI18n, provideInitialLanguage } from '@upbazaar/ui';
+import { provideDocumentTitle, provideI18n, provideInitialLanguage } from '@upbazaar/ui';
 import { appRoutes } from './app.routes';
 import { translations } from './i18n/translations';
 
@@ -18,5 +18,6 @@ export const appConfig: ApplicationConfig = {
     provideDataAccess({ interceptors: [authInterceptor] }),
     provideI18n(translations),
     provideInitialLanguage(),
+    provideDocumentTitle('app.adminPortal'),
   ],
 };

@@ -37,9 +37,12 @@ import { AuthService } from '../auth.service';
         <mat-progress-bar mode="indeterminate" />
         }
 
-        <mat-card-header class="block p-6 pb-0">
-          <h1 class="text-xl font-semibold">{{ 'twoFactor.challengeTitle' | transloco }}</h1>
-          <p class="mt-1 text-sm text-ink-muted">{{ 'twoFactor.challengeBody' | transloco }}</p>
+        <mat-card-header class="p-6 pb-0">
+          <!-- One child: Material lays the header out as a row, and its CSS outranks Tailwind's. -->
+          <div>
+            <h1 class="text-xl font-semibold">{{ 'twoFactor.challengeTitle' | transloco }}</h1>
+            <p class="mt-1 text-sm text-ink-muted">{{ 'twoFactor.challengeBody' | transloco }}</p>
+          </div>
         </mat-card-header>
 
         <mat-card-content class="p-6">
