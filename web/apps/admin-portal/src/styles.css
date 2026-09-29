@@ -9,6 +9,9 @@
 /* Design tokens live in libs/ui/theme; nothing here should hardcode a colour. */
 @import '../../../libs/ui/src/lib/theme/tokens.css';
 
+/* Material's type scale names Roboto with no fallback; this puts it on the tokens' --font-sans. */
+@import '../../../libs/ui/src/lib/theme/material-fonts.css';
+
 /* Tailwind scans from this file's folder, so shared library templates need declaring. */
 @source '../../../libs/ui/src/**/*.{html,ts}';
 @source '../../../libs/auth/src/**/*.{html,ts}';

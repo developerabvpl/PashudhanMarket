@@ -10,6 +10,14 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
 /**
  * Support screen: look an order up by its public id and show what the customer sees plus the
  * payment reference, which is what a refund conversation actually needs.
+ *
+ * The money is broken down the way the buyer's own order page breaks it down - coupon and
+ * free-delivery discounts included - so the parcels' full-price subtotals visibly add up to the
+ * total. The total counts only what the buyer keeps; for an order paid online that is being
+ * refunded, what was paid and what goes back are shown beneath it.
+ *
+ * The order's status is shown in the buyer's words (orders.status.*), translated like the rest,
+ * so support reads "Delivered" where the API says Completed - the same word the buyer sees.
  */
 @Component({
   selector: 'upb-order-lookup',
@@ -50,7 +58,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
         <header class="flex flex-wrap items-baseline justify-between gap-2">
           <h2 class="font-mono text-lg font-semibold text-ink">{{ found.number }}</h2>
           <span class="rounded-control bg-surface-sunken px-2 py-1 text-sm text-ink-muted">
-            {{ 'admin.status' | transloco }}: {{ found.status }}
+            {{ 'admin.status' | transloco }}: {{ 'orders.status.' + found.status | transloco }}
           </span>
         </header>
 
@@ -58,11 +66,40 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
           <dt class="text-ink-muted">{{ 'admin.placedAt' | transloco }}</dt>
           <dd class="text-ink">{{ found.placedAtUtc | dateIst: 'datetime' }}</dd>
 
+          <dt class="text-ink-muted">{{ 'admin.subtotal' | transloco }}</dt>
+          <dd class="text-ink">{{ found.subtotal | inr }}</dd>
+
+          @if (found.discount > 0) {
+          <dt class="text-ink-muted">{{ 'admin.couponDiscount' | transloco: { code: found.couponCode ?? '' } }}</dt>
+          <dd class="text-ink">{{ -found.discount | inr }}</dd>
+          }
+
+          <dt class="text-ink-muted">{{ 'admin.delivery' | transloco }}</dt>
+          <dd class="text-ink">{{ found.shippingFee | inr }}</dd>
+
+          @if (found.deliveryDiscount > 0) {
+          <dt class="text-ink-muted">{{ 'admin.deliveryDiscount' | transloco: { code: found.couponCode ?? '' } }}</dt>
+          <dd class="text-ink">{{ -found.deliveryDiscount | inr }}</dd>
+          }
+
           <dt class="text-ink-muted">{{ 'admin.total' | transloco }}</dt>
           <dd class="font-semibold text-ink">{{ found.total | inr }}</dd>
 
           <dt class="text-ink-muted">{{ 'admin.payment' | transloco }}</dt>
-          <dd class="font-mono text-xs text-ink">{{ found.paymentReference ?? '-' }}</dd>
+          <dd class="text-ink">
+            {{ 'orders.paymentMethod.' + found.paymentMethod | transloco }}
+            @if (found.paymentReference) {
+            <span class="block font-mono text-xs">{{ found.paymentReference }}</span>
+            }
+          </dd>
+
+          @if (found.amountPaid !== null && found.amountPaid !== undefined && found.refundTotal > 0) {
+          <dt class="text-ink-muted">{{ 'admin.paidOnline' | transloco }}</dt>
+          <dd class="text-ink">{{ found.amountPaid | inr }}</dd>
+
+          <dt class="text-ink-muted">{{ 'admin.refund' | transloco }}</dt>
+          <dd class="text-ink">{{ found.refundTotal | inr }}</dd>
+          }
         </dl>
 
         <h3 class="mt-6 font-medium text-ink">{{ 'admin.lines' | transloco }}</h3>

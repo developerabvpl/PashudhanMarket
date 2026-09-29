@@ -31,7 +31,7 @@ import { CartStore, MAX_QUANTITY } from './cart.store';
       </div>
       } @else {
       <p class="mt-2 text-sm text-ink-muted" aria-live="polite">
-        {{ 'cart.itemCount' | transloco: { count: cart.count() } }}
+        {{ (cart.count() === 1 ? 'cart.itemCount.one' : 'cart.itemCount.other') | transloco: { count: cart.count() } }}
       </p>
 
       <ul class="mt-6 divide-y divide-border rounded-card border border-border bg-surface">

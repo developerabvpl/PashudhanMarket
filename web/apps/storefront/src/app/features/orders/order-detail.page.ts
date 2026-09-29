@@ -14,6 +14,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { OrderPayPanel } from '../payments/order-pay-panel';
 import { orderStatusBadge, partStatusBadge } from './order-labels';
+import { OrderPaymentCard } from './order-payment-card';
 import { ReturnPanel } from './return-panel';
 import { ReviewPanel } from './review-panel';
 
@@ -27,7 +28,7 @@ import { ReviewPanel } from './review-panel';
  */
 @Component({
   selector: 'upb-order-detail-page',
-  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel, ReturnPanel, ReviewPanel],
+  imports: [RouterLink, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderPayPanel, OrderPaymentCard, ReturnPanel, ReviewPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
@@ -128,39 +129,7 @@ import { ReviewPanel } from './review-panel';
           </address>
         </div>
 
-        <div class="rounded-card border border-border bg-surface p-4 text-sm">
-          <h2 class="font-medium text-ink">{{ 'orders.payment' | transloco }}</h2>
-          <p class="mt-2 text-ink-muted">{{ 'orders.paymentMethod.' + o.paymentMethod | transloco }}</p>
-          <dl class="mt-3 space-y-1.5">
-            <div class="flex justify-between">
-              <dt class="text-ink-muted">{{ 'cart.subtotal' | transloco }}</dt>
-              <dd class="text-ink">{{ o.subtotal | inr: 'symbol' : 'auto' }}</dd>
-            </div>
-            @if (o.discount > 0) {
-            <div class="flex justify-between">
-              <dt class="text-ink-muted">{{ 'checkout.coupon.discount' | transloco: { code: o.couponCode ?? '' } }}</dt>
-              <dd class="text-success">− {{ o.discount | inr: 'symbol' : 'auto' }}</dd>
-            </div>
-            }
-            <div class="flex justify-between">
-              <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
-              <dd class="text-ink">
-                @if (o.shippingFee > 0) { {{ o.shippingFee | inr: 'symbol' : 'auto' }} } @else {
-                {{ 'checkout.free' | transloco }} }
-              </dd>
-            </div>
-            @if (o.deliveryDiscount > 0) {
-            <div class="flex justify-between">
-              <dt class="text-ink-muted">{{ 'checkout.coupon.freeDelivery' | transloco: { code: o.couponCode ?? '' } }}</dt>
-              <dd class="text-success">− {{ o.deliveryDiscount | inr: 'symbol' : 'auto' }}</dd>
-            </div>
-            }
-            <div class="flex justify-between border-t border-border pt-1.5 font-bold">
-              <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
-              <dd class="text-ink">{{ o.total | inr: 'symbol' : 'auto' }}</dd>
-            </div>
-          </dl>
-        </div>
+        <upb-order-payment-card [order]="o" />
       </div>
 
       @if (o.canCancel) {

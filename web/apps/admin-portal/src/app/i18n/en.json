@@ -48,6 +48,15 @@
     "optional": "optional",
     "working": "Working..."
   },
+  "paginator": {
+    "itemsPerPage": "Items per page",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "range": "{{start}} – {{end}} of {{length}}",
+    "rangeEmpty": "0 of {{length}}"
+  },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
     "offline": "Cannot reach the server. Check your connection.",
@@ -130,6 +139,13 @@
     "unitPrice": "Unit price",
     "lineTotal": "Line total",
     "payment": "Payment",
+    "subtotal": "Subtotal",
+    "couponDiscount": "Coupon {{code}}",
+    "delivery": "Delivery",
+    "deliveryDiscount": "Free delivery ({{code}})",
+    "paidOnline": "Paid online",
+    "refund": "Refund",
+    "partCoupon": "{{amount}} coupon",
     "notFound": "No order with that ID."
   },
   "staff": {
@@ -175,6 +191,12 @@
   },
   "orders": {
     "parcel": "Parcel {{index}} of {{count}}",
+    "status": {
+      "PendingPayment": "Awaiting payment",
+      "Confirmed": "Confirmed",
+      "Completed": "Delivered",
+      "Cancelled": "Cancelled"
+    },
     "partStatus": {
       "AwaitingPayment": "Awaiting payment",
       "Confirmed": "Confirmed",
@@ -236,7 +258,8 @@
     "outcomes": {
       "Pending": "Not yet applied",
       "Confirmed": "Order confirmed",
-      "Refused": "Order refused it"
+      "Refused": "Order refused it",
+      "Cancelled": "Order cancelled"
     }
   },
   "shipping": {
@@ -547,7 +570,10 @@
     "upTo": "up to {{amount}}",
     "minimum": "on {{amount}} or more",
     "sellersOwn": "seller's own",
-    "joined": "{{count}} sellers joined",
+    "joined": {
+      "one": "{{count}} seller joined",
+      "other": "{{count}} sellers joined"
+    },
     "uses": "used {{uses}} of {{limit}}",
     "perBuyer": "{{limit}} per buyer",
     "until": "until {{date}}",

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DOCUMENT, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AVAILABLE_LANGUAGES, AppLanguage } from '../i18n/provide-i18n';
 import { writeLanguageCookie } from '../i18n/language-preference';
@@ -6,6 +7,12 @@ import { writeLanguageCookie } from '../i18n/language-preference';
 /**
  * Switches between English and Hindi. A plain select rather than a custom menu: it is
  * keyboard-operable and screen-reader-labelled for free.
+ *
+ * Each option carries its own `selected` rather than the select a `value`. Angular sets the
+ * select's properties before the @for block has rendered any options, so a `[value]="'hi'"`
+ * lands on an empty select, is dropped, and the browser then selects the first option to
+ * arrive - English - while the page is in Hindi. The binding never re-fires because its value
+ * never changed.
  */
 @Component({
   selector: 'upb-language-switcher',
@@ -16,11 +23,12 @@ import { writeLanguageCookie } from '../i18n/language-preference';
       <span class="upb-sr-only">{{ 'app.languageLabel' | transloco }}</span>
       <select
         class="rounded-control border border-border bg-surface px-2 py-1 text-ink"
-        [value]="active()"
         (change)="switch($event)"
       >
         @for (lang of languages; track lang) {
-        <option [value]="lang">{{ (lang === 'en' ? 'app.english' : 'app.hindi') | transloco }}</option>
+        <option [value]="lang" [selected]="lang === active()">
+          {{ (lang === 'en' ? 'app.english' : 'app.hindi') | transloco }}
+        </option>
         }
       </select>
     </label>
@@ -41,14 +49,17 @@ export class LanguageSwitcher {
 
   protected readonly languages = AVAILABLE_LANGUAGES;
 
-  protected readonly active = signal<AppLanguage>(
-    (this.transloco.getActiveLang() as AppLanguage) ?? 'en'
-  );
+  /**
+   * Follows Transloco rather than remembering the last pick, so a language set anywhere else -
+   * the cookie at start-up, a sign-in that restores a preference - shows here too.
+   */
+  protected readonly active = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   switch(event: Event): void {
     const lang = (event.target as HTMLSelectElement).value as AppLanguage;
 
-    this.active.set(lang);
     writeLanguageCookie(this.document, lang);
     this.transloco.setActiveLang(lang);
 

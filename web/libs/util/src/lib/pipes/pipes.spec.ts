@@ -58,3 +58,29 @@ describe('InrCurrencyPipe auto decimals', () => {
     expect(pipe.transform(139)).toBe('₹139.00');
   });
 });
+
+describe('InrCurrencyPipe negative amounts', () => {
+  const pipe = new InrCurrencyPipe();
+  const minus = String.fromCharCode(0x2212);
+
+  it('puts a true minus sign before the symbol, the way the storefront shows a discount', () => {
+    expect(pipe.transform(-800)).toBe(`${minus}₹800.00`);
+    expect(pipe.transform(-800)).not.toContain('-');
+  });
+
+  it('keeps the Indian grouping and the chosen decimals on a negative amount', () => {
+    expect(pipe.transform(-123456.78)).toBe(`${minus}₹1,23,456.78`);
+    expect(pipe.transform(-50, 'symbol', 'auto')).toBe(`${minus}₹50`);
+    expect(pipe.transform('-99.5')).toBe(`${minus}₹99.50`);
+  });
+
+  it('signs the code and bare forms too', () => {
+    expect(pipe.transform(-4599, 'code')).toBe(`${minus}INR 4,599.00`);
+    expect(pipe.transform(-4599, 'none')).toBe(`${minus}4,599.00`);
+  });
+
+  it('shows no sign on an amount that rounds to zero', () => {
+    expect(pipe.transform(-0)).toBe('₹0.00');
+    expect(pipe.transform(-0.001)).toBe('₹0.00');
+  });
+});

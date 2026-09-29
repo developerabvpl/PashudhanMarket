@@ -222,7 +222,7 @@ export class App {
 
     return count === 0
       ? this.transloco.translate('cart.openEmpty')
-      : this.transloco.translate('cart.openWithCount', { count });
+      : this.transloco.translate(count === 1 ? 'cart.openWithCount.one' : 'cart.openWithCount.other', { count });
   }
 
   /** First character of the display name, for the avatar disc. */

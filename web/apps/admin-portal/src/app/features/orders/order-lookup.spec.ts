@@ -2,7 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Api, OrderDto, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
+import { TranslocoService } from '@jsverse/transloco';
 import { provideI18n } from '@upbazaar/ui';
+import { firstValueFrom } from 'rxjs';
 import { translations } from '../../i18n/translations';
 import { OrderLookup } from './order-lookup';
 
@@ -61,6 +63,8 @@ const order: OrderDto = {
   cancelledAtUtc: null,
   cancellationReason: null,
   canCancel: true,
+  amountPaid: 2000,
+  refundTotal: 0,
 };
 
 /** Submits the lookup form the way a user would, so the component's own handler runs. */
@@ -115,6 +119,66 @@ describe('OrderLookup', () => {
 
     expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
     expect(fixture.nativeElement.textContent).toContain('UPB-DIYA-001');
+  });
+
+  it('shows the coupon discount so the full-price parcels add up to the total', async () => {
+    const part = order.parts[0];
+    answerWith({
+      ...order,
+      paymentMethod: 'CashOnDelivery',
+      paymentStatus: 'CashOnDelivery',
+      paymentReference: null,
+      amountPaid: null,
+      subtotal: 597,
+      discount: 59.7,
+      total: 537.3,
+      couponCode: 'WELCOME10',
+      parts: [{ ...part, subtotal: 597, discount: 59.7 }],
+    });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, 'o1');
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
+    const minus = String.fromCharCode(0x2212);
+    expect(text).toContain(`Coupon WELCOME10${minus}₹59.70`);
+    expect(text).toContain('Total₹537.30');
+    expect(text).toContain(`₹597.00 · ${minus}₹59.70 coupon`);
+
+    // Cash on delivery has no payment reference, and says how it is paid instead of a dash.
+    expect(text).toContain('Payment Cash on delivery');
+  });
+
+  it('shows what a cancelled online order was paid and what goes back', async () => {
+    answerWith({ ...order, status: 'Cancelled', subtotal: 0, total: 0, amountPaid: 2000, refundTotal: 2000 });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, 'o1');
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
+    expect(text).toContain('Online payment pay-1');
+    expect(text).toContain('Paid online₹2,000.00');
+    expect(text).toContain('Refund₹2,000.00');
+  });
+
+  it('labels the order status in the page language, not the raw API value', async () => {
+    answerWith({ ...order, status: 'Completed' });
+    const fixture = await render();
+    const transloco = TestBed.inject(TranslocoService);
+
+    submitLookup(fixture.nativeElement, 'o1');
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Status: Delivered');
+
+    transloco.setActiveLang('hi');
+    await firstValueFrom(transloco.load('hi'));
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('पहुँचा दिया');
+    expect(text).not.toContain('Completed');
   });
 
   it('does not call the API for an empty id', async () => {

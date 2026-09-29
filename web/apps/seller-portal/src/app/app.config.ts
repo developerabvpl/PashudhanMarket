@@ -4,7 +4,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { authInterceptor } from '@upbazaar/auth';
+import { authInterceptor, providePortalPaginatorIntl } from '@upbazaar/auth';
 import { provideDataAccess } from '@upbazaar/data-access';
 import { provideDocumentTitle, provideI18n, provideInitialLanguage } from '@upbazaar/ui';
 import { appRoutes } from './app.routes';
@@ -18,6 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideDataAccess({ interceptors: [authInterceptor] }),
     provideI18n(translations),
     provideInitialLanguage(),
+    providePortalPaginatorIntl(),
     provideDocumentTitle('app.sellerPortal'),
   ],
 };

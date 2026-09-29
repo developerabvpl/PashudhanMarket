@@ -66,6 +66,13 @@ describe('CouponsPage', () => {
     expect(element.textContent).toContain('2 sellers joined');
   });
 
+  it('says one seller, not one sellers', async () => {
+    const { element } = await render(true, { sellersJoined: 1 });
+
+    expect(element.textContent).toContain('1 seller joined');
+    expect(element.textContent).not.toContain('1 sellers');
+  });
+
   it('creates a coupon ending at the close of the chosen day in India', async () => {
     const { fixture, invoke, element } = await render(true);
 

@@ -84,7 +84,7 @@ import { SalePrice } from './sale-price';
       }
 
       <p class="mt-6 text-sm text-ink-muted" aria-live="polite">
-        {{ 'catalog.resultCount' | transloco: { count: page().totalCount } }}
+        {{ (page().totalCount === 1 ? 'catalog.resultCount.one' : 'catalog.resultCount.other') | transloco: { count: page().totalCount } }}
       </p>
 
       @if (items().length === 0) {

@@ -20,7 +20,7 @@ test.describe('@smoke storefront basket', () => {
 
     await expect(page.getByText('Added to your basket.')).toBeVisible();
     await expect(badge).toHaveText('1');
-    await expect(page.getByRole('link', { name: 'Basket, 1 items' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Basket, 1 item' })).toBeVisible();
 
     // Adding the same product again tops up the line rather than starting a second one.
     await page.getByRole('button', { name: 'Add to cart' }).click();

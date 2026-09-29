@@ -60,6 +60,15 @@
     "optional": "वैकल्पिक",
     "working": "हो रहा है..."
   },
+  "paginator": {
+    "itemsPerPage": "प्रति पृष्ठ आइटम",
+    "firstPage": "पहला पृष्ठ",
+    "previousPage": "पिछला पृष्ठ",
+    "nextPage": "अगला पृष्ठ",
+    "lastPage": "अंतिम पृष्ठ",
+    "range": "{{length}} में से {{start}} – {{end}}",
+    "rangeEmpty": "{{length}} में से 0"
+  },
   "errors": {
     "unexpected": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     "offline": "सर्वर से संपर्क नहीं हो पा रहा। अपना कनेक्शन जाँचें।",
@@ -164,7 +173,10 @@
     "metaDescription": "उत्तर प्रदेश की गौशालाओं से गोबर और गोमूत्र उत्पाद: अगरबत्ती, हवन कप, दीये, पंचगव्य साबुन, फ़र्श क्लीनर और जैविक खाद।",
     "searchLabel": "उत्पाद खोजें",
     "searchPlaceholder": "अगरबत्ती, गोमूत्र अर्क, दीया खोजें...",
-    "resultCount": "{{count}} उत्पाद",
+    "resultCount": {
+      "one": "{{count}} उत्पाद",
+      "other": "{{count}} उत्पाद"
+    },
     "inStock": "स्टॉक में",
     "outOfStock": "स्टॉक में नहीं",
     "sku": "एसकेयू",
@@ -228,6 +240,13 @@
     "unitPrice": "प्रति इकाई क़ीमत",
     "lineTotal": "पंक्ति कुल",
     "payment": "भुगतान",
+    "subtotal": "उप-योग",
+    "couponDiscount": "कूपन {{code}}",
+    "delivery": "डिलीवरी",
+    "deliveryDiscount": "मुफ़्त डिलीवरी ({{code}})",
+    "paidOnline": "ऑनलाइन भुगतान किया",
+    "refund": "रिफ़ंड",
+    "partCoupon": "{{amount}} कूपन",
     "notFound": "इस आईडी का कोई ऑर्डर नहीं मिला।"
   },
   "staff": {
@@ -286,7 +305,10 @@
     "metaDescription": "यूपी बाज़ार की टोकरी में आपके जोड़े हुए सामान।",
     "empty": "आपकी टोकरी खाली है।",
     "browse": "उत्पाद देखें",
-    "itemCount": "{{count}} वस्तुएँ",
+    "itemCount": {
+      "one": "{{count}} वस्तु",
+      "other": "{{count}} वस्तुएँ"
+    },
     "each": "प्रति नग",
     "quantityFor": "{{name}} की मात्रा",
     "decrease": "मात्रा घटाएँ",
@@ -303,7 +325,10 @@
     "alreadyInCart": "{{count}} पहले से टोकरी में हैं।",
     "viewCart": "टोकरी देखें",
     "openEmpty": "टोकरी, खाली",
-    "openWithCount": "टोकरी, {{count}} वस्तुएँ",
+    "openWithCount": {
+      "one": "टोकरी, {{count}} वस्तु",
+      "other": "टोकरी, {{count}} वस्तुएँ"
+    },
     "mergeSkipped": "साइन इन से पहले जोड़ी गई कुछ वस्तुएँ आपकी टोकरी में नहीं जुड़ सकीं।",
     "pricesChanged": "आपके जोड़ने के बाद कुछ दाम बदल गए हैं।",
     "acceptPrices": "नए दाम स्वीकार करें",
@@ -367,6 +392,9 @@
     "parcel": "पार्सल {{index}} / {{count}}",
     "deliverTo": "डिलीवरी का पता",
     "payment": "भुगतान",
+    "paidOnline": "ऑनलाइन भुगतान किया",
+    "refund": "रिफ़ंड",
+    "refundNote": "रिफ़ंड उसी खाते में वापस जाता है जिससे आपने भुगतान किया था।",
     "cancel": "यह ऑर्डर रद्द करें",
     "cancelQuestion": "पूरा ऑर्डर रद्द करें? यह वापस नहीं होगा।",
     "cancelConfirm": "हाँ, रद्द करें",
@@ -471,7 +499,8 @@
     "outcomes": {
       "Pending": "अभी लागू नहीं",
       "Confirmed": "ऑर्डर पुष्ट",
-      "Refused": "ऑर्डर ने नहीं लिया"
+      "Refused": "ऑर्डर ने नहीं लिया",
+      "Cancelled": "ऑर्डर रद्द हुआ"
     }
   },
   "shipping": {
@@ -906,7 +935,10 @@
     "upTo": "अधिकतम {{amount}}",
     "minimum": "{{amount}} या अधिक पर",
     "sellersOwn": "विक्रेता का अपना",
-    "joined": "{{count}} विक्रेता जुड़े",
+    "joined": {
+      "one": "{{count}} विक्रेता जुड़ा",
+      "other": "{{count}} विक्रेता जुड़े"
+    },
     "uses": "{{limit}} में से {{uses}} उपयोग",
     "perBuyer": "प्रति ग्राहक {{limit}}",
     "until": "{{date}} तक",

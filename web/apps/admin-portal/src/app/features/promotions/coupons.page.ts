@@ -120,7 +120,7 @@ import { PromotionsPermissions } from '../../core/permissions';
               @if (c.maxDiscount) { · {{ 'coupons.upTo' | transloco: { amount: (c.maxDiscount | inr) } }} }
               @if (c.minOrderValue) { · {{ 'coupons.minimum' | transloco: { amount: (c.minOrderValue | inr) } }} }
               · {{ (c.sellerId ? 'coupons.sellersOwn' : 'coupons.funding.' + c.fundedBy) | transloco }}
-              @if (!c.sellerId && c.fundedBy === 'Seller') { · {{ 'coupons.joined' | transloco: { count: c.sellersJoined } }} }
+              @if (!c.sellerId && c.fundedBy === 'Seller') { · {{ (c.sellersJoined === 1 ? 'coupons.joined.one' : 'coupons.joined.other') | transloco: { count: c.sellersJoined } }} }
             </p>
             <p class="text-ink-muted">
               {{ 'coupons.uses' | transloco: { uses: c.uses, limit: c.totalLimit ?? '∞' } }}

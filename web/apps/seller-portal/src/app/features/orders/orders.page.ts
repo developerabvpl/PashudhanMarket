@@ -35,7 +35,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
                 <p class="font-mono font-medium text-ink">{{ order.orderNumber }}</p>
                 <p class="text-sm text-ink-muted">
                   {{ order.placedAtUtc | dateIst: 'datetime' }} · {{ order.city }} ·
-                  {{ 'cart.itemCount' | transloco: { count: order.itemCount } }}
+                  {{ (order.itemCount === 1 ? 'cart.itemCount.one' : 'cart.itemCount.other') | transloco: { count: order.itemCount } }}
                 </p>
                 @if (order.returnRequestStatus === 'Requested') {
                 <p class="mt-1 inline-block rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-ink">{{ 'returns.requestTitle' | transloco }}</p>

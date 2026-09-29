@@ -29,6 +29,15 @@
     "optional": "वैकल्पिक",
     "working": "हो रहा है..."
   },
+  "paginator": {
+    "itemsPerPage": "प्रति पृष्ठ आइटम",
+    "firstPage": "पहला पृष्ठ",
+    "previousPage": "पिछला पृष्ठ",
+    "nextPage": "अगला पृष्ठ",
+    "lastPage": "अंतिम पृष्ठ",
+    "range": "{{length}} में से {{start}} – {{end}}",
+    "rangeEmpty": "{{length}} में से 0"
+  },
   "errors": {
     "unexpected": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     "offline": "सर्वर से संपर्क नहीं हो पा रहा। अपना कनेक्शन जाँचें।",
@@ -99,7 +108,10 @@
     "back": "वापस जाएँ"
   },
   "cart": {
-    "itemCount": "{{count}} वस्तुएँ"
+    "itemCount": {
+      "one": "{{count}} वस्तु",
+      "other": "{{count}} वस्तुएँ"
+    }
   },
   "orders": {
     "deliverTo": "डिलीवरी का पता",

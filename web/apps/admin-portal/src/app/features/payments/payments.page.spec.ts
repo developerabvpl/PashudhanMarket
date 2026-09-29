@@ -60,6 +60,16 @@ const payment: PaymentDto = {
   refundDue: 0,
 };
 
+/** Paid, confirmed its order, and the order was cancelled since: the money is on its way back. */
+const cancelledPayment: PaymentDto = {
+  ...payment,
+  id: 'pmt3',
+  orderNumber: 'UPB-260929-JPPXA9',
+  amount: 476,
+  orderOutcome: 'Cancelled',
+  refundDue: 476,
+};
+
 function page<T>(items: T[]) {
   return { items, page: 1, pageSize: 25, totalCount: items.length, hasNextPage: false, totalPages: 1 };
 }
@@ -74,7 +84,7 @@ describe('PaymentsPage', () => {
       }
 
       if (fn === apiV1AdminPaymentsGet) {
-        return page([payment]);
+        return page([payment, cancelledPayment]);
       }
 
       throw new Error('unexpected call');
@@ -116,5 +126,22 @@ describe('PaymentsPage', () => {
     expect(invoke).toHaveBeenCalledWith(apiV1AdminPaymentsGet, { Page: 1, PageSize: 25, Search: undefined });
     expect(fixture.nativeElement.textContent).toContain('order_abc');
     expect(fixture.nativeElement.textContent).toContain('pay_abc');
+  });
+
+  it('says when the order a payment confirmed has been cancelled since', async () => {
+    const fixture = TestBed.createComponent(PaymentsPage);
+    await fixture.whenStable();
+
+    const toggle = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button: HTMLButtonElement) => button.closest('mat-button-toggle')?.getAttribute('value') === 'payments'
+    ) as HTMLButtonElement;
+
+    toggle.click();
+    await fixture.whenStable();
+
+    const rows = [...fixture.nativeElement.querySelectorAll('tr[mat-row]')] as HTMLElement[];
+    expect(rows[0].textContent).toContain('Order confirmed');
+    expect(rows[1].textContent).toContain('Order cancelled');
+    expect(rows[1].textContent).not.toContain('Order confirmed');
   });
 });

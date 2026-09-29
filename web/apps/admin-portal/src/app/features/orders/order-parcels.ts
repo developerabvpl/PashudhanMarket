@@ -46,6 +46,8 @@ interface ReturnedLine {
             {{ 'orders.parcel' | transloco: { index: i + 1, count: order().parts.length } }} ·
             {{ (part.returnRequest?.status === 'Approved' && (part.status === 'Returning' || part.status === 'Returned')
               ? 'orders.returnStatus.' : 'orders.partStatus.') + part.status | transloco }} · {{ part.subtotal | inr }}
+            <!-- The subtotal is at full price; the coupon's share shows beside it so the parcels add up to the order. -->
+            @if (part.discount > 0) { · {{ 'admin.partCoupon' | transloco: { amount: (-part.discount | inr) } }} }
           </p>
 
           @if (shipmentFor(part.id); as shipment) {

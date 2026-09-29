@@ -48,6 +48,15 @@
     "optional": "वैकल्पिक",
     "working": "हो रहा है..."
   },
+  "paginator": {
+    "itemsPerPage": "प्रति पृष्ठ आइटम",
+    "firstPage": "पहला पृष्ठ",
+    "previousPage": "पिछला पृष्ठ",
+    "nextPage": "अगला पृष्ठ",
+    "lastPage": "अंतिम पृष्ठ",
+    "range": "{{length}} में से {{start}} – {{end}}",
+    "rangeEmpty": "{{length}} में से 0"
+  },
   "errors": {
     "unexpected": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
     "offline": "सर्वर से संपर्क नहीं हो पा रहा। अपना कनेक्शन जाँचें।",
@@ -130,6 +139,13 @@
     "unitPrice": "प्रति इकाई क़ीमत",
     "lineTotal": "पंक्ति कुल",
     "payment": "भुगतान",
+    "subtotal": "उप-योग",
+    "couponDiscount": "कूपन {{code}}",
+    "delivery": "डिलीवरी",
+    "deliveryDiscount": "मुफ़्त डिलीवरी ({{code}})",
+    "paidOnline": "ऑनलाइन भुगतान किया",
+    "refund": "रिफ़ंड",
+    "partCoupon": "{{amount}} कूपन",
     "notFound": "इस आईडी का कोई ऑर्डर नहीं मिला।"
   },
   "staff": {
@@ -175,6 +191,12 @@
   },
   "orders": {
     "parcel": "पार्सल {{index}} / {{count}}",
+    "status": {
+      "PendingPayment": "भुगतान बाकी",
+      "Confirmed": "पुष्ट",
+      "Completed": "पहुँचा दिया",
+      "Cancelled": "रद्द"
+    },
     "partStatus": {
       "AwaitingPayment": "भुगतान बाकी",
       "Confirmed": "पुष्ट",
@@ -236,7 +258,8 @@
     "outcomes": {
       "Pending": "अभी लागू नहीं",
       "Confirmed": "ऑर्डर पुष्ट",
-      "Refused": "ऑर्डर ने नहीं लिया"
+      "Refused": "ऑर्डर ने नहीं लिया",
+      "Cancelled": "ऑर्डर रद्द हुआ"
     }
   },
   "shipping": {
@@ -547,7 +570,10 @@
     "upTo": "अधिकतम {{amount}}",
     "minimum": "{{amount}} या अधिक पर",
     "sellersOwn": "विक्रेता का अपना",
-    "joined": "{{count}} विक्रेता जुड़े",
+    "joined": {
+      "one": "{{count}} विक्रेता जुड़ा",
+      "other": "{{count}} विक्रेता जुड़े"
+    },
     "uses": "{{limit}} में से {{uses}} उपयोग",
     "perBuyer": "प्रति ग्राहक {{limit}}",
     "until": "{{date}} तक",

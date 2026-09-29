@@ -94,7 +94,10 @@
     "metaDescription": "Cow dung and gomutra products from Uttar Pradesh gaushalas: agarbatti, havan cups, diyas, panchgavya soap, floor cleaner and organic manure.",
     "searchLabel": "Search products",
     "searchPlaceholder": "Search agarbatti, gomutra ark, diya...",
-    "resultCount": "{{count}} products",
+    "resultCount": {
+      "one": "{{count}} product",
+      "other": "{{count}} products"
+    },
     "inStock": "In stock",
     "outOfStock": "Out of stock",
     "sku": "SKU",
@@ -149,7 +152,10 @@
     "metaDescription": "The items you have added to your UP Bazaar basket.",
     "empty": "Your basket is empty.",
     "browse": "Browse products",
-    "itemCount": "{{count}} items",
+    "itemCount": {
+      "one": "{{count}} item",
+      "other": "{{count}} items"
+    },
     "each": "each",
     "quantityFor": "Quantity for {{name}}",
     "decrease": "Reduce quantity",
@@ -166,7 +172,10 @@
     "alreadyInCart": "{{count}} already in your basket.",
     "viewCart": "View basket",
     "openEmpty": "Basket, empty",
-    "openWithCount": "Basket, {{count}} items",
+    "openWithCount": {
+      "one": "Basket, {{count}} item",
+      "other": "Basket, {{count}} items"
+    },
     "mergeSkipped": "Some items from before you signed in could not be added to your basket.",
     "pricesChanged": "Some prices have changed since you added these items.",
     "acceptPrices": "Accept new prices",
@@ -230,6 +239,9 @@
     "parcel": "Parcel {{index}} of {{count}}",
     "deliverTo": "Delivering to",
     "payment": "Payment",
+    "paidOnline": "Paid online",
+    "refund": "Refund",
+    "refundNote": "Refunds go back to the account you paid from.",
     "cancel": "Cancel this order",
     "cancelQuestion": "Cancel the whole order? This cannot be undone.",
     "cancelConfirm": "Yes, cancel it",

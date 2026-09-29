@@ -42,7 +42,7 @@ const PAGE_SIZE = 20;
                 <p class="font-medium text-ink">{{ order.number }}</p>
                 <p class="mt-0.5 text-sm text-ink-muted">
                   {{ order.placedAtUtc | dateIst }} ·
-                  {{ 'cart.itemCount' | transloco: { count: order.itemCount } }}
+                  {{ (order.itemCount === 1 ? 'cart.itemCount.one' : 'cart.itemCount.other') | transloco: { count: order.itemCount } }}
                 </p>
               </div>
               <div class="flex items-center gap-3">

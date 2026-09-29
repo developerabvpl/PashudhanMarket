@@ -1,0 +1,44 @@
+/**
+ * Material's type scale on the UP Bazaar font, for the two portals.
+ *
+ * Material's prebuilt theme names the bare family `Roboto` for every role, with no generic
+ * fallback. Nothing loads Roboto and Windows does not ship it, so the browser dropped to its
+ * default font - a serif - in every toolbar title, button, chip, checkbox and table cell, while
+ * the Tailwind-styled text around them used --font-sans.
+ *
+ * Imported by a portal's styles.css after the Material theme; the same `html` selector, later in
+ * the file, wins. The sizes, weights and line heights are Material's own, copied unchanged: only
+ * the family differs. The storefront has no Material and does not import this.
+ */
+html {
+  --mat-sys-body-large-font: var(--font-sans);
+  --mat-sys-body-large: 400 1rem / 1.5rem var(--font-sans);
+  --mat-sys-body-medium-font: var(--font-sans);
+  --mat-sys-body-medium: 400 0.875rem / 1.25rem var(--font-sans);
+  --mat-sys-body-small-font: var(--font-sans);
+  --mat-sys-body-small: 400 0.75rem / 1rem var(--font-sans);
+  --mat-sys-display-large-font: var(--font-sans);
+  --mat-sys-display-large: 400 3.562rem / 4rem var(--font-sans);
+  --mat-sys-display-medium-font: var(--font-sans);
+  --mat-sys-display-medium: 400 2.812rem / 3.25rem var(--font-sans);
+  --mat-sys-display-small-font: var(--font-sans);
+  --mat-sys-display-small: 400 2.25rem / 2.75rem var(--font-sans);
+  --mat-sys-headline-large-font: var(--font-sans);
+  --mat-sys-headline-large: 400 2rem / 2.5rem var(--font-sans);
+  --mat-sys-headline-medium-font: var(--font-sans);
+  --mat-sys-headline-medium: 400 1.75rem / 2.25rem var(--font-sans);
+  --mat-sys-headline-small-font: var(--font-sans);
+  --mat-sys-headline-small: 400 1.5rem / 2rem var(--font-sans);
+  --mat-sys-label-large-font: var(--font-sans);
+  --mat-sys-label-large: 500 0.875rem / 1.25rem var(--font-sans);
+  --mat-sys-label-medium-font: var(--font-sans);
+  --mat-sys-label-medium: 500 0.75rem / 1rem var(--font-sans);
+  --mat-sys-label-small-font: var(--font-sans);
+  --mat-sys-label-small: 500 0.688rem / 1rem var(--font-sans);
+  --mat-sys-title-large-font: var(--font-sans);
+  --mat-sys-title-large: 400 1.375rem / 1.75rem var(--font-sans);
+  --mat-sys-title-medium-font: var(--font-sans);
+  --mat-sys-title-medium: 500 1rem / 1.5rem var(--font-sans);
+  --mat-sys-title-small-font: var(--font-sans);
+  --mat-sys-title-small: 500 0.875rem / 1.25rem var(--font-sans);
+}
