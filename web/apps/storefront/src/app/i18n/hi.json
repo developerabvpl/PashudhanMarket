@@ -223,7 +223,18 @@
       "remove": "हटाएँ",
       "saves": "आपकी बचत {{amount}}",
       "discount": "कूपन {{code}}",
-      "freeDelivery": "मुफ़्त डिलीवरी ({{code}})"
+      "freeDelivery": "मुफ़्त डिलीवरी ({{code}})",
+      "errors": {
+        "unknown": "यह कूपन कोड पहचाना नहीं गया।",
+        "notValidNow": "यह कूपन अभी मान्य नहीं है।",
+        "usedUp": "यह कूपन जितनी बार इस्तेमाल हो सकता था, हो चुका है।",
+        "alreadyUsed": "आप यह कूपन जितनी बार इस्तेमाल कर सकते थे, कर चुके हैं।",
+        "nothingCovered": "यह कूपन आपकी टोकरी के किसी सामान पर लागू नहीं होता।",
+        "deliveryAlreadyFree": "इस ऑर्डर पर डिलीवरी पहले से मुफ़्त है, इसलिए इस कूपन से कुछ नहीं घटता।",
+        "belowMinimum": "इस कूपन के लिए इसमें शामिल सामान कम से कम {{amount}} का होना चाहिए।",
+        "belowMinimumUnknown": "आपकी टोकरी इस कूपन के न्यूनतम ऑर्डर तक नहीं पहुँचती।",
+        "concurrentChange": "उसी समय किसी और ने यह कूपन इस्तेमाल कर लिया। फिर से कोशिश करें।"
+      }
     }
   },
   "orders": {
@@ -242,6 +253,7 @@
     "paidOnline": "ऑनलाइन भुगतान किया",
     "refund": "रिफ़ंड",
     "refundNote": "रिफ़ंड उसी खाते में वापस जाता है जिससे आपने भुगतान किया था।",
+    "refundOf": "रिफ़ंड {{amount}}",
     "cancel": "यह ऑर्डर रद्द करें",
     "cancelQuestion": "पूरा ऑर्डर रद्द करें? यह वापस नहीं होगा।",
     "cancelConfirm": "हाँ, रद्द करें",
@@ -250,6 +262,8 @@
     "status": {
       "PendingPayment": "भुगतान बाकी",
       "Confirmed": "पुष्ट",
+      "Packed": "पैक हो गया",
+      "Shipped": "भेज दिया",
       "Completed": "पहुँचा दिया",
       "Cancelled": "रद्द"
     },
@@ -269,9 +283,13 @@
     },
     "shippedWith": "{{courier}} से, AWB {{awb}}",
     "track": "पार्सल ट्रैक करें",
+    "lineReturning": "{{quantity}} में से {{count}} वापस जा रहे हैं",
+    "lineReturned": "{{quantity}} में से {{count}} वापस किए गए",
     "returnStatus": {
       "Returning": "वापस जा रहा है",
-      "Returned": "वापस किया गया"
+      "Returned": "वापस किया गया",
+      "PartlyReturning": "कुछ सामान वापस जा रहा है",
+      "PartlyReturned": "कुछ सामान वापस किया गया"
     },
     "return": {
       "start": "यह पार्सल वापस करें",

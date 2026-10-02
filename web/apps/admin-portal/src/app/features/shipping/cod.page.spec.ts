@@ -42,13 +42,13 @@ const remittance: CodRemittanceDto = {
   lines: [],
 };
 
-async function render(canWrite: boolean) {
+async function render(canWrite: boolean, items: readonly CodReceivableDto[] = [owed]) {
   const invoke = vi.fn(async (fn: unknown) => {
     switch (fn) {
       case apiV1AdminShippingCodSummaryGet:
         return { outstandingAmount: 10, outstandingCount: 1, overdueCount: 1, shortCount: 1, overdueDays: 7 };
       case apiV1AdminShippingCodReceivablesGet:
-        return { items: [owed], page: 1, pageSize: 100, totalCount: 1 };
+        return { items, page: 1, pageSize: 100, totalCount: items.length };
       case apiV1AdminShippingCodRemittancesGet:
         return { items: [remittance], page: 1, pageSize: 25, totalCount: 1 };
       case apiV1AdminShippingCodRemittancesPost:
@@ -89,8 +89,22 @@ describe('CodPage', () => {
 
     expect(element.textContent).toContain('Overdue (over 7 days)');
     expect(element.textContent).toContain('UPB-260925-ABCDEF');
-    expect(element.textContent).toContain('₹140.00 of ₹150.00 paid over');
+    expect(element.textContent).toContain('₹140.00 of ₹150.00 remitted');
     expect(element.textContent).toContain('1 not matched');
+  });
+
+  it('says paid over only of a parcel the courier paid too much for', async () => {
+    const { element } = await render(true, [
+      { ...owed, id: 'r2', awb: 'AWB2', received: 0, status: 'Outstanding' },
+      { ...owed, id: 'r3', awb: 'AWB3', received: 160, status: 'Over', isOverdue: false },
+    ]);
+    const rows = [...element.querySelectorAll('li')].map((li) => li.textContent ?? '');
+
+    expect(rows[0]).toContain('₹150.00 collected');
+    expect(rows[0]).toContain('Nothing paid yet');
+    expect(rows[0]).not.toMatch(/remitted|paid over|overpaid/i);
+    expect(rows[1]).toContain('₹160.00 remitted for ₹150.00 collected, ₹10.00 too much');
+    expect(rows[1]).toContain('Overpaid');
   });
 
   it('uploads a remittance report for a bank transfer', async () => {

@@ -8,11 +8,14 @@
   },
   "nav": {
     "signOut": "Sign out",
+    "primary": "Main",
     "returns": "Returns",
     "earnings": "Earnings",
     "reviews": "Reviews",
     "coupons": "Coupons",
-    "team": "Team"
+    "team": "Team",
+    "menu": "Menu",
+    "shop": "Your shop"
   },
   "state": {
     "loading": "Loading",
@@ -127,7 +130,9 @@
     },
     "returnStatus": {
       "Returning": "Being returned",
-      "Returned": "Returned"
+      "Returned": "Returned",
+      "PartlyReturning": "Partly being returned",
+      "PartlyReturned": "Partly returned"
     },
     "return": {
       "reasons": {
@@ -165,6 +170,8 @@
       "Cancelled": "Cancelled",
       "ReturnInTransit": "Returning to seller"
     },
+    "forwardShipment": "Delivery to the buyer",
+    "returnShipment": "Return pickup",
     "pickupName": "Name as registered in Shiprocket",
     "pickupSaved": "Pickup location saved.",
     "pincode": "PIN code"
@@ -230,6 +237,9 @@
     "noOrders": "Nothing here.",
     "codCollect": "Collect {{amount}} on delivery",
     "toPack": "To pack",
+    "packedItems": "Packed",
+    "sentItems": "Sent to the buyer",
+    "cancelledItems": "Cancelled - not sent",
     "partValue": "Value {{amount}}",
     "courier": "Courier",
     "settingsTitle": "Settings",
@@ -327,6 +337,8 @@
       "Damaged": "Returned damaged; not restocked."
     },
     "unitsBack": "{{count}} coming back",
+    "unitsAsked": "{{count}} asked to return",
+    "unitsCameBack": "{{count}} came back",
     "recordInspection": "Record inspection"
   },
   "reviews": {

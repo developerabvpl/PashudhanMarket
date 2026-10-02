@@ -61,16 +61,33 @@ internal sealed class ListSellersQueryHandler(UPBazaarDbContext dbContext)
     }
 }
 
-/// <summary>One seller in full, for review.</summary>
+/// <summary>
+/// One seller in full, for review, with its owner's name and email from Identity: staff recognise
+/// the person, not their account id. An owner Identity cannot find still shows by id.
+/// </summary>
 public sealed record GetSellerQuery(Guid SellerId) : IQuery<SellerDto>;
 
-internal sealed class GetSellerQueryHandler(UPBazaarDbContext dbContext) : IQueryHandler<GetSellerQuery, SellerDto>
+internal sealed class GetSellerQueryHandler(UPBazaarDbContext dbContext, IUserDirectory users) : IQueryHandler<GetSellerQuery, SellerDto>
 {
     public async Task<Result<SellerDto>> HandleAsync(GetSellerQuery query, CancellationToken cancellationToken)
     {
         var seller = await dbContext.Set<Seller>().AsNoTracking().FirstOrDefaultAsync(s => s.PublicId == query.SellerId, cancellationToken);
 
-        return seller is null ? Result.Failure<SellerDto>(SellerErrors.NotFound) : seller.ToDto();
+        if (seller is null)
+        {
+            return Result.Failure<SellerDto>(SellerErrors.NotFound);
+        }
+
+        var dto = seller.ToDto();
+
+        if (seller.OwnerUserId is not { } ownerId)
+        {
+            return dto;
+        }
+
+        var owner = await users.GetUserAsync(ownerId, cancellationToken);
+
+        return owner.IsSuccess ? dto with { OwnerName = owner.Value.DisplayName, OwnerEmail = owner.Value.Email } : dto;
     }
 }
 

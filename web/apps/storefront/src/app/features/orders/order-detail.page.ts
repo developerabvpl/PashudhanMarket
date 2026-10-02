@@ -3,17 +3,19 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   Api,
+  DeliveryAddressDto,
   OrderDto,
   ShipmentDto,
   apiV1OrdersOrderIdCancelPost,
   apiV1ShippingOrdersOrderIdShipmentsGet,
+  isBuyerReturn,
   ordersGetMine,
 } from '@upbazaar/data-access';
 import { PageState, ToastService } from '@upbazaar/ui';
-import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { DateIstPipe, InrCurrencyPipe, joinParts } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { OrderPayPanel } from '../payments/order-pay-panel';
-import { orderStatusBadge, partStatusBadge } from './order-labels';
+import { orderBadge, partStatusBadge } from './order-labels';
 import { OrderPaymentCard } from './order-payment-card';
 import { ReturnPanel } from './return-panel';
 import { ReviewPanel } from './review-panel';
@@ -75,8 +77,8 @@ import { ReviewPanel } from './review-panel';
             <p class="text-sm font-medium text-ink">
               {{ 'orders.parcel' | transloco: { index: i + 1, count: o.parts.length } }}
             </p>
-            <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="partBadge(part.status).tone">
-              {{ partBadge(part.status, part.returnRequest?.status === 'Approved').key | transloco }}
+            <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="partBadge(part).tone">
+              {{ partBadge(part).key | transloco }}
             </span>
           </div>
           <ul class="divide-y divide-border">
@@ -86,6 +88,11 @@ import { ReviewPanel } from './review-panel';
                 <a class="min-w-0 text-ink hover:text-brand-700" [routerLink]="['/products', line.productId]">
                   {{ line.name }}
                   <span class="text-ink-muted">× {{ line.quantity }}</span>
+                  @if (buyerReturn(part) && line.returnQuantity) {
+                  <span class="block text-xs text-ink-muted">
+                    {{ (part.status === 'Returned' ? 'orders.lineReturned' : 'orders.lineReturning') | transloco: { count: line.returnQuantity, quantity: line.quantity } }}
+                  </span>
+                  }
                 </a>
                 <span class="shrink-0 font-medium text-ink" [class.line-through]="part.status === 'Cancelled'">
                   {{ line.lineTotal | inr: 'symbol' : 'auto' }}
@@ -120,11 +127,7 @@ import { ReviewPanel } from './review-panel';
           <h2 class="font-medium text-ink">{{ 'orders.deliverTo' | transloco }}</h2>
           <address class="mt-2 not-italic leading-relaxed text-ink-muted">
             <span class="text-ink">{{ o.deliveryAddress.fullName }}</span><br />
-            {{ o.deliveryAddress.line1 }}<br />
-            @if (o.deliveryAddress.line2) { {{ o.deliveryAddress.line2 }}<br /> }
-            @if (o.deliveryAddress.landmark) { {{ o.deliveryAddress.landmark }}<br /> }
-            {{ o.deliveryAddress.city }}@if (o.deliveryAddress.district) {, {{ o.deliveryAddress.district }} }<br />
-            {{ o.deliveryAddress.state }} {{ o.deliveryAddress.pincode }}<br />
+            @for (row of addressLines(o.deliveryAddress); track $index) { {{ row }}<br /> }
             +91 {{ o.deliveryAddress.mobile }}
           </address>
         </div>
@@ -185,8 +188,20 @@ export class OrderDetailPage {
   protected readonly busy = signal(false);
   protected readonly confirming = signal(false);
 
-  protected readonly badge = computed(() => orderStatusBadge(this.order()?.status ?? ''));
+  /** How far the order has got: the same rule, and so the same word, as its row in My orders. */
+  protected readonly badge = computed(() => orderBadge(this.order()?.status ?? '', this.order()?.parts.map((p) => p.status)));
   protected readonly partBadge = partStatusBadge;
+  protected readonly buyerReturn = isBuyerReturn;
+
+  /**
+   * The address a line at a time, leaving out what the buyer left blank, so an empty district or
+   * area never leaves a stray comma or space behind.
+   */
+  protected addressLines(a: DeliveryAddressDto): string[] {
+    return [a.line1, a.line2, a.landmark, joinParts([a.city, a.district]), joinParts([a.state, a.pincode], ' ')].filter(
+      (row): row is string => !!row?.trim()
+    );
+  }
 
   private readonly api = inject(Api);
   private readonly toast = inject(ToastService);

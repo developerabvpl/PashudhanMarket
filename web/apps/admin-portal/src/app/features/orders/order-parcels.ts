@@ -12,6 +12,7 @@ import {
   apiV1AdminOrdersOrderIdPartsPartIdReturnInspectionPost,
   apiV1AdminShippingOrdersOrderIdPartsPartIdReturnPickupPost,
   apiV1AdminShippingOrdersOrderIdShipmentsGet,
+  partStatusKey,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
@@ -44,14 +45,14 @@ interface ReturnedLine {
         <div>
           <p class="font-medium text-ink">
             {{ 'orders.parcel' | transloco: { index: i + 1, count: order().parts.length } }} ·
-            {{ (part.returnRequest?.status === 'Approved' && (part.status === 'Returning' || part.status === 'Returned')
-              ? 'orders.returnStatus.' : 'orders.partStatus.') + part.status | transloco }} · {{ part.subtotal | inr }}
+            {{ statusKey(part) | transloco }} · {{ part.subtotal | inr }}
             <!-- The subtotal is at full price; the coupon's share shows beside it so the parcels add up to the order. -->
             @if (part.discount > 0) { · {{ 'admin.partCoupon' | transloco: { amount: (-part.discount | inr) } }} }
           </p>
 
           @if (shipmentFor(part.id); as shipment) {
           <p class="mt-1 text-ink-muted">
+            {{ 'shipping.forwardShipment' | transloco }}:
             {{ shipment.courierName ?? '—' }} · <span class="font-mono text-xs">{{ shipment.awb ?? '—' }}</span> ·
             {{ 'shipping.statuses.' + shipment.status | transloco }} · {{ shipment.pickupLocation }}
           </p>
@@ -73,7 +74,7 @@ interface ReturnedLine {
           @if (request.decisionNote) { <p class="mt-1 text-ink-muted">{{ request.decisionNote }}</p> }
           @if (returned(part).length > 0) {
           <p class="mt-1 text-ink">
-            {{ 'returns.itemsBack' | transloco }}
+            {{ (part.status === 'Returned' ? 'returns.itemsCameBack' : 'returns.itemsBack') | transloco }}
             @for (line of returned(part); track line.productId) { <span class="mr-2">{{ line.quantity }} × {{ line.name }}</span> }
           </p>
           }
@@ -93,15 +94,18 @@ interface ReturnedLine {
           </div>
           }
 
-          @if (request.status === 'Approved' && part.status === 'Returning') {
+          <!-- The return pickup and what it costs stay listed after the parcel is back and inspected. -->
           @if (returnFor(part.id); as pickup) {
           <p class="mt-1 text-ink-muted">
+            {{ 'shipping.returnShipment' | transloco }}:
             {{ pickup.courierName ?? '—' }} · <span class="font-mono text-xs">{{ pickup.awb ?? '—' }}</span> ·
             {{ 'shipping.statuses.' + pickup.status | transloco }}
           </p>
           @if (pickup.lastError) { <p class="mt-1 text-danger">{{ 'returns.pickupFailed' | transloco: { error: pickup.lastError } }}</p> }
           <upb-shipment-charges [shipment]="pickup" (changed)="replace($event)" />
           }
+
+          @if (request.status === 'Approved' && part.status === 'Returning') {
           @if (!returnFor(part.id) || returnFor(part.id)?.status === 'Booking') {
           <button *hasPermission="shipmentsWrite" class="mt-2" mat-stroked-button type="button" (click)="bookReturnPickup(part.id)">
             {{ 'returns.bookPickup' | transloco }}
@@ -146,6 +150,7 @@ export class OrderParcels {
   protected readonly ordersWrite = OrderingPermissions.Write;
   protected readonly shipments = signal<readonly ShipmentDto[]>([]);
   protected readonly rejectNote = signal('');
+  protected readonly statusKey = partStatusKey;
 
   /** Conditions chosen for what came back, by part and product; Good until changed. */
   private readonly conditions = signal<Readonly<Record<string, string>>>({});

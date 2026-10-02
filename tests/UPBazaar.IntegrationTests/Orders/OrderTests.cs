@@ -255,6 +255,11 @@ public sealed class OrderTests(ApiFixture fixture)
         mine!.Items.Single().Number.ShouldBe(order.Number);
         mine.Items.Single().Total.ShouldBe(10m);
         mine.Items.Single().ItemCount.ShouldBe(1);
+        // The parcels' own statuses come with the row, so the list can say how far they have got.
+        mine.Items.Single().PartStatuses.ShouldBe(["Confirmed"]);
+        // Nothing was paid online, so there is nothing to refund.
+        mine.Items.Single().AmountPaid.ShouldBeNull();
+        mine.Items.Single().RefundTotal.ShouldBe(0m);
 
         (await other.GetFromJsonAsync<PagedList<OrderSummaryDto>>(OrdersUri))!.Items.ShouldBeEmpty();
         (await other.GetAsync(new Uri($"/api/v1/orders/{order.Id}", UriKind.Relative))).StatusCode

@@ -109,7 +109,7 @@ type Filter = 'Owed' | 'Overdue' | 'Short' | 'Over' | 'All';
                 </p>
                 <p class="text-ink-muted">
                   {{ 'cod.deliveredOn' | transloco: { date: (r.deliveredAtUtc | dateIst) } }} ·
-                  {{ 'cod.paidOf' | transloco: { received: (r.received | inr), expected: (r.expected | inr) } }} ·
+                  {{ amountsKey(r) | transloco: { received: (r.received | inr), expected: (r.expected | inr), excess: (r.received - r.expected | inr) } }} ·
                   {{ 'cod.statuses.' + r.status | transloco }}
                 </p>
                 @if (r.writeOffNote) { <p class="text-ink-muted">{{ r.writeOffNote }}</p> }
@@ -206,6 +206,22 @@ export class CodPage {
 
   constructor() {
     void this.refresh();
+  }
+
+  /**
+   * How much was collected and remitted. The words follow the status: a parcel with nothing
+   * remitted yet shows only what was collected, and only an overpaid one says by how much - "paid
+   * over" on every row read as though the courier had paid too much.
+   */
+  protected amountsKey(receivable: CodReceivableDto): string {
+    switch (receivable.status) {
+      case 'Outstanding':
+        return 'cod.amounts.none';
+      case 'Over':
+        return 'cod.amounts.over';
+      default:
+        return 'cod.amounts.part';
+    }
   }
 
   protected value(event: Event): string {

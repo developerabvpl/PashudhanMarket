@@ -1,3 +1,5 @@
+import { ReturnablePart, orderProgress, partStatusKey } from '@upbazaar/data-access';
+
 /**
  * How an order or part status reads on screen: an i18n key and a badge colour.
  *
@@ -30,13 +32,19 @@ export function orderStatusBadge(status: string): StatusBadge {
 }
 
 /**
- * A part going or gone back reads differently depending on why: "could not be delivered" for a
- * courier return, "being returned" for one the buyer asked for and the seller accepted.
+ * An order's badge in the list and on its page: how far its parcels have got, by the rule in
+ * {@link orderProgress} - a confirmed order reads Shipped once any parcel has left its seller,
+ * Packed once any is packed - so the two never disagree.
  */
-export function partStatusBadge(status: string, buyerReturn = false): StatusBadge {
-  const key = buyerReturn && (status === 'Returning' || status === 'Returned')
-    ? `orders.returnStatus.${status}`
-    : `orders.partStatus.${status}`;
+export function orderBadge(status: string, partStatuses: readonly string[] | null | undefined): StatusBadge {
+  return orderStatusBadge(orderProgress(status, partStatuses));
+}
 
-  return { key, tone: TONES[status] ?? NEUTRAL };
+/**
+ * A part going or gone back reads differently depending on why: "could not be delivered" for a
+ * courier return, "being returned" for one the buyer asked for and the seller accepted, and
+ * "partly returned" when the buyer sent back only some of it.
+ */
+export function partStatusBadge(part: ReturnablePart): StatusBadge {
+  return { key: partStatusKey(part), tone: TONES[part.status] ?? NEUTRAL };
 }

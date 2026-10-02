@@ -223,7 +223,18 @@
       "remove": "Remove",
       "saves": "You save {{amount}}",
       "discount": "Coupon {{code}}",
-      "freeDelivery": "Free delivery ({{code}})"
+      "freeDelivery": "Free delivery ({{code}})",
+      "errors": {
+        "unknown": "That coupon code is not recognised.",
+        "notValidNow": "That coupon is not valid now.",
+        "usedUp": "That coupon has been used as many times as it can be.",
+        "alreadyUsed": "You have already used this coupon as many times as it allows.",
+        "nothingCovered": "That coupon does not cover anything in your basket.",
+        "deliveryAlreadyFree": "Delivery is already free on this order, so that coupon takes nothing off.",
+        "belowMinimum": "That coupon needs at least {{amount}} of the goods it covers.",
+        "belowMinimumUnknown": "Your basket does not reach that coupon's minimum order.",
+        "concurrentChange": "That coupon was used by someone else at the same moment. Try again."
+      }
     }
   },
   "orders": {
@@ -242,6 +253,7 @@
     "paidOnline": "Paid online",
     "refund": "Refund",
     "refundNote": "Refunds go back to the account you paid from.",
+    "refundOf": "Refund {{amount}}",
     "cancel": "Cancel this order",
     "cancelQuestion": "Cancel the whole order? This cannot be undone.",
     "cancelConfirm": "Yes, cancel it",
@@ -250,6 +262,8 @@
     "status": {
       "PendingPayment": "Awaiting payment",
       "Confirmed": "Confirmed",
+      "Packed": "Packed",
+      "Shipped": "Shipped",
       "Completed": "Delivered",
       "Cancelled": "Cancelled"
     },
@@ -269,9 +283,13 @@
     },
     "shippedWith": "With {{courier}}, AWB {{awb}}",
     "track": "Track parcel",
+    "lineReturning": "{{count}} of {{quantity}} being returned",
+    "lineReturned": "{{count}} of {{quantity}} returned",
     "returnStatus": {
       "Returning": "Being returned",
-      "Returned": "Returned"
+      "Returned": "Returned",
+      "PartlyReturning": "Partly being returned",
+      "PartlyReturned": "Partly returned"
     },
     "return": {
       "start": "Return this parcel",

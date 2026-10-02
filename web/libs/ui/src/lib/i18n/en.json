@@ -24,7 +24,6 @@
     "catalogue": "Catalogue",
     "categories": "Categories",
     "returns": "Returns",
-    "settlements": "Settlements",
     "payouts": "Payouts",
     "settlementRates": "Commission and tax",
     "earnings": "Earnings",
@@ -32,7 +31,11 @@
     "buyerReviews": "Buyer reviews",
     "coupons": "Coupons",
     "cod": "Cash on delivery",
-    "team": "Team"
+    "team": "Team",
+    "menu": "Menu",
+    "money": "Money",
+    "shipping": "Shipping",
+    "shop": "Your shop"
   },
   "state": {
     "loading": "Loading",
@@ -230,6 +233,7 @@
   "admin": {
     "orderLookup": "Order lookup",
     "orderId": "Order ID",
+    "orderNumberOrId": "Order number or ID",
     "find": "Find order",
     "orderNumber": "Order number",
     "status": "Status",
@@ -247,7 +251,8 @@
     "paidOnline": "Paid online",
     "refund": "Refund",
     "partCoupon": "{{amount}} coupon",
-    "notFound": "No order with that ID."
+    "notFound": "No order with that number or ID.",
+    "manyMatches": "{{count}} orders match. Choose one:"
   },
   "staff": {
     "title": "Staff users",
@@ -268,9 +273,16 @@
     "rolesTitle": "Roles for {{name}}",
     "initialPassword": "Initial password",
     "initialPasswordHint": "They should change this after their first sign-in.",
-    "statusActive": "Active",
-    "statusSuspended": "Suspended",
-    "statusDeactivated": "Deactivated",
+    "statuses": {
+      "Active": "Active",
+      "Suspended": "Suspended",
+      "Deactivated": "Deactivated"
+    },
+    "types": {
+      "Staff": "Staff",
+      "Seller": "Seller",
+      "Buyer": "Buyer"
+    },
     "assignRoles": "Assign roles",
     "noRoles": "No roles",
     "created": "Staff user created.",
@@ -376,7 +388,18 @@
       "remove": "Remove",
       "saves": "You save {{amount}}",
       "discount": "Coupon {{code}}",
-      "freeDelivery": "Free delivery ({{code}})"
+      "freeDelivery": "Free delivery ({{code}})",
+      "errors": {
+        "unknown": "That coupon code is not recognised.",
+        "notValidNow": "That coupon is not valid now.",
+        "usedUp": "That coupon has been used as many times as it can be.",
+        "alreadyUsed": "You have already used this coupon as many times as it allows.",
+        "nothingCovered": "That coupon does not cover anything in your basket.",
+        "deliveryAlreadyFree": "Delivery is already free on this order, so that coupon takes nothing off.",
+        "belowMinimum": "That coupon needs at least {{amount}} of the goods it covers.",
+        "belowMinimumUnknown": "Your basket does not reach that coupon's minimum order.",
+        "concurrentChange": "That coupon was used by someone else at the same moment. Try again."
+      }
     }
   },
   "orders": {
@@ -395,6 +418,7 @@
     "paidOnline": "Paid online",
     "refund": "Refund",
     "refundNote": "Refunds go back to the account you paid from.",
+    "refundOf": "Refund {{amount}}",
     "cancel": "Cancel this order",
     "cancelQuestion": "Cancel the whole order? This cannot be undone.",
     "cancelConfirm": "Yes, cancel it",
@@ -403,6 +427,8 @@
     "status": {
       "PendingPayment": "Awaiting payment",
       "Confirmed": "Confirmed",
+      "Packed": "Packed",
+      "Shipped": "Shipped",
       "Completed": "Delivered",
       "Cancelled": "Cancelled"
     },
@@ -422,9 +448,13 @@
     },
     "shippedWith": "With {{courier}}, AWB {{awb}}",
     "track": "Track parcel",
+    "lineReturning": "{{count}} of {{quantity}} being returned",
+    "lineReturned": "{{count}} of {{quantity}} returned",
     "returnStatus": {
       "Returning": "Being returned",
-      "Returned": "Returned"
+      "Returned": "Returned",
+      "PartlyReturning": "Partly being returned",
+      "PartlyReturned": "Partly returned"
     },
     "return": {
       "start": "Return this parcel",
@@ -531,6 +561,8 @@
     "pickupSubtitle": "Names must match pickup locations registered in Shiprocket. Sellers without their own ship from the platform warehouse.",
     "warehouse": "Platform warehouse",
     "forSeller": "Seller",
+    "forwardShipment": "Delivery to the buyer",
+    "returnShipment": "Return pickup",
     "noPickups": "No pickup locations yet. Add the platform warehouse first.",
     "sellerIdOptional": "Seller id (blank for the platform warehouse)",
     "pickupName": "Name as registered in Shiprocket",
@@ -615,6 +647,9 @@
     "noOrders": "Nothing here.",
     "codCollect": "Collect {{amount}} on delivery",
     "toPack": "To pack",
+    "packedItems": "Packed",
+    "sentItems": "Sent to the buyer",
+    "cancelledItems": "Cancelled - not sent",
     "partValue": "Value {{amount}}",
     "courier": "Courier",
     "settingsTitle": "Settings",
@@ -648,6 +683,7 @@
     },
     "none": "None here.",
     "owner": "Owner account",
+    "noOwner": "No owner yet",
     "approve": "Approve",
     "reject": "Reject",
     "rejectNote": "What should the applicant fix?",
@@ -826,7 +862,10 @@
       "Damaged": "Returned damaged; not restocked."
     },
     "unitsBack": "{{count}} coming back",
+    "unitsAsked": "{{count}} asked to return",
+    "unitsCameBack": "{{count}} came back",
     "itemsBack": "Coming back:",
+    "itemsCameBack": "Came back:",
     "refundDue": "Refund due: {{amount}}",
     "recordInspection": "Record inspection"
   },
@@ -976,17 +1015,21 @@
       "Owed": "Owed",
       "Overdue": "Overdue",
       "Short": "Paid short",
-      "Over": "Paid over",
+      "Over": "Overpaid",
       "All": "All"
     },
     "overdue": "Overdue",
     "deliveredOn": "Delivered {{date}}",
-    "paidOf": "{{received}} of {{expected}} paid over",
+    "amounts": {
+      "none": "{{expected}} collected",
+      "part": "{{received}} of {{expected}} remitted",
+      "over": "{{received}} remitted for {{expected}} collected, {{excess}} too much"
+    },
     "statuses": {
       "Outstanding": "Nothing paid yet",
       "ShortPaid": "Paid short",
       "Received": "Paid in full",
-      "Over": "Paid over",
+      "Over": "Overpaid",
       "WrittenOff": "Written off"
     },
     "writeOff": "Write off the rest",

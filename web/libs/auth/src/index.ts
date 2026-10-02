@@ -4,6 +4,7 @@ export * from './lib/auth.service';
 export * from './lib/auth.interceptor';
 export * from './lib/auth.guards';
 export * from './lib/has-permission.directive';
+export * from './lib/portal-nav';
 export * from './lib/pages/forbidden.page';
 
 // Only the portals call this; it fetches the Material half from lib/portal when it runs.

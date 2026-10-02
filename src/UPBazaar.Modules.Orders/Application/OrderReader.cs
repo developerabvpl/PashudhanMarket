@@ -28,19 +28,22 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 o => o.PublicId == orderId && (buyerId == null || o.BuyerId == buyerId),
                 cancellationToken);
 
-    /// <summary>A page of orders, newest first, projected straight to summaries.</summary>
+    /// <summary>
+    /// A page of orders, newest first, projected straight to summaries.
+    ///
+    /// The total is written out once and then reused: the refund is what was paid less that
+    /// total, by the same rule as <see cref="Order.RefundTotal"/>, and spelling the total out twice
+    /// would let the two drift apart.
+    /// </summary>
     public static IQueryable<OrderSummaryDto> Summaries(IQueryable<Order> orders) =>
         orders
             .OrderByDescending(o => o.PlacedAtUtc)
             .ThenByDescending(o => o.Id)
-            .Select(o => new OrderSummaryDto(
-                o.PublicId,
-                o.Number,
-                o.Status.ToString(),
-                o.PaymentMethod.ToString(),
-                o.PaymentStatus.ToString(),
+            .Select(o => new
+            {
+                Order = o,
                 // What the buyer keeps: not cancelled, not taken back undelivered, less returned units.
-                o.Parts
+                Total = o.Parts
                     .Where(p => p.Status != OrderPartStatus.Cancelled
                         && ((p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
                             || (p.ReturnRequest != null && p.ReturnRequest.Status == ReturnRequestStatus.Approved)))
@@ -48,9 +51,20 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                     .Sum(l => (l.UnitPrice * (l.Quantity - l.ReturnedQuantity)) - (l.Discount - l.ReturnedDiscount - l.RevokedDiscount))
                     + o.ShippingFee
                     - o.Parts.Where(p => p.FreeDelivery).Sum(p => p.DeliveryFee),
-                o.Currency,
-                o.Parts.SelectMany(p => p.Lines).Sum(l => l.Quantity),
-                o.PlacedAtUtc));
+            })
+            .Select(x => new OrderSummaryDto(
+                x.Order.PublicId,
+                x.Order.Number,
+                x.Order.Status.ToString(),
+                x.Order.PaymentMethod.ToString(),
+                x.Order.PaymentStatus.ToString(),
+                x.Total,
+                x.Order.Currency,
+                x.Order.Parts.SelectMany(p => p.Lines).Sum(l => l.Quantity),
+                x.Order.PlacedAtUtc,
+                x.Order.Parts.OrderBy(p => p.Id).Select(p => p.Status.ToString()).ToList(),
+                x.Order.AmountPaid,
+                x.Order.AmountPaid != null && x.Order.AmountPaid > x.Total ? x.Order.AmountPaid.Value - x.Total : 0m));
 }
 
 /// <summary>Maps orders to the DTOs the API and other modules see.</summary>

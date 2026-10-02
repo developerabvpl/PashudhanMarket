@@ -70,7 +70,11 @@ public sealed record ShipmentEventDto(string Status, DateTime OccurredAtUtc);
 /// <param name="Name">The pickup location's name exactly as registered in Shiprocket.</param>
 /// <param name="Pincode">The PIN code of that address, used to price parcels; null if not recorded.</param>
 /// <param name="UpdatedAtUtc">When it was last set.</param>
-public sealed record PickupLocationDto(Guid? SellerId, string Name, string? Pincode, DateTime UpdatedAtUtc);
+/// <param name="ShopName">
+/// The seller's shop name, so staff read whose location it is rather than an id; null for the
+/// warehouse, or where the name was not looked up.
+/// </param>
+public sealed record PickupLocationDto(Guid? SellerId, string Name, string? Pincode, DateTime UpdatedAtUtc, string? ShopName = null);
 
 /// <summary>What one courier trip of a shipment costs.</summary>
 /// <param name="Trip">Delivery, Rto (brought back undelivered) or ReturnPickup (collecting a buyer's return).</param>

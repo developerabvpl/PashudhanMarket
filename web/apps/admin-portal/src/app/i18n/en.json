@@ -14,17 +14,20 @@
     "shipments": "Shipments",
     "staffUsers": "Staff users",
     "signOut": "Sign out",
+    "primary": "Main",
     "sellers": "Sellers",
     "listingReview": "Listings to review",
     "catalogue": "Catalogue",
     "categories": "Categories",
     "returns": "Returns",
-    "settlements": "Settlements",
     "payouts": "Payouts",
     "settlementRates": "Commission and tax",
     "buyerReviews": "Buyer reviews",
     "coupons": "Coupons",
-    "cod": "Cash on delivery"
+    "cod": "Cash on delivery",
+    "menu": "Menu",
+    "money": "Money",
+    "shipping": "Shipping"
   },
   "state": {
     "loading": "Loading",
@@ -129,7 +132,7 @@
   },
   "admin": {
     "orderLookup": "Order lookup",
-    "orderId": "Order ID",
+    "orderNumberOrId": "Order number or ID",
     "find": "Find order",
     "status": "Status",
     "placedAt": "Placed",
@@ -146,7 +149,8 @@
     "paidOnline": "Paid online",
     "refund": "Refund",
     "partCoupon": "{{amount}} coupon",
-    "notFound": "No order with that ID."
+    "notFound": "No order with that number or ID.",
+    "manyMatches": "{{count}} orders match. Choose one:"
   },
   "staff": {
     "title": "Staff users",
@@ -167,8 +171,16 @@
     "rolesTitle": "Roles for {{name}}",
     "initialPassword": "Initial password",
     "initialPasswordHint": "They should change this after their first sign-in.",
-    "statusActive": "Active",
-    "statusSuspended": "Suspended",
+    "statuses": {
+      "Active": "Active",
+      "Suspended": "Suspended",
+      "Deactivated": "Deactivated"
+    },
+    "types": {
+      "Staff": "Staff",
+      "Seller": "Seller",
+      "Buyer": "Buyer"
+    },
     "assignRoles": "Assign roles",
     "noRoles": "No roles",
     "created": "Staff user created.",
@@ -194,6 +206,8 @@
     "status": {
       "PendingPayment": "Awaiting payment",
       "Confirmed": "Confirmed",
+      "Packed": "Packed",
+      "Shipped": "Shipped",
       "Completed": "Delivered",
       "Cancelled": "Cancelled"
     },
@@ -213,7 +227,9 @@
     },
     "returnStatus": {
       "Returning": "Being returned",
-      "Returned": "Returned"
+      "Returned": "Returned",
+      "PartlyReturning": "Partly being returned",
+      "PartlyReturned": "Partly returned"
     },
     "return": {
       "reasons": {
@@ -290,6 +306,8 @@
     "pickupSubtitle": "Names must match pickup locations registered in Shiprocket. Sellers without their own ship from the platform warehouse.",
     "warehouse": "Platform warehouse",
     "forSeller": "Seller",
+    "forwardShipment": "Delivery to the buyer",
+    "returnShipment": "Return pickup",
     "noPickups": "No pickup locations yet. Add the platform warehouse first.",
     "sellerIdOptional": "Seller id (blank for the platform warehouse)",
     "pickupName": "Name as registered in Shiprocket",
@@ -356,6 +374,7 @@
     },
     "none": "None here.",
     "owner": "Owner account",
+    "noOwner": "No owner yet",
     "approve": "Approve",
     "reject": "Reject",
     "rejectNote": "What should the applicant fix?",
@@ -507,6 +526,7 @@
       "Damaged": "Returned damaged; not restocked."
     },
     "itemsBack": "Coming back:",
+    "itemsCameBack": "Came back:",
     "refundDue": "Refund due: {{amount}}",
     "recordInspection": "Record inspection"
   },
@@ -600,17 +620,21 @@
       "Owed": "Owed",
       "Overdue": "Overdue",
       "Short": "Paid short",
-      "Over": "Paid over",
+      "Over": "Overpaid",
       "All": "All"
     },
     "overdue": "Overdue",
     "deliveredOn": "Delivered {{date}}",
-    "paidOf": "{{received}} of {{expected}} paid over",
+    "amounts": {
+      "none": "{{expected}} collected",
+      "part": "{{received}} of {{expected}} remitted",
+      "over": "{{received}} remitted for {{expected}} collected, {{excess}} too much"
+    },
     "statuses": {
       "Outstanding": "Nothing paid yet",
       "ShortPaid": "Paid short",
       "Received": "Paid in full",
-      "Over": "Paid over",
+      "Over": "Overpaid",
       "WrittenOff": "Written off"
     },
     "writeOff": "Write off the rest",

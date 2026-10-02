@@ -1,14 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Api, OrderDto, apiV1AdminOrdersOrderIdGet, toApiProblem } from '@upbazaar/data-access';
+import {
+  Api,
+  OrderDto,
+  OrderSummaryDto,
+  apiV1AdminOrdersGet,
+  apiV1AdminOrdersOrderIdGet,
+  orderProgress,
+  toApiProblem,
+} from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { OrderParcels } from './order-parcels';
 
-type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
+type LookupState = 'idle' | 'loading' | 'loaded' | 'choose' | 'notFound' | 'error';
+
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Support screen: look an order up by its public id and show what the customer sees plus the
+ * Support screen: look an order up by its number - what a buyer reads out on the phone, such as
+ * UPB-260929-QMRATS, or any part of it - or by its public id, and show what the customer sees plus the
  * payment reference, which is what a refund conversation actually needs.
  *
  * The money is broken down the way the buyer's own order page breaks it down - coupon and
@@ -29,13 +40,13 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
 
       <form class="mt-4 flex gap-2" (submit)="find($event)">
         <label class="flex-1">
-          <span class="upb-sr-only">{{ 'admin.orderId' | transloco }}</span>
+          <span class="upb-sr-only">{{ 'admin.orderNumberOrId' | transloco }}</span>
           <input
             name="orderId"
             type="text"
             required
             class="w-full rounded-control border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
-            placeholder="00000000-0000-0000-0000-000000000000"
+            placeholder="UPB-260929-QMRATS"
             [value]="orderId() ?? ''"
           />
         </label>
@@ -49,6 +60,20 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
 
       @switch (state()) { @case ('loading') {
       <upb-page-state state="loading" />
+      } @case ('choose') {
+      <div class="upb-card mt-6 p-4 text-sm">
+        <p class="text-ink">{{ 'admin.manyMatches' | transloco: { count: matches().length } }}</p>
+        <ul class="mt-2 divide-y divide-border">
+          @for (match of matches(); track match.id) {
+          <li>
+            <button type="button" class="flex w-full justify-between gap-3 py-2 text-left hover:bg-surface-sunken" (click)="pick(match.id)">
+              <span class="font-mono">{{ match.number }}</span>
+              <span class="text-ink-muted">{{ match.placedAtUtc | dateIst }} · {{ match.total | inr }}</span>
+            </button>
+          </li>
+          }
+        </ul>
+      </div>
       } @case ('notFound') {
       <upb-page-state state="empty" message="admin.notFound" />
       } @case ('error') {
@@ -58,7 +83,7 @@ type LookupState = 'idle' | 'loading' | 'loaded' | 'notFound' | 'error';
         <header class="flex flex-wrap items-baseline justify-between gap-2">
           <h2 class="font-mono text-lg font-semibold text-ink">{{ found.number }}</h2>
           <span class="rounded-control bg-surface-sunken px-2 py-1 text-sm text-ink-muted">
-            {{ 'admin.status' | transloco }}: {{ 'orders.status.' + found.status | transloco }}
+            {{ 'admin.status' | transloco }}: {{ 'orders.status.' + progress(found) | transloco }}
           </span>
         </header>
 
@@ -144,6 +169,9 @@ export class OrderLookup {
   protected readonly state = signal<LookupState>('idle');
   protected readonly order = signal<OrderDto | null>(null);
 
+  /** Orders whose numbers matched what was typed, when more than one did. */
+  protected readonly matches = signal<readonly OrderSummaryDto[]>([]);
+
   protected readonly hasResult = computed(() => this.order() !== null);
 
   /** Every line across the sellers' parts: support reads an order as one list, not per parcel. */
@@ -177,11 +205,43 @@ export class OrderLookup {
     }
   }
 
-  private async load(orderId: string): Promise<void> {
-    this.lastQueried.set(orderId);
+  /** Opens one of several orders whose numbers matched. */
+  pick(orderId: string): void {
+    void this.load(orderId);
+  }
+
+  /** The order's status in the buyer's words, Shipped or Packed once its parcels have got that far. */
+  protected progress(order: OrderDto): string {
+    return orderProgress(order.status, order.parts.map((p) => p.status));
+  }
+
+  /**
+   * An id opens that order. Anything else is an order number, or part of one: the staff orders
+   * search finds it, and one match - or one whose number is exactly what was typed - opens
+   * straight away, while several are listed to choose from.
+   */
+  private async load(query: string): Promise<void> {
+    this.lastQueried.set(query);
     this.state.set('loading');
+    this.matches.set([]);
 
     try {
+      let orderId = query;
+
+      if (!GUID.test(query)) {
+        const found = (await this.api.invoke(apiV1AdminOrdersGet, { Number: query, PageSize: 20 })).items;
+        const exact = found.find((o) => o.number.toUpperCase() === query.toUpperCase());
+
+        if (!exact && found.length !== 1) {
+          this.order.set(null);
+          this.matches.set(found);
+          this.state.set(found.length === 0 ? 'notFound' : 'choose');
+          return;
+        }
+
+        orderId = (exact ?? found[0]).id;
+      }
+
       this.order.set(await this.api.invoke(apiV1AdminOrdersOrderIdGet, { orderId }));
       this.state.set('loaded');
     } catch (error) {

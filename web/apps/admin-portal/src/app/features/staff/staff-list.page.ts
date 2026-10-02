@@ -69,9 +69,9 @@ import { StaffService } from './staff.service';
           <mat-label>{{ 'staff.filterType' | transloco }}</mat-label>
           <mat-select [value]="userType()" (valueChange)="changeType($event)">
             <mat-option value="">{{ 'staff.allTypes' | transloco }}</mat-option>
-            <mat-option value="Staff">Staff</mat-option>
-            <mat-option value="Seller">Seller</mat-option>
-            <mat-option value="Buyer">Buyer</mat-option>
+            <mat-option value="Staff">{{ 'staff.types.Staff' | transloco }}</mat-option>
+            <mat-option value="Seller">{{ 'staff.types.Seller' | transloco }}</mat-option>
+            <mat-option value="Buyer">{{ 'staff.types.Buyer' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -96,12 +96,12 @@ import { StaffService } from './staff.service';
 
           <ng-container matColumnDef="userType">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnType' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.userType }}</td>
+            <td mat-cell *matCellDef="let row">{{ 'staff.types.' + row.userType | transloco }}</td>
           </ng-container>
 
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnStatus' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+            <td mat-cell *matCellDef="let row">{{ 'staff.statuses.' + row.status | transloco }}</td>
           </ng-container>
 
           <ng-container matColumnDef="roles">

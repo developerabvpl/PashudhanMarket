@@ -1,15 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { Api, OrderDto, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
+import { Api, OrderDto, apiV1AdminOrdersGet, apiV1AdminShippingOrdersOrderIdShipmentsGet } from '@upbazaar/data-access';
 import { TranslocoService } from '@jsverse/transloco';
 import { provideI18n } from '@upbazaar/ui';
 import { firstValueFrom } from 'rxjs';
 import { translations } from '../../i18n/translations';
 import { OrderLookup } from './order-lookup';
 
+const ORDER_ID = '3f2b8c1e-5d4a-4b6f-9e2d-7a1c0b9d8e6f';
+
 const order: OrderDto = {
-  id: 'o1',
+  id: ORDER_ID,
   number: 'UPB-260314-ABCD12',
   buyerId: 'b1',
   status: 'Confirmed',
@@ -114,7 +116,7 @@ describe('OrderLookup', () => {
     answerWith(order);
     const fixture = await render();
 
-    submitLookup(fixture.nativeElement, 'o1');
+    submitLookup(fixture.nativeElement, ORDER_ID);
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
@@ -137,7 +139,7 @@ describe('OrderLookup', () => {
     });
     const fixture = await render();
 
-    submitLookup(fixture.nativeElement, 'o1');
+    submitLookup(fixture.nativeElement, ORDER_ID);
     await fixture.whenStable();
 
     const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
@@ -154,7 +156,7 @@ describe('OrderLookup', () => {
     answerWith({ ...order, status: 'Cancelled', subtotal: 0, total: 0, amountPaid: 2000, refundTotal: 2000 });
     const fixture = await render();
 
-    submitLookup(fixture.nativeElement, 'o1');
+    submitLookup(fixture.nativeElement, ORDER_ID);
     await fixture.whenStable();
 
     const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
@@ -168,7 +170,7 @@ describe('OrderLookup', () => {
     const fixture = await render();
     const transloco = TestBed.inject(TranslocoService);
 
-    submitLookup(fixture.nativeElement, 'o1');
+    submitLookup(fixture.nativeElement, ORDER_ID);
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Status: Delivered');
 
@@ -194,7 +196,7 @@ describe('OrderLookup', () => {
     invoke.mockRejectedValue(new HttpErrorResponse({ status: 404, error: {} }));
     const fixture = await render();
 
-    submitLookup(fixture.nativeElement, 'missing');
+    submitLookup(fixture.nativeElement, '00000000-0000-0000-0000-000000000000');
     await fixture.whenStable();
 
     // The empty state renders; the error state with its retry button does not.
@@ -205,7 +207,7 @@ describe('OrderLookup', () => {
     invoke.mockRejectedValue(new HttpErrorResponse({ status: 500, error: {} }));
     const fixture = await render();
 
-    submitLookup(fixture.nativeElement, 'o1');
+    submitLookup(fixture.nativeElement, ORDER_ID);
     await fixture.whenStable();
 
     const retry = fixture.nativeElement.querySelector('button[type="button"]') as HTMLButtonElement;
@@ -217,5 +219,68 @@ describe('OrderLookup', () => {
 
     expect(fixture.nativeElement.textContent).toContain('UPB-260314-ABCD12');
     expect(invoke.mock.calls.filter(([fn]) => fn !== apiV1AdminShippingOrdersOrderIdShipmentsGet)).toHaveLength(2);
+  });
+  /** The orders search answers with these summaries; opening one answers with the order. */
+  function searchFinds(numbers: readonly string[]): void {
+    const items = numbers.map((number, i) => ({
+      id: i === 0 ? ORDER_ID : `id-${i}`,
+      number,
+      status: 'Confirmed',
+      paymentMethod: 'Online',
+      paymentStatus: 'Paid',
+      total: 2000,
+      currency: 'INR',
+      itemCount: 2,
+      placedAtUtc: '2026-03-14T10:00:00Z',
+      partStatuses: ['Confirmed'],
+    }));
+
+    invoke.mockImplementation(async (fn: unknown) =>
+      fn === apiV1AdminShippingOrdersOrderIdShipmentsGet ? [] : fn === apiV1AdminOrdersGet ? { items } : order
+    );
+  }
+
+  it('finds an order by its number, as a buyer reads it out', async () => {
+    searchFinds(['UPB-260314-ABCD12']);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, 'upb-260314-abcd12');
+    await fixture.whenStable();
+
+    expect(invoke).toHaveBeenCalledWith(apiV1AdminOrdersGet, { Number: 'upb-260314-abcd12', PageSize: 20 });
+    expect(fixture.nativeElement.textContent).toContain('UPB-DIYA-001');
+  });
+
+  it('lists the orders to choose from when part of a number matches several', async () => {
+    searchFinds(['UPB-260314-ABCD12', 'UPB-260314-ABCD99']);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, 'ABCD');
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('UPB-260314-ABCD99');
+    expect(fixture.nativeElement.querySelector('article')).toBeNull();
+  });
+
+  it('says so when no order number matches', async () => {
+    searchFinds([]);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, 'NOPE');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('article')).toBeNull();
+    expect(fixture.nativeElement.querySelector('button[type="button"]')).toBeNull();
+  });
+
+  it('shows a confirmed order whose parcel has left the seller as shipped', async () => {
+    answerWith({ ...order, parts: [{ ...order.parts[0], status: 'Shipped' }] });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Status: Shipped');
   });
 });

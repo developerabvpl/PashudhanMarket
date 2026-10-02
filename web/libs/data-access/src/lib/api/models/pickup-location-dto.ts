@@ -5,5 +5,6 @@ export interface PickupLocationDto {
   name: string;
   pincode: (string | null);
   sellerId: (string | null);
+  shopName?: (string | null);
   updatedAtUtc: string;
 }

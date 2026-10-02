@@ -10,6 +10,8 @@ export interface SellerDto {
   description: (string | null);
   id: string;
   kyc: SellerKycDto;
+  ownerEmail?: (string | null);
+  ownerName?: (string | null);
   ownerUserId: (string | null);
   reviewNote: (string | null);
   reviewedAtUtc: (string | null);

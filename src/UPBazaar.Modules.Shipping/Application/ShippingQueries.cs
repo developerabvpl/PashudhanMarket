@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Modules.Sellers.Contracts;
 using UPBazaar.Modules.Shipping.Contracts.Dtos;
 using UPBazaar.Modules.Shipping.Domain;
 using UPBazaar.Modules.Shipping.Gateway;
@@ -91,10 +92,13 @@ internal sealed class ListShipmentsQueryHandler(UPBazaarDbContext dbContext, ICo
     }
 }
 
-/// <summary>Every pickup location: the platform warehouse first, then sellers'.</summary>
+/// <summary>
+/// Every pickup location: the platform warehouse first, then sellers', each with its shop's name
+/// from the Sellers module, since staff know a seller by name and not by id.
+/// </summary>
 public sealed record ListPickupLocationsQuery : IQuery<IReadOnlyList<PickupLocationDto>>;
 
-internal sealed class ListPickupLocationsQueryHandler(UPBazaarDbContext dbContext)
+internal sealed class ListPickupLocationsQueryHandler(UPBazaarDbContext dbContext, ISellerDirectory sellers)
     : IQueryHandler<ListPickupLocationsQuery, IReadOnlyList<PickupLocationDto>>
 {
     public async Task<Result<IReadOnlyList<PickupLocationDto>>> HandleAsync(
@@ -105,10 +109,15 @@ internal sealed class ListPickupLocationsQueryHandler(UPBazaarDbContext dbContex
             .AsNoTracking()
             .OrderBy(l => l.SellerId != null)
             .ThenBy(l => l.Name)
-            .Select(l => new PickupLocationDto(l.SellerId, l.Name, l.Pincode, l.UpdatedAtUtc))
+            .Select(l => new PickupLocationDto(l.SellerId, l.Name, l.Pincode, l.UpdatedAtUtc, null))
             .ToListAsync(cancellationToken);
 
-        return locations;
+        var names = await sellers.GetShopNamesAsync(
+            [.. locations.Where(l => l.SellerId is not null).Select(l => l.SellerId!.Value).Distinct()],
+            cancellationToken);
+
+        return Result.Success<IReadOnlyList<PickupLocationDto>>(
+            [.. locations.Select(l => l.SellerId is { } id ? l with { ShopName = names.GetValueOrDefault(id) } : l)]);
     }
 }
 

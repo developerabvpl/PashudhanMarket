@@ -16,7 +16,7 @@ import {
   apiV1AdminSellersSellerIdRejectPost,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
-import { DateIstPipe } from '@upbazaar/util';
+import { DateIstPipe, joinParts } from '@upbazaar/util';
 import { SellersPermissions } from '../../core/permissions';
 
 /**
@@ -68,14 +68,21 @@ import { SellersPermissions } from '../../core/permissions';
             <dt class="text-ink-muted">{{ 'sellerPortal.contactMobile' | transloco }}</dt><dd>{{ s.contactMobile }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.contactEmail' | transloco }}</dt><dd>{{ s.contactEmail ?? '—' }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.sectionAddress' | transloco }}</dt>
-            <dd>{{ s.address.line1 }}@if (s.address.line2) {, {{ s.address.line2 }} }, {{ s.address.city }}, {{ s.address.state }} {{ s.address.pincode }}</dd>
+            <dd>{{ address(s) }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.legalName' | transloco }}</dt><dd>{{ s.kyc.legalName }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.pan' | transloco }}</dt><dd class="font-mono">{{ s.kyc.pan }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.gstin' | transloco }}</dt><dd class="font-mono">{{ s.kyc.gstin ?? '—' }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.bankAccountHolder' | transloco }}</dt><dd>{{ s.kyc.bankAccountHolder }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.bankAccountNumber' | transloco }}</dt><dd class="font-mono">•••• {{ s.kyc.bankAccountLast4 }}</dd>
             <dt class="text-ink-muted">{{ 'sellerPortal.ifsc' | transloco }}</dt><dd class="font-mono">{{ s.kyc.ifsc }}</dd>
-            <dt class="text-ink-muted">{{ 'sellersAdmin.owner' | transloco }}</dt><dd class="font-mono text-xs">{{ s.ownerUserId ?? '—' }}</dd>
+            <dt class="text-ink-muted">{{ 'sellersAdmin.owner' | transloco }}</dt>
+            <dd>
+              @if (s.ownerName) {
+              {{ s.ownerName }}@if (s.ownerEmail) { <span class="text-ink-muted">· {{ s.ownerEmail }}</span> }
+              } @else if (s.ownerUserId) {
+              <span class="font-mono text-xs">{{ s.ownerUserId }}</span>
+              } @else { {{ 'sellersAdmin.noOwner' | transloco }} }
+            </dd>
           </dl>
 
           @if (s.reviewNote) { <p class="text-danger">{{ s.reviewNote }}</p> }
@@ -117,6 +124,13 @@ export class SellersPage {
 
   constructor() {
     void this.load();
+  }
+
+  /** The registered address on one line, leaving out an empty second line. */
+  protected address(seller: SellerDto): string {
+    const a = seller.address;
+
+    return joinParts([joinParts([a.line1, a.line2, a.city, a.state]), a.pincode], ' ');
   }
 
   protected value(event: Event): string {

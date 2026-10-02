@@ -18,6 +18,11 @@ namespace UPBazaar.Modules.Sellers.Contracts.Dtos;
 /// <param name="ReviewNote">Why it was rejected, when it was.</param>
 /// <param name="SubmittedAtUtc">When the application was last submitted.</param>
 /// <param name="ReviewedAtUtc">When it was last approved or rejected.</param>
+/// <param name="OwnerName">
+/// The owner's display name, for staff who know people by name rather than by account id. Filled
+/// in only on the staff view of one seller; null elsewhere and when there is no owner.
+/// </param>
+/// <param name="OwnerEmail">The owner's email address, on the same staff view, if their account has one.</param>
 public sealed record SellerDto(
     Guid Id,
     Guid? OwnerUserId,
@@ -30,7 +35,9 @@ public sealed record SellerDto(
     SellerKycDto Kyc,
     string? ReviewNote,
     DateTime SubmittedAtUtc,
-    DateTime? ReviewedAtUtc);
+    DateTime? ReviewedAtUtc,
+    string? OwnerName = null,
+    string? OwnerEmail = null);
 
 /// <summary>A registered business address.</summary>
 public sealed record SellerAddressDto(string Line1, string? Line2, string City, string State, string Pincode);

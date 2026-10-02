@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Api, apiV1PromotionsCouponsPreviewPost } from '@upbazaar/data-access';
+import { HttpContext, HttpErrorResponse } from '@angular/common/http';
+import { Api, apiV1PromotionsCouponsPreviewPost, callerShowsErrors } from '@upbazaar/data-access';
 import { provideI18n } from '@upbazaar/ui';
 import { translations } from '../../i18n/translations';
 import { CouponField } from './coupon-field';
@@ -39,7 +39,8 @@ describe('CouponField', () => {
     await fixture.whenStable();
 
     expect(enter.defaultPrevented).toBe(true);
-    expect(invoke).toHaveBeenCalledWith(apiV1PromotionsCouponsPreviewPost, { body: { code: 'welcome10' } });
+    expect(invoke).toHaveBeenCalledWith(apiV1PromotionsCouponsPreviewPost, { body: { code: 'welcome10' } }, expect.any(HttpContext));
+    expect((invoke.mock.calls[0] as unknown[])[2]).toEqual(callerShowsErrors());
     expect(applied).toHaveBeenCalledWith(preview);
     expect(element.textContent).toContain('You save ₹15');
   });
@@ -71,6 +72,26 @@ describe('CouponField', () => {
 
     expect(element.textContent).toContain('used as many times as it can be');
     expect(applied).not.toHaveBeenCalled();
+  });
+
+  it('says why once, in words, with the minimum, never the raw code', async () => {
+    const invoke = vi.fn(async () => {
+      throw new HttpErrorResponse({
+        status: 400,
+        error: { title: 'That coupon needs at least Rs 499 of the goods it covers.', code: 'promotions.coupon.below_minimum' },
+      });
+    });
+    const { fixture, element } = await render(invoke);
+
+    type(element, 'BIG');
+    await fixture.whenStable();
+    [...element.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Apply')!.click();
+    await fixture.whenStable();
+
+    const alerts = element.querySelectorAll('[role=alert]');
+    expect(alerts.length).toBe(1);
+    expect(alerts[0].textContent).toContain('needs at least ₹499');
+    expect(element.textContent).not.toContain('promotions.coupon');
   });
 
   it('can be taken off again', async () => {

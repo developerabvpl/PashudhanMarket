@@ -191,6 +191,23 @@ public sealed record DeliveryAddressDto(
     string Pincode);
 
 /// <summary>A row in an order list: enough to recognise an order without loading it.</summary>
+/// <param name="Id">Public id.</param>
+/// <param name="Number">Order number.</param>
+/// <param name="Status">PendingPayment, Confirmed, Completed or Cancelled.</param>
+/// <param name="PaymentMethod">CashOnDelivery or Online.</param>
+/// <param name="PaymentStatus">Pending, Paid or CashOnDelivery.</param>
+/// <param name="Total">What the buyer pays for what they keep.</param>
+/// <param name="Currency">ISO currency code.</param>
+/// <param name="ItemCount">Units bought, across every part.</param>
+/// <param name="PlacedAtUtc">When the order was placed.</param>
+/// <param name="PartStatuses">
+/// Each seller's parcel's status, in the order the parts were created. The order's own status stays
+/// Confirmed from payment until every parcel is delivered, so a list showing only that would call
+/// an order on a lorry "Confirmed"; with these it can say how far the parcels have got, exactly as
+/// the order's own page does.
+/// </param>
+/// <param name="AmountPaid">What the buyer paid online; null for cash on delivery or until paid. <paramref name="Total"/> counts only what the buyer keeps, so a paid order that was cancelled totals nothing - the list shows this instead, with the refund, as the order's own page does.</param>
+/// <param name="RefundTotal">What of <paramref name="AmountPaid"/> goes back to the buyer, sent or not. Zero unless paid online.</param>
 public sealed record OrderSummaryDto(
     Guid Id,
     string Number,
@@ -200,7 +217,10 @@ public sealed record OrderSummaryDto(
     decimal Total,
     string Currency,
     int ItemCount,
-    DateTime PlacedAtUtc);
+    DateTime PlacedAtUtc,
+    IReadOnlyList<string> PartStatuses,
+    decimal? AmountPaid,
+    decimal RefundTotal);
 
 /// <summary>What Payments needs to take money for an order.</summary>
 /// <param name="OrderId">Public id.</param>

@@ -8,4 +8,5 @@ export * from './lib/api/strict-http-response';
 // Hand-written surface.
 export * from './lib/api-problem';
 export * from './lib/http-error.interceptor';
+export * from './lib/order-status';
 export * from './lib/provide-data-access';

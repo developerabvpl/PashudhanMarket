@@ -15,10 +15,12 @@ import {
   apiV1SellerShippingOrdersOrderIdPartsPartIdParcelGet,
   apiV1SellerShippingOrdersOrderIdPartsPartIdReturnPickupPost,
   apiV1SellerShippingOrdersOrderIdShipmentsGet,
+  partStatusKey,
   toApiProblem,
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
-import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
+import { DateIstPipe, InrCurrencyPipe, joinParts } from '@upbazaar/util';
+import { itemsTitleKey, lineReturnKey } from './part-labels';
 import { ReturnDecision } from './return-decision';
 import { ReturnInspection } from './return-inspection';
 
@@ -46,21 +48,20 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           <p class="text-sm text-ink-muted">{{ o.placedAtUtc | dateIst: 'datetime' }}</p>
         </div>
         <span class="rounded-full bg-surface-sunken px-3 py-1 text-sm">
-          {{ (o.returnRequest?.status === 'Approved' && (o.status === 'Returning' || o.status === 'Returned')
-            ? 'orders.returnStatus.' : 'orders.partStatus.') + o.status | transloco }}
+          {{ statusKey(o) | transloco }}
         </span>
       </header>
 
       <div class="upb-card p-5">
-        <h2 class="font-medium text-ink">{{ 'sellerPortal.toPack' | transloco }}</h2>
+        <h2 class="font-medium text-ink">{{ itemsTitle(o.status) | transloco }}</h2>
         <ul class="mt-2 divide-y divide-border text-sm">
           @for (line of o.lines; track line.productId) {
           <li class="flex justify-between gap-3 py-2">
             <span><span class="font-mono text-xs">{{ line.sku }}</span> {{ line.name }}</span>
             <span class="font-medium">
               × {{ line.quantity }}
-              @if (o.returnRequest && line.returnQuantity) {
-              <span class="block text-xs font-normal text-warning">{{ 'returns.unitsBack' | transloco: { count: line.returnQuantity } }}</span>
+              @if (lineReturn(o, line.returnQuantity); as note) {
+              <span class="block text-xs font-normal text-warning">{{ note | transloco: { count: line.returnQuantity } }}</span>
               }
             </span>
           </li>
@@ -76,8 +77,8 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
         <h2 class="font-medium text-ink">{{ 'orders.deliverTo' | transloco }}</h2>
         <address class="mt-2 not-italic leading-relaxed text-ink-muted">
           <span class="text-ink">{{ o.deliveryAddress.fullName }}</span> · +91 {{ o.deliveryAddress.mobile }}<br />
-          {{ o.deliveryAddress.line1 }}@if (o.deliveryAddress.line2) {, {{ o.deliveryAddress.line2 }} }<br />
-          {{ o.deliveryAddress.city }}, {{ o.deliveryAddress.state }} {{ o.deliveryAddress.pincode }}
+          {{ street(o) }}<br />
+          {{ town(o) }}
         </address>
       </div>
 
@@ -86,17 +87,11 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
       <upb-return-decision [order]="o" (decided)="load(o.orderId)" />
       }
       @case ('Rejected') {
-      <p class="upb-card p-5 text-sm">{{ 'returns.refusedNote' | transloco: { note: o.returnRequest?.decisionNote ?? '' } }}</p>
+      <p class="upb-card p-5 text-sm">{{ 'returns.refusedNote' | transloco: { note: o.returnRequest.decisionNote ?? '' } }}</p>
       }
       @case ('Approved') { @if (o.status === 'Returning') {
       <div class="upb-card space-y-2 p-5 text-sm">
         <p class="text-ink">{{ 'returns.awaitingPickup' | transloco }}</p>
-        @if (returnShipment(); as r) {
-        <p>
-          {{ r.courierName ?? '—' }} · AWB <span class="font-mono">{{ r.awb ?? '—' }}</span> ·
-          {{ 'shipping.statuses.' + r.status | transloco }}
-        </p>
-        }
         @if (!returnShipment() || returnShipment()?.status === 'Booking') {
         @if (returnShipment()?.lastError; as error) {
         <p class="text-danger">{{ 'returns.pickupFailed' | transloco: { error: error } }}</p>
@@ -115,14 +110,29 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
       <upb-return-inspection [order]="o" (inspected)="order.set($event)" />
       } }
 
-      @if (shipment(); as s) {
-      <div class="upb-card p-5 text-sm">
+      <!-- Both courier trips: the parcel going to the buyer, and the pickup bringing a return back. -->
+      @if (shipment() || returnShipment()) {
+      <div class="upb-card space-y-3 p-5 text-sm">
         <h2 class="font-medium text-ink">{{ 'sellerPortal.courier' | transloco }}</h2>
-        <p class="mt-2">
-          {{ s.courierName ?? '—' }} · AWB <span class="font-mono">{{ s.awb ?? '—' }}</span> ·
-          {{ 'shipping.statuses.' + s.status | transloco }} · {{ s.pickupLocation }}
-        </p>
-        @if (s.lastError) { <p class="mt-1 text-danger">{{ s.lastError }}</p> }
+        @if (shipment(); as s) {
+        <div>
+          <p class="text-ink-muted">{{ 'shipping.forwardShipment' | transloco }}</p>
+          <p>
+            {{ s.courierName ?? '—' }} · AWB <span class="font-mono">{{ s.awb ?? '—' }}</span> ·
+            {{ 'shipping.statuses.' + s.status | transloco }} · {{ s.pickupLocation }}
+          </p>
+          @if (s.lastError) { <p class="mt-1 text-danger">{{ s.lastError }}</p> }
+        </div>
+        }
+        @if (returnShipment(); as r) {
+        <div>
+          <p class="text-ink-muted">{{ 'shipping.returnShipment' | transloco }}</p>
+          <p>
+            {{ r.courierName ?? '—' }} · AWB <span class="font-mono">{{ r.awb ?? '—' }}</span> ·
+            {{ 'shipping.statuses.' + r.status | transloco }}
+          </p>
+        </div>
+        }
       </div>
       }
 
@@ -179,6 +189,10 @@ export class OrderPage {
   protected readonly busy = signal(false);
   protected readonly problem = signal<ApiProblem | null>(null);
 
+  protected readonly statusKey = partStatusKey;
+  protected readonly itemsTitle = itemsTitleKey;
+  protected readonly lineReturn = lineReturnKey;
+
   /** A confirmed part with no live booking, or a booking that stopped half way. */
   protected readonly canPack = computed(() => {
     const shipment = this.shipment();
@@ -194,6 +208,20 @@ export class OrderPage {
       const id = this.orderId();
       untracked(() => void this.load(id));
     });
+  }
+
+  /** House, street, area and landmark on one line, leaving out what the buyer left blank. */
+  protected street(order: SellerOrderDto): string {
+    const a = order.deliveryAddress;
+
+    return joinParts([a.line1, a.line2, a.landmark]);
+  }
+
+  /** Town, district, state and PIN code on one line. */
+  protected town(order: SellerOrderDto): string {
+    const a = order.deliveryAddress;
+
+    return joinParts([joinParts([a.city, a.district, a.state]), a.pincode], ' ');
   }
 
   protected complete(): boolean {

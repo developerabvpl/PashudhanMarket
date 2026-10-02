@@ -14,17 +14,20 @@
     "shipments": "शिपमेंट",
     "staffUsers": "स्टाफ़ उपयोगकर्ता",
     "signOut": "साइन आउट",
+    "primary": "मुख्य",
     "sellers": "विक्रेता",
     "listingReview": "समीक्षा के लिए उत्पाद",
     "catalogue": "कैटलॉग",
     "categories": "श्रेणियाँ",
     "returns": "वापसी",
-    "settlements": "भुगतान निपटान",
     "payouts": "विक्रेता भुगतान",
     "settlementRates": "कमीशन और कर",
     "buyerReviews": "ग्राहक समीक्षाएँ",
     "coupons": "कूपन",
-    "cod": "कैश ऑन डिलीवरी"
+    "cod": "कैश ऑन डिलीवरी",
+    "menu": "मेनू",
+    "money": "लेन-देन",
+    "shipping": "शिपिंग"
   },
   "state": {
     "loading": "लोड हो रहा है",
@@ -129,7 +132,7 @@
   },
   "admin": {
     "orderLookup": "ऑर्डर खोज",
-    "orderId": "ऑर्डर आईडी",
+    "orderNumberOrId": "ऑर्डर नंबर या आईडी",
     "find": "ऑर्डर ढूँढें",
     "status": "स्थिति",
     "placedAt": "दिनांक",
@@ -146,7 +149,8 @@
     "paidOnline": "ऑनलाइन भुगतान किया",
     "refund": "रिफ़ंड",
     "partCoupon": "{{amount}} कूपन",
-    "notFound": "इस आईडी का कोई ऑर्डर नहीं मिला।"
+    "notFound": "इस नंबर या आईडी का कोई ऑर्डर नहीं मिला।",
+    "manyMatches": "{{count}} ऑर्डर मिले। एक चुनें:"
   },
   "staff": {
     "title": "स्टाफ़ उपयोगकर्ता",
@@ -167,8 +171,16 @@
     "rolesTitle": "{{name}} की भूमिकाएँ",
     "initialPassword": "प्रारंभिक पासवर्ड",
     "initialPasswordHint": "पहली बार साइन इन करने के बाद उन्हें इसे बदलना चाहिए।",
-    "statusActive": "सक्रिय",
-    "statusSuspended": "निलंबित",
+    "statuses": {
+      "Active": "सक्रिय",
+      "Suspended": "निलंबित",
+      "Deactivated": "निष्क्रिय"
+    },
+    "types": {
+      "Staff": "स्टाफ़",
+      "Seller": "विक्रेता",
+      "Buyer": "खरीदार"
+    },
     "assignRoles": "भूमिकाएँ सौंपें",
     "noRoles": "कोई भूमिका नहीं",
     "created": "स्टाफ़ उपयोगकर्ता बन गया।",
@@ -194,6 +206,8 @@
     "status": {
       "PendingPayment": "भुगतान बाकी",
       "Confirmed": "पुष्ट",
+      "Packed": "पैक हो गया",
+      "Shipped": "भेज दिया",
       "Completed": "पहुँचा दिया",
       "Cancelled": "रद्द"
     },
@@ -213,7 +227,9 @@
     },
     "returnStatus": {
       "Returning": "वापस जा रहा है",
-      "Returned": "वापस किया गया"
+      "Returned": "वापस किया गया",
+      "PartlyReturning": "कुछ सामान वापस जा रहा है",
+      "PartlyReturned": "कुछ सामान वापस किया गया"
     },
     "return": {
       "reasons": {
@@ -290,6 +306,8 @@
     "pickupSubtitle": "नाम Shiprocket में दर्ज पिकअप स्थानों से मेल खाने चाहिए। जिन विक्रेताओं का अपना स्थान नहीं है, वे प्लेटफ़ॉर्म गोदाम से भेजते हैं।",
     "warehouse": "प्लेटफ़ॉर्म गोदाम",
     "forSeller": "विक्रेता",
+    "forwardShipment": "खरीदार तक डिलीवरी",
+    "returnShipment": "वापसी पिकअप",
     "noPickups": "अभी कोई पिकअप स्थान नहीं। पहले प्लेटफ़ॉर्म गोदाम जोड़ें।",
     "sellerIdOptional": "विक्रेता आईडी (प्लेटफ़ॉर्म गोदाम के लिए खाली)",
     "pickupName": "Shiprocket में दर्ज नाम",
@@ -356,6 +374,7 @@
     },
     "none": "यहाँ कुछ नहीं।",
     "owner": "मालिक का खाता",
+    "noOwner": "अभी कोई मालिक नहीं",
     "approve": "मंज़ूर करें",
     "reject": "अस्वीकार करें",
     "rejectNote": "आवेदक क्या ठीक करे?",
@@ -507,6 +526,7 @@
       "Damaged": "खराब लौटा; स्टॉक में नहीं जोड़ा।"
     },
     "itemsBack": "वापस आ रहा है:",
+    "itemsCameBack": "वापस आ गया:",
     "refundDue": "देय रिफ़ंड: {{amount}}",
     "recordInspection": "जाँच दर्ज करें"
   },
@@ -605,7 +625,11 @@
     },
     "overdue": "अतिदेय",
     "deliveredOn": "{{date}} को डिलीवर",
-    "paidOf": "{{expected}} में से {{received}} चुकाया गया",
+    "amounts": {
+      "none": "{{expected}} वसूले गए",
+      "part": "{{expected}} में से {{received}} जमा किए गए",
+      "over": "{{expected}} वसूले, {{received}} जमा किए गए, {{excess}} अधिक"
+    },
     "statuses": {
       "Outstanding": "अभी कुछ नहीं चुकाया",
       "ShortPaid": "कम भुगतान",

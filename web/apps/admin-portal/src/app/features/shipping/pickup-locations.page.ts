@@ -27,7 +27,8 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * address-verified - in the Shiprocket dashboard, because Shiprocket books by that name alone. The
  * PIN code is kept too, because parcels are priced by where they are collected from; without it
  * they still ship, but their courier charge waits for staff to enter it.
- * Keyed by seller id until the Sellers module gives sellers names to pick from.
+ * Each seller's location shows its shop name, looked up by the API; the id shows only for a
+ * seller id the Sellers module does not know.
  */
 @Component({
   selector: 'upb-pickup-locations-page',
@@ -52,7 +53,8 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             </p>
             <p class="text-ink-muted">
               @if (location.sellerId) {
-              {{ 'shipping.forSeller' | transloco }} <span class="font-mono text-xs">{{ location.sellerId }}</span>
+              {{ 'shipping.forSeller' | transloco }}
+              @if (location.shopName) { {{ location.shopName }} } @else { <span class="font-mono text-xs">{{ location.sellerId }}</span> }
               } @else {
               {{ 'shipping.warehouse' | transloco }}
               }

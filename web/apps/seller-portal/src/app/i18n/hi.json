@@ -8,11 +8,14 @@
   },
   "nav": {
     "signOut": "साइन आउट",
+    "primary": "मुख्य",
     "returns": "वापसी",
     "earnings": "कमाई",
     "reviews": "समीक्षाएँ",
     "coupons": "कूपन",
-    "team": "टीम"
+    "team": "टीम",
+    "menu": "मेनू",
+    "shop": "आपकी दुकान"
   },
   "state": {
     "loading": "लोड हो रहा है",
@@ -127,7 +130,9 @@
     },
     "returnStatus": {
       "Returning": "वापस जा रहा है",
-      "Returned": "वापस किया गया"
+      "Returned": "वापस किया गया",
+      "PartlyReturning": "कुछ सामान वापस जा रहा है",
+      "PartlyReturned": "कुछ सामान वापस किया गया"
     },
     "return": {
       "reasons": {
@@ -165,6 +170,8 @@
       "Cancelled": "रद्द",
       "ReturnInTransit": "विक्रेता को लौट रहा है"
     },
+    "forwardShipment": "खरीदार तक डिलीवरी",
+    "returnShipment": "वापसी पिकअप",
     "pickupName": "Shiprocket में दर्ज नाम",
     "pickupSaved": "पिकअप स्थान सहेजा गया।",
     "pincode": "पिन कोड"
@@ -230,6 +237,9 @@
     "noOrders": "यहाँ कुछ नहीं।",
     "codCollect": "डिलीवरी पर {{amount}} लें",
     "toPack": "पैक करना है",
+    "packedItems": "पैक किया गया",
+    "sentItems": "खरीदार को भेजा गया",
+    "cancelledItems": "रद्द - नहीं भेजा गया",
     "partValue": "मूल्य {{amount}}",
     "courier": "कूरियर",
     "settingsTitle": "सेटिंग्स",
@@ -327,6 +337,8 @@
       "Damaged": "खराब लौटा; स्टॉक में नहीं जोड़ा।"
     },
     "unitsBack": "{{count}} वापस आ रहे हैं",
+    "unitsAsked": "{{count}} वापस करने को कहा",
+    "unitsCameBack": "{{count}} वापस आ गए",
     "recordInspection": "जाँच दर्ज करें"
   },
   "reviews": {

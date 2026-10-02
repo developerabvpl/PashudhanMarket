@@ -1,38 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
-import { AccountMenu } from '@upbazaar/auth/portal';
+import { AuthService, CurrentUserStore, visibleNav } from '@upbazaar/auth';
+import { AccountMenu, NavCollapsedMenu, NavGroupMenu } from '@upbazaar/auth/portal';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
-import {
-  CatalogPermissions,
-  IdentityPermissions,
-  OrderingPermissions,
-  PaymentsPermissions,
-  PromotionsPermissions,
-  ReviewsPermissions,
-  SellersPermissions,
-  SettlementsPermissions,
-  ShippingPermissions,
-} from './core/permissions';
-import { CatalogueMenu, SettlementsMenu } from './core/nav-menus';
+import { ADMIN_NAV } from './core/nav';
 
 @Component({
   selector: 'upb-root',
   imports: [
     RouterOutlet,
     RouterLink,
+    RouterLinkActive,
     TranslocoPipe,
     LanguageSwitcher,
     ToastHost,
-    HasPermissionDirective,
     MatToolbarModule,
     MatButtonModule,
     AccountMenu,
-    SettlementsMenu,
-    CatalogueMenu,
+    NavGroupMenu,
+    NavCollapsedMenu,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -44,60 +33,45 @@ import { CatalogueMenu, SettlementsMenu } from './core/nav-menus';
     </a>
 
     @if (signedIn()) {
-    <mat-toolbar color="primary">
-      <a class="font-semibold" routerLink="/staff">{{ 'app.adminPortal' | transloco }}</a>
+    <mat-toolbar color="primary" class="gap-1">
+      <a class="min-w-0 truncate font-semibold" routerLink="/staff">{{ 'app.adminPortal' | transloco }}</a>
 
       <span class="flex-1"></span>
 
       <!--
-        Each entry is gated by the permission its route requires, so the menu never offers a
-        page that would answer 403. The guard still enforces it; this only keeps the UI honest.
+        Wide screens get the pages as buttons and drop-downs; below 1024px they would overlap, so
+        the same pages fold into one menu. Both lists come from ADMIN_NAV, filtered to what this
+        user may open. The drop-downs load once the page settles: Material's menu brings the CDK
+        overlay, which the first screen does not need.
       -->
-      <a *hasPermission="usersRead" mat-button routerLink="/staff">
-        {{ 'nav.staffUsers' | transloco }}
-      </a>
-      <a *hasPermission="ordersRead" mat-button routerLink="/orders">
-        {{ 'nav.orders' | transloco }}
-      </a>
-      <a *hasPermission="ordersRead" mat-button routerLink="/orders/returns">
-        {{ 'nav.returns' | transloco }}
-      </a>
-      <a *hasPermission="paymentsRead" mat-button routerLink="/payments">
-        {{ 'nav.payments' | transloco }}
-      </a>
-      <ng-container *hasPermission="settlementsRead">
+      <nav class="hidden items-center lg:flex" [attr.aria-label]="'nav.primary' | transloco">
+        @for (entry of nav(); track entry.label) {
+        @if (entry.kind === 'group') {
         @defer (on idle) {
-        <upb-settlements-menu />
+        <upb-nav-group-menu [group]="entry" />
         } @placeholder {
-        <button mat-button type="button">{{ 'nav.settlements' | transloco }}</button>
+        <button mat-button type="button">{{ entry.label | transloco }}</button>
         }
-      </ng-container>
-      <a *hasPermission="shipmentsRead" mat-button routerLink="/shipping">
-        {{ 'nav.shipments' | transloco }}
-      </a>
-      <a *hasPermission="codRead" mat-button routerLink="/shipping/cod">
-        {{ 'nav.cod' | transloco }}
-      </a>
-      <a *hasPermission="sellersRead" mat-button routerLink="/sellers">
-        {{ 'nav.sellers' | transloco }}
-      </a>
-      <ng-container *hasPermission="productsRead">
+        } @else {
+        <a mat-button [routerLink]="entry.route" routerLinkActive="!bg-white/10" [routerLinkActiveOptions]="{ exact: entry.exact ?? false }">
+          {{ entry.label | transloco }}
+        </a>
+        }
+        }
+      </nav>
+
+      @if (nav().length > 0) {
+      <div class="lg:hidden">
         @defer (on idle) {
-        <upb-catalogue-menu />
+        <upb-nav-collapsed-menu [entries]="nav()" />
         } @placeholder {
-        <button mat-button type="button">{{ 'nav.catalogue' | transloco }}</button>
+        <button mat-button type="button">{{ 'nav.menu' | transloco }}</button>
         }
-      </ng-container>
-      <a *hasPermission="reviewsRead" mat-button routerLink="/reviews">
-        {{ 'nav.buyerReviews' | transloco }}
-      </a>
-      <a *hasPermission="couponsRead" mat-button routerLink="/promotions/coupons">
-        {{ 'nav.coupons' | transloco }}
-      </a>
+      </div>
+      }
 
       <upb-language-switcher />
 
-      <!-- Loaded once the page settles: the menu brings Material's overlay, which the first screen does not need. -->
       @defer (on idle) {
       <upb-account-menu [displayName]="displayName()" (signOut)="signOut()" />
       } @placeholder {
@@ -119,19 +93,11 @@ export class App {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
-  protected readonly usersRead = IdentityPermissions.UsersRead;
-  protected readonly ordersRead = OrderingPermissions.Read;
-  protected readonly paymentsRead = PaymentsPermissions.Read;
-  protected readonly settlementsRead = SettlementsPermissions.Read;
-  protected readonly shipmentsRead = ShippingPermissions.ShipmentsRead;
-  protected readonly codRead = ShippingPermissions.CodRead;
-  protected readonly sellersRead = SellersPermissions.Read;
-  protected readonly productsRead = CatalogPermissions.ProductsRead;
-  protected readonly reviewsRead = ReviewsPermissions.Read;
-  protected readonly couponsRead = PromotionsPermissions.CampaignsRead;
-
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;
+
+  /** The toolbar's pages this user may open; recomputed when their permissions change. */
+  protected readonly nav = computed(() => visibleNav(ADMIN_NAV, (permission) => this.currentUser.has(permission)));
 
   constructor() {
     void this.currentUser.ensureLoaded();

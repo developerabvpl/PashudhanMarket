@@ -181,6 +181,12 @@ public sealed class PaymentTests(ApiFixture fixture)
         refund.OrderPartId.ShouldBe(part.Id);
         refund.Reason.ShouldBe("Part of the order was cancelled.");
 
+        // The list works the refund out from its own total; it must agree with the refund recorded.
+        var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(
+            new Uri("/api/v1/orders", UriKind.Relative)))!.Items.Single(o => o.Id == order.Id);
+        listed.RefundTotal.ShouldBe(80m);
+        (listed.AmountPaid - listed.Total).ShouldBe(80m);
+
         var marked = await (await admin.PostAsJsonAsync(
                 new Uri($"/api/v1/admin/payments/refunds/{refund.Id}/mark-refunded", UriKind.Relative),
                 new { gatewayRefundId = "rfnd_test_1" }))
@@ -209,6 +215,13 @@ public sealed class PaymentTests(ApiFixture fixture)
         cancelled.Total.ShouldBe(0m);
         cancelled.AmountPaid.ShouldBe(476m);
         cancelled.RefundTotal.ShouldBe(476m);
+
+        // The buyer's order list says the same, rather than a bare zero.
+        var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(
+            new Uri("/api/v1/orders", UriKind.Relative)))!.Items.Single(o => o.Id == order.Id);
+        listed.Total.ShouldBe(0m);
+        listed.AmountPaid.ShouldBe(476m);
+        listed.RefundTotal.ShouldBe(476m);
 
         var refund = (await RefundsForAsync(order.Id)).ShouldHaveSingleItem();
         refund.Amount.ShouldBe(476m);

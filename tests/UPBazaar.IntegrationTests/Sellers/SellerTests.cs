@@ -44,6 +44,10 @@ public sealed class SellerTests(ApiFixture fixture)
             new Uri("/api/v1/admin/sellers?status=Pending&pageSize=100", UriKind.Relative));
         queue!.Items.ShouldContain(s => s.Id == applied.Id);
 
+        // Staff reviewing it see who the owner is, not just an account id.
+        var review = await admin.GetFromJsonAsync<SellerDto>(new Uri($"/api/v1/admin/sellers/{applied.Id}", UriKind.Relative));
+        review!.OwnerName.ShouldBe("Seller Applicant");
+
         (await admin.PostAsync(new Uri($"/api/v1/admin/sellers/{applied.Id}/approve", UriKind.Relative), null))
             .EnsureSuccessStatusCode();
 
@@ -174,6 +178,10 @@ public sealed class SellerTests(ApiFixture fixture)
             .EnsureSuccessStatusCode();
         (await seller.PutAsJsonAsync(new Uri("/api/v1/seller/shipping/pickup-location", UriKind.Relative), new { name = "Seller Own Gaushala" }))
             .EnsureSuccessStatusCode();
+
+        // Staff see whose pickup location it is by shop name, not by seller id.
+        (await admin.GetFromJsonAsync<List<PickupLocationDto>>(new Uri("/api/v1/admin/shipping/pickup-locations", UriKind.Relative)))!
+            .ShouldContain(l => l.Name == "Seller Own Gaushala" && l.ShopName == "Shri Krishna Gaushala");
 
         var (buyer, _) = await BuyerAsync();
         await AddToCartAsync(buyer, mineProduct.Id, 2);

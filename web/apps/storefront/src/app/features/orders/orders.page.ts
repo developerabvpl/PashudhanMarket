@@ -5,7 +5,8 @@ import { Api, OrderSummaryDto, apiV1OrdersGet } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
-import { orderStatusBadge } from './order-labels';
+import { orderAmount } from './order-amount';
+import { orderBadge } from './order-labels';
 
 const PAGE_SIZE = 20;
 
@@ -46,10 +47,16 @@ const PAGE_SIZE = 20;
                 </p>
               </div>
               <div class="flex items-center gap-3">
-                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="badge(order.status).tone">
-                  {{ badge(order.status).key | transloco }}
+                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="badge(order.status, order.partStatuses).tone">
+                  {{ badge(order.status, order.partStatuses).key | transloco }}
                 </span>
-                <span class="font-semibold text-ink">{{ order.total | inr: 'symbol' : 'auto' }}</span>
+                @let money = amount(order);
+                <span class="text-right">
+                  <span class="block font-semibold text-ink">{{ money.amount | inr: 'symbol' : 'auto' }}</span>
+                  @if (money.refund !== null) {
+                  <span class="block text-xs font-medium text-success">{{ 'orders.refundOf' | transloco: { amount: (money.refund | inr: 'symbol' : 'auto') } }}</span>
+                  }
+                </span>
               </div>
             </a>
           </li>
@@ -79,7 +86,10 @@ export class OrdersPage {
   protected readonly loaded = signal(false);
   protected readonly failed = signal(false);
   protected readonly busy = signal(false);
-  protected readonly badge = orderStatusBadge;
+  /** How far each order has got: Shipped once a parcel has left its seller, as on the order's own page. */
+  protected readonly badge = orderBadge;
+  /** What was paid, with the refund beneath, once anything paid online is going back. */
+  protected readonly amount = orderAmount;
 
   private readonly api = inject(Api);
 

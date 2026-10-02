@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthService, CurrentUserStore, HasPermissionDirective } from '@upbazaar/auth';
-import { AccountMenu } from '@upbazaar/auth/portal';
+import { AuthService, CurrentUserStore, visibleNav } from '@upbazaar/auth';
+import { AccountMenu, NavCollapsedMenu, NavGroupMenu } from '@upbazaar/auth/portal';
 import { LanguageSwitcher, ToastHost, ToastService } from '@upbazaar/ui';
-import { SellerAccess, SellerPermissions } from './core/seller-access';
+import { SELLER_NAV } from './core/nav';
+import { SellerAccess } from './core/seller-access';
 
 @Component({
   selector: 'upb-root',
@@ -16,13 +16,13 @@ import { SellerAccess, SellerPermissions } from './core/seller-access';
     RouterLink,
     RouterLinkActive,
     AccountMenu,
-    HasPermissionDirective,
+    NavGroupMenu,
+    NavCollapsedMenu,
     TranslocoPipe,
     LanguageSwitcher,
     ToastHost,
     MatToolbarModule,
     MatButtonModule,
-    MatIconModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -34,22 +34,42 @@ import { SellerAccess, SellerPermissions } from './core/seller-access';
     </a>
 
     @if (signedIn()) {
-    <mat-toolbar color="primary">
-      <a class="font-semibold" routerLink="/orders">{{ 'app.sellerPortal' | transloco }}</a>
+    <mat-toolbar color="primary" class="gap-1">
+      <a class="min-w-0 truncate font-semibold" routerLink="/orders">{{ 'app.sellerPortal' | transloco }}</a>
 
       <span class="flex-1"></span>
 
       <!-- A seller not yet approved has only their application to look at. -->
       @if (canSell()) {
-      <!-- Team members see only the areas their role opens; the owner sees all of them. -->
-      <a mat-button routerLink="/orders" routerLinkActive="!bg-white/10" [routerLinkActiveOptions]="{ exact: true }">{{ 'sellerPortal.ordersTitle' | transloco }}</a>
-      <a mat-button routerLink="/orders/returns" routerLinkActive="!bg-white/10">{{ 'nav.returns' | transloco }}</a>
-      <a *hasPermission="p.Products" mat-button routerLink="/products" routerLinkActive="!bg-white/10">{{ 'sellerPortal.productsTitle' | transloco }}</a>
-      <a *hasPermission="p.Earnings" mat-button routerLink="/earnings" routerLinkActive="!bg-white/10">{{ 'nav.earnings' | transloco }}</a>
-      <a *hasPermission="p.Reviews" mat-button routerLink="/reviews" routerLinkActive="!bg-white/10">{{ 'nav.reviews' | transloco }}</a>
-      <a *hasPermission="p.Coupons" mat-button routerLink="/coupons" routerLinkActive="!bg-white/10">{{ 'nav.coupons' | transloco }}</a>
-      <a *hasPermission="p.Manage" mat-button routerLink="/team" routerLinkActive="!bg-white/10">{{ 'nav.team' | transloco }}</a>
-      <a *hasPermission="p.Manage" mat-button routerLink="/settings" routerLinkActive="!bg-white/10">{{ 'sellerPortal.settingsTitle' | transloco }}</a>
+      <!--
+        Wide screens get the pages as buttons and a drop-down; below 1024px they would overlap, so
+        the same pages fold into one menu. Both come from SELLER_NAV, filtered to what this
+        member's role opens. The menus load once the page settles: Material's menu brings the CDK
+        overlay, which the first screen does not need.
+      -->
+      <nav class="hidden items-center lg:flex" [attr.aria-label]="'nav.primary' | transloco">
+        @for (entry of nav(); track entry.label) {
+        @if (entry.kind === 'group') {
+        @defer (on idle) {
+        <upb-nav-group-menu [group]="entry" />
+        } @placeholder {
+        <button mat-button type="button">{{ entry.label | transloco }}</button>
+        }
+        } @else {
+        <a mat-button [routerLink]="entry.route" routerLinkActive="!bg-white/10" [routerLinkActiveOptions]="{ exact: entry.exact ?? false }">
+          {{ entry.label | transloco }}
+        </a>
+        }
+        }
+      </nav>
+
+      <div class="lg:hidden">
+        @defer (on idle) {
+        <upb-nav-collapsed-menu [entries]="nav()" />
+        } @placeholder {
+        <button mat-button type="button">{{ 'nav.menu' | transloco }}</button>
+        }
+      </div>
       } @else {
       <a mat-button routerLink="/apply">{{ 'sellerPortal.applyTitle' | transloco }}</a>
       }
@@ -82,7 +102,9 @@ export class App {
   protected readonly signedIn = this.currentUser.isSignedIn;
   protected readonly displayName = this.currentUser.displayName;
   protected readonly canSell = this.access.canSell;
-  protected readonly p = SellerPermissions;
+
+  /** The toolbar's pages this member's role opens; recomputed when their permissions change. */
+  protected readonly nav = computed(() => visibleNav(SELLER_NAV, (permission) => this.currentUser.has(permission)));
 
   constructor() {
     // Restores the header for someone returning with a stored session, without waiting for a

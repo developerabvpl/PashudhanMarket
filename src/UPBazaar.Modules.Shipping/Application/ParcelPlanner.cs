@@ -10,10 +10,8 @@ namespace UPBazaar.Modules.Shipping.Application;
 /// <summary>
 /// Works out a parcel from the products in a part, and where it is collected from.
 ///
-/// The parcel is the units stacked in one box: weights add up, the box is as long and wide as
-/// the largest unit and as tall as all of them together. That overstates a box that was packed
-/// cleverly, which is the safe side - couriers surcharge a parcel that turns out bigger than
-/// booked, and never refund one that turns out smaller.
+/// The parcel is the units in one box, as <see cref="ParcelPacking"/> fits them: weights add up,
+/// units lie flat in compact stacks, and the box errs large rather than small.
 /// </summary>
 internal sealed class ParcelPlanner(UPBazaarDbContext dbContext, IProductCatalog catalog)
 {
@@ -29,13 +27,7 @@ internal sealed class ParcelPlanner(UPBazaarDbContext dbContext, IProductCatalog
             return (null, missing);
         }
 
-        var units = part.Lines.Select(l => (Package: packages[l.ProductId], l.Quantity)).ToList();
-
-        return (new ParcelDto(
-            units.Sum(u => u.Package.WeightGrams * u.Quantity),
-            units.Max(u => u.Package.LengthCm),
-            units.Max(u => u.Package.BreadthCm),
-            units.Sum(u => u.Package.HeightCm * u.Quantity)), []);
+        return (ParcelPacking.Pack([.. part.Lines.Select(l => (packages[l.ProductId], l.Quantity))]), []);
     }
 
     /// <summary>The name of the seller's own pickup location, else the platform warehouse's, else none.</summary>

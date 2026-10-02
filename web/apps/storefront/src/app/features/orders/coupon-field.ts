@@ -1,11 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Api, CouponPreviewDto, apiV1PromotionsCouponsPreviewPost, toApiProblem } from '@upbazaar/data-access';
+import {
+  Api,
+  CouponPreviewDto,
+  apiV1PromotionsCouponsPreviewPost,
+  callerShowsErrors,
+  toApiProblem,
+} from '@upbazaar/data-access';
 import { InrCurrencyPipe } from '@upbazaar/util';
+import { CouponError, couponError } from './coupon-errors';
 
 /**
  * Where a buyer enters a coupon code at checkout. Applying it asks the API what it takes off the
  * basket as it stands, and says why not when it takes nothing; placing the order prices it again.
+ *
+ * A refused code is explained once, under the box, in the buyer's language; the request is sent
+ * with callerShowsErrors so the app-wide error toast does not repeat it.
  *
  * It sits inside the checkout form, so Enter in the code box applies the code rather than placing
  * the order.
@@ -40,7 +50,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
         </button>
       </div>
       @if (error(); as e) {
-      <p id="coupon-code-error" class="mt-1 text-danger" role="alert">{{ e | transloco }}</p>
+      <p id="coupon-code-error" class="mt-1 text-danger" role="alert">{{ e.key | transloco: { amount: (e.minimum ?? 0 | inr: 'symbol' : 'auto') } }}</p>
       }
       }
     </div>
@@ -52,7 +62,7 @@ export class CouponField {
 
   protected readonly code = signal('');
   protected readonly coupon = signal<CouponPreviewDto | null>(null);
-  protected readonly error = signal<string | null>(null);
+  protected readonly error = signal<CouponError | null>(null);
   protected readonly busy = signal(false);
 
   private readonly api = inject(Api);
@@ -77,12 +87,12 @@ export class CouponField {
     this.error.set(null);
 
     try {
-      const coupon = await this.api.invoke(apiV1PromotionsCouponsPreviewPost, { body: { code } });
+      const coupon = await this.api.invoke(apiV1PromotionsCouponsPreviewPost, { body: { code } }, callerShowsErrors());
 
       this.coupon.set(coupon);
       this.applied.emit(coupon);
     } catch (error) {
-      this.error.set(toApiProblem(error).title);
+      this.error.set(couponError(toApiProblem(error)));
     } finally {
       this.busy.set(false);
     }

@@ -84,8 +84,8 @@ export interface StaffFormData {
         <mat-form-field>
           <mat-label>{{ 'staff.columnStatus' | transloco }}</mat-label>
           <mat-select formControlName="status">
-            <mat-option value="Active">{{ 'staff.statusActive' | transloco }}</mat-option>
-            <mat-option value="Suspended">{{ 'staff.statusSuspended' | transloco }}</mat-option>
+            <mat-option value="Active">{{ 'staff.statuses.Active' | transloco }}</mat-option>
+            <mat-option value="Suspended">{{ 'staff.statuses.Suspended' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
         } @else {
