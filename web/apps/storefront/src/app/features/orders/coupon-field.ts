@@ -15,7 +15,8 @@ import { CouponError, couponError } from './coupon-errors';
  * basket as it stands, and says why not when it takes nothing; placing the order prices it again.
  *
  * A refused code is explained once, under the box, in the buyer's language; the request is sent
- * with callerShowsErrors so the app-wide error toast does not repeat it.
+ * with callerShowsErrors so the app-wide error toast does not repeat it. The checkout hands back a
+ * refusal that comes only when the order is placed, so it is explained in the same place.
  *
  * It sits inside the checkout form, so Enter in the code box applies the code rather than placing
  * the order.
@@ -96,6 +97,20 @@ export class CouponField {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /**
+   * The order was refused over the coupon, priced again as it was placed. The coupon comes off -
+   * placing again with it would only fail again - and the code stays in the box with the reason
+   * under it, exactly as if it had been refused when applied.
+   */
+  refuse(error: CouponError): void {
+    const code = this.coupon()?.code ?? this.code();
+
+    this.coupon.set(null);
+    this.code.set(code);
+    this.error.set(error);
+    this.applied.emit(null);
   }
 
   protected remove(): void {

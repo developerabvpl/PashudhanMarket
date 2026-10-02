@@ -14,6 +14,7 @@ export interface RefundDto {
   orderPartId: (string | null);
   paymentId: (string | null);
   reason: string;
+  reasonCode: (string | null);
   refundedAtUtc: (string | null);
   refundedBy: (string | null);
   status: string;

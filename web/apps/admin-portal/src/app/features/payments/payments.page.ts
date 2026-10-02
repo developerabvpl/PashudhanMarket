@@ -20,6 +20,7 @@ import { ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 import { PaymentsPermissions } from '../../core/permissions';
 import { MarkRefundedDialog } from './mark-refunded.dialog';
+import { refundReasonKey } from './refund-reason';
 
 type View = 'refunds' | 'payments';
 
@@ -91,7 +92,14 @@ type View = 'refunds' | 'payments';
           </ng-container>
           <ng-container matColumnDef="reason">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.reason' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="text-sm">{{ row.reason }}</td>
+            <!-- The label is translated from the code; the sentence stored with it is the audit record, kept on hover. -->
+            <td mat-cell *matCellDef="let row" class="text-sm" [attr.title]="row.reason">
+              @if (reasonKey(row); as key) {
+              {{ key | transloco }}
+              } @else {
+              {{ row.reason }}
+              }
+            </td>
           </ng-container>
           <ng-container matColumnDef="gatewayPaymentId">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.refundTo' | transloco }}</th>
@@ -180,6 +188,7 @@ export class PaymentsPage {
   private readonly toast = inject(ToastService);
 
   protected readonly refundsWrite = PaymentsPermissions.RefundsWrite;
+  protected readonly reasonKey = refundReasonKey;
   protected readonly refundColumns = ['createdAtUtc', 'orderNumber', 'amount', 'reason', 'gatewayPaymentId', 'actions'];
   protected readonly paymentColumns = ['createdAtUtc', 'orderNumber', 'amount', 'status', 'gateway', 'refundDue'];
 

@@ -28,7 +28,7 @@ internal sealed partial class PartRefundRecorder(
         string orderNumber,
         Guid partId,
         decimal refundDue,
-        string reason,
+        RefundReason reason,
         CancellationToken cancellationToken)
     {
         if (refundDue <= 0)
@@ -72,7 +72,7 @@ internal sealed partial class PartRefundRecorder(
         decimal refundDue,
         string currency,
         string upiId,
-        string reason,
+        RefundReason reason,
         CancellationToken cancellationToken)
     {
         if (refundDue <= 0 || await dbContext.Set<Refund>().AnyAsync(r => r.OrderPartId == partId, cancellationToken))
@@ -99,17 +99,13 @@ internal sealed partial class PartRefundRecorder(
 internal sealed class OrderPartCancelledHandler(PartRefundRecorder refunds)
     : IDomainEventHandler<OrderPartCancelledDomainEvent>
 {
-    private const string OrderCancelledReason = "The order was cancelled.";
-
-    private const string PartCancelledReason = "Part of the order was cancelled.";
-
     public Task HandleAsync(OrderPartCancelledDomainEvent e, CancellationToken cancellationToken) =>
         refunds.RecordAsync(
             e.OrderId,
             e.Number,
             e.PartId,
             e.RefundDue,
-            e.OrderCancelled ? OrderCancelledReason : PartCancelledReason,
+            e.OrderCancelled ? RefundReason.OrderCancelled : RefundReason.PartCancelled,
             cancellationToken);
 }
 
@@ -127,10 +123,10 @@ internal sealed class OrderPartReturnedHandler(PartRefundRecorder refunds)
         if (!e.RequestedByBuyer)
         {
             return refunds.RecordAsync(
-                e.OrderId, e.Number, e.PartId, e.RefundDue, "The parcel could not be delivered and went back to the seller.", cancellationToken);
+                e.OrderId, e.Number, e.PartId, e.RefundDue, RefundReason.Undelivered, cancellationToken);
         }
 
-        const string reason = "The buyer returned the parcel and it is back with the seller.";
+        const RefundReason reason = RefundReason.BuyerReturn;
 
         return e.RefundUpiId is { } upiId
             ? refunds.RecordUpiAsync(e.OrderId, e.Number, e.PartId, e.RefundDue, e.Currency, upiId, reason, cancellationToken)

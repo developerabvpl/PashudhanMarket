@@ -1,5 +1,5 @@
 import { ApiProblem } from '@upbazaar/data-access';
-import { couponError } from './coupon-errors';
+import { couponError, isCouponProblem } from './coupon-errors';
 
 function problem(code: string, title: string): ApiProblem {
   return { status: 400, code, title, fieldErrors: {}, isValidation: false };
@@ -22,6 +22,14 @@ describe('couponError', () => {
 
   it('still gives the reason when the minimum cannot be read', () => {
     expect(couponError(problem('promotions.coupon.below_minimum', 'Too small.')).key).toBe('checkout.coupon.errors.belowMinimumUnknown');
+  });
+
+  it('knows which failures are about the coupon, including Orders own free-delivery check', () => {
+    expect(isCouponProblem(problem('promotions.coupon.below_minimum', 'x'))).toBe(true);
+    expect(isCouponProblem(problem('orders.coupon.delivery_already_free', 'x'))).toBe(true);
+    expect(couponError(problem('orders.coupon.delivery_already_free', 'x')).key).toBe('checkout.coupon.errors.deliveryAlreadyFree');
+    expect(isCouponProblem(problem('orders.out_of_stock', 'x'))).toBe(false);
+    expect(isCouponProblem(problem('toString', 'x'))).toBe(false);
   });
 
   it('falls back to the title for a code it does not know', () => {

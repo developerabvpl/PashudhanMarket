@@ -70,6 +70,7 @@ internal sealed class RefundConfiguration : IEntityTypeConfiguration<Refund>
         builder.Property(x => x.UpiId).HasMaxLength(64);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        builder.Property(x => x.ReasonCode).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.GatewayRefundId).HasMaxLength(64);
         builder.Property(x => x.RefundedBy).HasMaxLength(64);
     }

@@ -217,6 +217,13 @@
     "placing": "Placing your order...",
     "onlineNote": "UPI, cards, net banking and wallets, through Razorpay.",
     "placeAndPay": "Place order and pay",
+    "errors": {
+      "cartEmpty": "Your basket is empty.",
+      "cartChanged": "Something in your basket has changed. Review it before placing the order.",
+      "outOfStock": "Some items sold out while you were checking out. Review your basket and try again.",
+      "concurrentChange": "Your basket changed at the same moment. Try placing the order again.",
+      "invalid": "Some of the order details could not be accepted. Check them and try again."
+    },
     "coupon": {
       "label": "Coupon code",
       "apply": "Apply",

@@ -152,6 +152,8 @@ public sealed class PaymentTests(ApiFixture fixture)
         refund.Amount.ShouldBe(160m);
         refund.Status.ShouldBe("Due");
         refund.GatewayPaymentId.ShouldBe("pay_late");
+        refund.ReasonCode.ShouldBe("PaymentRefused");
+        refund.Reason.ShouldStartWith("Payment could not be applied to the order: ");
     }
 
     [DatabaseFact]
@@ -180,6 +182,7 @@ public sealed class PaymentTests(ApiFixture fixture)
         refund.Amount.ShouldBe(80m);
         refund.OrderPartId.ShouldBe(part.Id);
         refund.Reason.ShouldBe("Part of the order was cancelled.");
+        refund.ReasonCode.ShouldBe("PartCancelled");
 
         // The list works the refund out from its own total; it must agree with the refund recorded.
         var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(
@@ -226,11 +229,53 @@ public sealed class PaymentTests(ApiFixture fixture)
         var refund = (await RefundsForAsync(order.Id)).ShouldHaveSingleItem();
         refund.Amount.ShouldBe(476m);
         refund.Reason.ShouldBe("The order was cancelled.");
+        refund.ReasonCode.ShouldBe("OrderCancelled");
 
         var payment = (await admin.GetFromJsonAsync<PagedList<PaymentDto>>(
             new Uri($"/api/v1/admin/payments?search={order.Number}", UriKind.Relative)))!.Items.ShouldHaveSingleItem();
         payment.OrderOutcome.ShouldBe("Cancelled");
         payment.RefundDue.ShouldBe(476m);
+    }
+
+    [DatabaseFact]
+    public async Task Cancelling_the_last_part_left_is_coded_as_the_order_cancelled_and_an_earlier_one_as_a_part()
+    {
+        var admin = await AdminClientAsync();
+        var first = await CreateProductAsync(admin, price: 100m, stock: 5, Guid.NewGuid());
+        var second = await CreateProductAsync(admin, price: 40m, stock: 5, Guid.NewGuid());
+        var buyer = await BuyerClientAsync();
+
+        await AddToCartAsync(buyer, first.Id, 1);
+        await AddToCartAsync(buyer, second.Id, 1);
+        var order = await PlaceOnlineAsync(buyer);
+        var session = await StartAsync(buyer, order.Id);
+        await VerifyAsync(buyer, session.GatewayOrderId, "pay_two_parts");
+
+        var firstPart = order.Parts.Single(p => p.Lines.Any(l => l.ProductId == first.Id));
+        var secondPart = order.Parts.Single(p => p.Lines.Any(l => l.ProductId == second.Id));
+
+        foreach (var part in new[] { firstPart, secondPart })
+        {
+            (await admin.PostAsJsonAsync(
+                    new Uri($"/api/v1/admin/orders/{order.Id}/parts/{part.Id}/cancel", UriKind.Relative),
+                    new { reason = "Seller cannot supply" }))
+                .EnsureSuccessStatusCode();
+        }
+
+        await ProcessOutboxAsync();
+
+        (await OrderAsync(buyer, order.Id)).Status.ShouldBe("Cancelled");
+
+        var refunds = await RefundsForAsync(order.Id);
+        refunds.Count.ShouldBe(2);
+
+        var earlier = refunds.Single(r => r.OrderPartId == firstPart.Id);
+        earlier.ReasonCode.ShouldBe("PartCancelled");
+        earlier.Reason.ShouldBe("Part of the order was cancelled.");
+
+        var last = refunds.Single(r => r.OrderPartId == secondPart.Id);
+        last.ReasonCode.ShouldBe("OrderCancelled");
+        last.Reason.ShouldBe("The order was cancelled.");
     }
 
     [DatabaseFact]

@@ -22,6 +22,8 @@ const KEYS: Readonly<Record<string, string>> = {
   'promotions.coupon.delivery_already_free': 'checkout.coupon.errors.deliveryAlreadyFree',
   'promotions.coupon.below_minimum': 'checkout.coupon.errors.belowMinimum',
   'promotions.concurrent_change': 'checkout.coupon.errors.concurrentChange',
+  // Orders' own check when the order is placed: the coupon was fine, but this basket already ships free.
+  'orders.coupon.delivery_already_free': 'checkout.coupon.errors.deliveryAlreadyFree',
 };
 
 /**
@@ -30,6 +32,14 @@ const KEYS: Readonly<Record<string, string>> = {
  * reason, just without the amount.
  */
 const MINIMUM = /Rs\s*([0-9]+(?:\.[0-9]+)?)/;
+
+/**
+ * Whether a failure is about the coupon, and so belongs under the coupon box rather than in the
+ * app-wide toast. Placing an order prices the coupon again, so any of these can come back from it.
+ */
+export function isCouponProblem(problem: ApiProblem): boolean {
+  return Object.hasOwn(KEYS, problem.code);
+}
 
 export function couponError(problem: ApiProblem): CouponError {
   if (problem.code === 'promotions.coupon.below_minimum') {

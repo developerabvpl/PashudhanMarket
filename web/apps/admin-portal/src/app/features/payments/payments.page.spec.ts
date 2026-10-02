@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { CurrentUserStore } from '@upbazaar/auth';
 import {
   Api,
@@ -21,6 +23,7 @@ const refund: RefundDto = {
   amount: 160,
   currency: 'INR',
   reason: 'Payment could not be applied to the order: This order is not waiting for payment.',
+  reasonCode: 'PaymentRefused',
   status: 'Due',
   method: 'Razorpay',
   upiId: null,
@@ -37,6 +40,7 @@ const upiRefund: RefundDto = {
   paymentId: null,
   orderNumber: 'UPB-260923-PQRSTU',
   reason: 'The buyer returned the parcel and it is back with the seller.',
+  reasonCode: 'BuyerReturn',
   method: 'Upi',
   upiId: 'asha@okicici',
   gatewayPaymentId: null,
@@ -76,11 +80,13 @@ function page<T>(items: T[]) {
 
 describe('PaymentsPage', () => {
   let invoke: ReturnType<typeof vi.fn>;
+  let refunds: RefundDto[];
 
   beforeEach(() => {
+    refunds = [refund, upiRefund];
     invoke = vi.fn(async (fn: unknown) => {
       if (fn === apiV1AdminPaymentsRefundsGet) {
-        return page([refund, upiRefund]);
+        return page(refunds);
       }
 
       if (fn === apiV1AdminPaymentsGet) {
@@ -110,6 +116,45 @@ describe('PaymentsPage', () => {
 
     // Cash paid at the door goes back to the buyer's UPI id, not through Razorpay.
     expect(fixture.nativeElement.textContent).toContain('UPI to asha@okicici');
+  });
+
+  it('labels each refund from its reason code and keeps the stored sentence on hover', async () => {
+    const fixture = TestBed.createComponent(PaymentsPage);
+    await fixture.whenStable();
+
+    const cells = [...fixture.nativeElement.querySelectorAll('td.mat-column-reason')] as HTMLElement[];
+    expect(cells[0].textContent?.trim()).toBe('Paid, but the order could not take the payment');
+    expect(cells[0].getAttribute('title')).toBe(refund.reason);
+    expect(cells[1].textContent?.trim()).toBe('Returned by the buyer; back with the seller');
+  });
+
+  it('shows the reason in Hindi when the portal is in Hindi', async () => {
+    const fixture = TestBed.createComponent(PaymentsPage);
+    await fixture.whenStable();
+
+    const transloco = TestBed.inject(TranslocoService);
+    transloco.setActiveLang('hi');
+    await firstValueFrom(transloco.load('hi'));
+    await fixture.whenStable();
+
+    const cells = [...fixture.nativeElement.querySelectorAll('td.mat-column-reason')] as HTMLElement[];
+    expect(cells[0].textContent?.trim()).toBe('भुगतान हुआ, पर ऑर्डर उसे नहीं ले सका');
+    expect(cells[1].textContent?.trim()).toBe('खरीदार ने लौटाया; विक्रेता के पास वापस');
+  });
+
+  it('falls back to the stored sentence when the code is missing or not one it knows', async () => {
+    refunds = [
+      { ...refund, id: 'r3', reasonCode: null, reason: 'Refunded by hand before codes existed.' },
+      { ...refund, id: 'r4', reasonCode: 'SomethingNew', reason: 'A reason added on the server later.' },
+    ];
+
+    const fixture = TestBed.createComponent(PaymentsPage);
+    await fixture.whenStable();
+
+    const cells = [...fixture.nativeElement.querySelectorAll('td.mat-column-reason')] as HTMLElement[];
+    expect(cells[0].textContent?.trim()).toBe('Refunded by hand before codes existed.');
+    expect(cells[1].textContent?.trim()).toBe('A reason added on the server later.');
+    expect(fixture.nativeElement.textContent).not.toContain('payments.reasons');
   });
 
   it('shows every payment with its Razorpay ids on the other view', async () => {

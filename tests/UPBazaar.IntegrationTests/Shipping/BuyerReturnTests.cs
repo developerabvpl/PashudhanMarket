@@ -81,6 +81,7 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         await ProcessOutboxAsync();
         var refund = (await RefundsForAsync(admin, order.Id)).ShouldHaveSingleItem();
         refund.Method.ShouldBe("Upi");
+        refund.ReasonCode.ShouldBe("BuyerReturn");
         refund.UpiId.ShouldBe("asha.devi@okicici");
         refund.Amount.ShouldBe(150m);
         refund.Status.ShouldBe("Due");
@@ -137,6 +138,7 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
 
         var refund = (await RefundsForAsync(admin, order.Id)).ShouldHaveSingleItem();
         refund.Method.ShouldBe("Razorpay");
+        refund.ReasonCode.ShouldBe("BuyerReturn");
         refund.PaymentId.ShouldNotBeNull();
         refund.GatewayPaymentId.ShouldNotBeNull();
         refund.Amount.ShouldBe(150m);

@@ -94,6 +94,23 @@ describe('CouponField', () => {
     expect(element.textContent).not.toContain('promotions.coupon');
   });
 
+  it('takes the coupon off and says why when the order is refused over it', async () => {
+    const { fixture, applied, element } = await render(vi.fn(async () => ({ code: 'WELCOME10', description: 'Welcome', discount: 15, deliveryDiscount: 0 })));
+
+    type(element, 'WELCOME10');
+    await fixture.whenStable();
+    [...element.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Apply')!.click();
+    await fixture.whenStable();
+
+    fixture.componentInstance.refuse({ key: 'checkout.coupon.errors.usedUp', minimum: null });
+    await fixture.whenStable();
+
+    expect(applied).toHaveBeenLastCalledWith(null);
+    expect((element.querySelector('#coupon-code') as HTMLInputElement).value).toBe('WELCOME10');
+    expect(element.querySelectorAll('[role=alert]').length).toBe(1);
+    expect(element.textContent).toContain('used as many times as it can be');
+  });
+
   it('can be taken off again', async () => {
     const { fixture, applied, element } = await render(vi.fn(async () => ({ code: 'WELCOME10', description: 'Welcome', discount: 15, deliveryDiscount: 0 })));
 

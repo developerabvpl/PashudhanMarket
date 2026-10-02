@@ -77,7 +77,12 @@ public sealed record PaymentDto(
 /// <param name="OrderPartId">The seller's part it is for; null when the whole payment is refunded.</param>
 /// <param name="Amount">How much.</param>
 /// <param name="Currency">ISO currency code.</param>
-/// <param name="Reason">Why it is owed.</param>
+/// <param name="Reason">Why it is owed, in English, as it was recorded: the audit record.</param>
+/// <param name="ReasonCode">
+/// Why it is owed, as a code to translate: OrderCancelled, PartCancelled, Undelivered (the courier
+/// took it back), BuyerReturn or PaymentRefused (the money reached an order that could not take it).
+/// Null for an old refund whose reason matched none of them; show <paramref name="Reason"/> then.
+/// </param>
 /// <param name="Status">Due, or Refunded once someone has made it and recorded it.</param>
 /// <param name="Method">Razorpay (reverse the online payment) or Upi (send it to <paramref name="UpiId"/>).</param>
 /// <param name="UpiId">Where a UPI refund is sent; null for Razorpay.</param>
@@ -95,6 +100,7 @@ public sealed record RefundDto(
     decimal Amount,
     string Currency,
     string Reason,
+    string? ReasonCode,
     string Status,
     string Method,
     string? UpiId,

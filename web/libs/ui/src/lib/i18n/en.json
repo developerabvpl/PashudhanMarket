@@ -382,6 +382,13 @@
     "placing": "Placing your order...",
     "onlineNote": "UPI, cards, net banking and wallets, through Razorpay.",
     "placeAndPay": "Place order and pay",
+    "errors": {
+      "cartEmpty": "Your basket is empty.",
+      "cartChanged": "Something in your basket has changed. Review it before placing the order.",
+      "outOfStock": "Some items sold out while you were checking out. Review your basket and try again.",
+      "concurrentChange": "Your basket changed at the same moment. Try placing the order again.",
+      "invalid": "Some of the order details could not be accepted. Check them and try again."
+    },
     "coupon": {
       "label": "Coupon code",
       "apply": "Apply",
@@ -531,6 +538,13 @@
       "Confirmed": "Order confirmed",
       "Refused": "Order refused it",
       "Cancelled": "Order cancelled"
+    },
+    "reasons": {
+      "OrderCancelled": "The order was cancelled",
+      "PartCancelled": "Part of the order was cancelled",
+      "Undelivered": "Could not be delivered; back with the seller",
+      "BuyerReturn": "Returned by the buyer; back with the seller",
+      "PaymentRefused": "Paid, but the order could not take the payment"
     }
   },
   "shipping": {

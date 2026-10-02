@@ -191,14 +191,15 @@ public sealed class Payment : AggregateRoot, IAuditable
         OrderOutcome = OrderOutcome.Refused;
         OrderOutcomeReason = reason;
 
-        _refunds.Add(Refund.Create(this, orderPartId: null, Amount, $"Payment could not be applied to the order: {reason}", now));
+        _refunds.Add(Refund.Create(
+            this, orderPartId: null, Amount, RefundReason.PaymentRefused, RefundReasons.PaymentRefusedPrefix + reason, now));
     }
 
     /// <summary>
     /// Records that part of a paid order was cancelled and its share is owed back. Recording the
     /// same part twice changes nothing, because the event that drives this can be delivered twice.
     /// </summary>
-    public Result RecordPartRefundDue(Guid orderPartId, decimal amount, string reason, DateTime now)
+    public Result RecordPartRefundDue(Guid orderPartId, decimal amount, RefundReason reason, DateTime now)
     {
         if (_refunds.Any(r => r.OrderPartId == orderPartId))
         {
@@ -216,7 +217,7 @@ public sealed class Payment : AggregateRoot, IAuditable
             return Result.Failure(PaymentErrors.RefundExceedsPayment);
         }
 
-        _refunds.Add(Refund.Create(this, orderPartId, amount, reason, now));
+        _refunds.Add(Refund.Create(this, orderPartId, amount, reason, RefundReasons.Describe(reason), now));
 
         return Result.Success();
     }
@@ -281,7 +282,14 @@ public sealed class Refund : AggregateRoot
     /// <summary>Where a <see cref="RefundMethod.Upi"/> refund is sent.</summary>
     public string? UpiId { get; private set; }
 
+    /// <summary>Why it is owed, in English: the audit record, kept as it was written.</summary>
     public string Reason { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Why it is owed, as a code the portals translate. Null only for a refund recorded before codes
+    /// existed whose sentence matched none of them.
+    /// </summary>
+    public RefundReason? ReasonCode { get; private set; }
 
     public RefundStatus Status { get; private set; }
 
@@ -295,7 +303,8 @@ public sealed class Refund : AggregateRoot
     /// <summary>User id of whoever recorded the refund as made.</summary>
     public string? RefundedBy { get; private set; }
 
-    internal static Refund Create(Payment payment, Guid? orderPartId, decimal amount, string reason, DateTime now) => new()
+    internal static Refund Create(
+        Payment payment, Guid? orderPartId, decimal amount, RefundReason code, string reason, DateTime now) => new()
     {
         OrderId = payment.OrderId,
         OrderNumber = payment.OrderNumber,
@@ -304,6 +313,7 @@ public sealed class Refund : AggregateRoot
         Currency = payment.Currency,
         Method = RefundMethod.Razorpay,
         Reason = Truncate(reason),
+        ReasonCode = code,
         Status = RefundStatus.Due,
         CreatedAtUtc = now,
     };
@@ -316,7 +326,7 @@ public sealed class Refund : AggregateRoot
         decimal amount,
         string currency,
         string upiId,
-        string reason,
+        RefundReason reason,
         DateTime now)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(upiId);
@@ -331,7 +341,8 @@ public sealed class Refund : AggregateRoot
             Currency = currency,
             Method = RefundMethod.Upi,
             UpiId = upiId.Trim(),
-            Reason = Truncate(reason),
+            Reason = Truncate(RefundReasons.Describe(reason)),
+            ReasonCode = reason,
             Status = RefundStatus.Due,
             CreatedAtUtc = now,
         };

@@ -92,6 +92,8 @@ public sealed class ReturnTests(ApiFixture fixture)
         var refund = (await RefundsForAsync(order.Id)).ShouldHaveSingleItem();
         refund.Amount.ShouldBe(2 * 75m);
         refund.Status.ShouldBe("Due");
+        refund.ReasonCode.ShouldBe("Undelivered");
+        refund.Reason.ShouldBe("The parcel could not be delivered and went back to the seller.");
     }
 
     [DatabaseFact]

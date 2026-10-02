@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { CurrentUserStore } from '@upbazaar/auth';
@@ -9,10 +9,11 @@ import {
   DeliveryAddressDto,
   apiV1OrdersDeliveryStatesGet,
   apiV1OrdersPost,
+  callerShowsErrors,
   fieldErrorsFor,
   toApiProblem,
 } from '@upbazaar/data-access';
-import { FieldErrors } from '@upbazaar/ui';
+import { FieldErrors, ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe, isMobile, isPincode, normalizeMobile } from '@upbazaar/util';
 import { DeliveryCharge } from '../../core/delivery-charge';
 import { SeoService } from '../../core/seo.service';
@@ -20,6 +21,7 @@ import { CartStore } from '../cart/cart.store';
 import { OrderPayment } from '../payments/order-payment';
 import { CouponField } from './coupon-field';
 import { LastAddress } from './last-address';
+import { placementFailure } from './placement-errors';
 
 type AddressField = keyof DeliveryAddressDto;
 
@@ -305,6 +307,8 @@ export class CheckoutPage {
   private readonly user = inject(CurrentUserStore);
   private readonly lastAddress = inject(LastAddress);
   private readonly payment = inject(OrderPayment);
+  private readonly toast = inject(ToastService);
+  private readonly couponField = viewChild(CouponField);
 
   protected readonly address = signal<DeliveryAddressDto>(EMPTY);
   protected readonly states = signal<readonly string[]>([]);
@@ -393,9 +397,12 @@ export class CheckoutPage {
     this.busy.set(true);
 
     try {
-      const order = await this.api.invoke(apiV1OrdersPost, {
-        body: { paymentMethod: this.method(), deliveryAddress: address, couponCode: this.coupon()?.code ?? null },
-      });
+      // The page reports every failure itself - see report() - so the app-wide toast stays quiet.
+      const order = await this.api.invoke(
+        apiV1OrdersPost,
+        { body: { paymentMethod: this.method(), deliveryAddress: address, couponCode: this.coupon()?.code ?? null } },
+        callerShowsErrors()
+      );
 
       const id = this.userId();
 
@@ -413,6 +420,7 @@ export class CheckoutPage {
       const problem = toApiProblem(error);
 
       this.problem.set(problem);
+      this.report(problem);
 
       // A cart problem found at the last moment - a price moved, stock sold out - is shown in
       // the summary once the store has the server's current view of the cart.
@@ -421,6 +429,28 @@ export class CheckoutPage {
       }
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  /**
+   * Shows why the order was not placed, once. A coupon refused only now - it ran out, or the
+   * basket no longer reaches its minimum - is explained under the coupon box as when it was
+   * applied; address problems sit under their inputs; anything else is a toast, in the buyer's
+   * language when the code is one the page knows.
+   */
+  private report(problem: ApiProblem): void {
+    // The inputs with a message slot under them are exactly the required ones.
+    const failure = placementFailure(problem, REQUIRED);
+    const couponField = this.couponField();
+
+    if (failure.kind === 'coupon' && couponField) {
+      couponField.refuse(failure.error);
+    } else if (failure.kind === 'coupon') {
+      // No coupon box on screen to put it under; a toast cannot carry the amount, so no minimum.
+      const key = failure.error.minimum === null ? failure.error.key : 'checkout.coupon.errors.belowMinimumUnknown';
+      this.toast.error(key, problem.code);
+    } else if (failure.kind === 'toast') {
+      this.toast.error(failure.message, failure.code);
     }
   }
 

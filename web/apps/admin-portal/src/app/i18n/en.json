@@ -276,6 +276,13 @@
       "Confirmed": "Order confirmed",
       "Refused": "Order refused it",
       "Cancelled": "Order cancelled"
+    },
+    "reasons": {
+      "OrderCancelled": "The order was cancelled",
+      "PartCancelled": "Part of the order was cancelled",
+      "Undelivered": "Could not be delivered; back with the seller",
+      "BuyerReturn": "Returned by the buyer; back with the seller",
+      "PaymentRefused": "Paid, but the order could not take the payment"
     }
   },
   "shipping": {

@@ -41,9 +41,9 @@ public sealed class PaymentTests
         payment.RecordOrderConfirmed();
         var part = Guid.NewGuid();
 
-        payment.RecordPartRefundDue(part, 300m, "Cancelled", Now).IsSuccess.ShouldBeTrue();
-        payment.RecordPartRefundDue(part, 300m, "Cancelled", Now).IsSuccess.ShouldBeTrue();
-        payment.RecordPartRefundDue(Guid.NewGuid(), 201m, "Cancelled", Now).Error
+        payment.RecordPartRefundDue(part, 300m, RefundReason.PartCancelled, Now).IsSuccess.ShouldBeTrue();
+        payment.RecordPartRefundDue(part, 300m, RefundReason.PartCancelled, Now).IsSuccess.ShouldBeTrue();
+        payment.RecordPartRefundDue(Guid.NewGuid(), 201m, RefundReason.PartCancelled, Now).Error
             .ShouldBe(PaymentErrors.RefundExceedsPayment);
 
         payment.RefundDue.ShouldBe(300m);
@@ -59,7 +59,7 @@ public sealed class PaymentTests
         payment.RecordOrderCancelled();
 
         payment.OrderOutcome.ShouldBe(OrderOutcome.Cancelled);
-        payment.RecordPartRefundDue(Guid.NewGuid(), 500m, "The order was cancelled.", Now).IsSuccess.ShouldBeTrue();
+        payment.RecordPartRefundDue(Guid.NewGuid(), 500m, RefundReason.OrderCancelled, Now).IsSuccess.ShouldBeTrue();
         payment.RefundDue.ShouldBe(500m);
     }
 
@@ -92,6 +92,50 @@ public sealed class PaymentTests
 
         refund.GatewayRefundId.ShouldBe("rfnd_1");
         payment.RefundDue.ShouldBe(0m);
+    }
+
+    [Fact]
+    public void A_refused_payment_is_owed_back_with_its_code_and_what_orders_said()
+    {
+        var payment = NewPayment();
+        payment.MarkPaid("pay_1", Now);
+
+        payment.RecordOrderRefused("The payment deadline has passed.", Now);
+
+        var refund = payment.Refunds.ShouldHaveSingleItem();
+        refund.ReasonCode.ShouldBe(RefundReason.PaymentRefused);
+        refund.Reason.ShouldBe("Payment could not be applied to the order: The payment deadline has passed.");
+    }
+
+    [Theory]
+    [InlineData(RefundReason.OrderCancelled, "The order was cancelled.")]
+    [InlineData(RefundReason.PartCancelled, "Part of the order was cancelled.")]
+    [InlineData(RefundReason.Undelivered, "The parcel could not be delivered and went back to the seller.")]
+    [InlineData(RefundReason.BuyerReturn, "The buyer returned the parcel and it is back with the seller.")]
+    public void A_part_refund_keeps_its_code_beside_the_sentence_it_always_wrote(RefundReason code, string sentence)
+    {
+        var payment = NewPayment();
+        payment.MarkPaid("pay_1", Now);
+        payment.RecordOrderConfirmed();
+
+        payment.RecordPartRefundDue(Guid.NewGuid(), 100m, code, Now).IsSuccess.ShouldBeTrue();
+
+        var refund = payment.Refunds.ShouldHaveSingleItem();
+        refund.ReasonCode.ShouldBe(code);
+
+        // The audit text must not change: the backfill migration matched old rows on these sentences.
+        refund.Reason.ShouldBe(sentence);
+    }
+
+    [Fact]
+    public void A_upi_refund_carries_the_buyer_return_code()
+    {
+        var refund = Refund.ToUpi(
+            Guid.NewGuid(), "UPB-260922-ABCDEF", Guid.NewGuid(), 150m, "INR", " asha@okicici ", RefundReason.BuyerReturn, Now);
+
+        refund.ReasonCode.ShouldBe(RefundReason.BuyerReturn);
+        refund.Reason.ShouldBe("The buyer returned the parcel and it is back with the seller.");
+        refund.UpiId.ShouldBe("asha@okicici");
     }
 
     [Fact]
