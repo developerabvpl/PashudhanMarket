@@ -46,9 +46,11 @@ dotnet user-secrets set "KeyVault:Uri" "https://<vault-name>.vault.azure.net/" -
 Then sign in to Azure (`az login`) with an account that holds the **Key Vault Secrets User** role
 on the vault. Deployed to Azure, the app's managed identity needs the same role instead.
 
-In the vault, secret names use `--` where configuration uses `:`, because Key Vault does not
-allow `:`. So the connection string goes in a secret named `ConnectionStrings--UPBazaar`, and the
-signing key, if you keep it there too, in `Jwt--SigningKey`.
+The vault is shared with other applications, so only secrets whose names start with `UPBazaar--`
+are read; the rest never enter this application's configuration. After the prefix, `--` stands
+where configuration uses `:`, because Key Vault does not allow `:`. So the connection string is
+the secret `UPBazaar--ConnectionStrings--UPBazaar`, and the signing key, if you keep it there too,
+`UPBazaar--Jwt--SigningKey`.
 
 Order of precedence, highest first:
 1. `UPBAZAAR_` environment variables.

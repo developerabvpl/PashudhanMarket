@@ -12,9 +12,10 @@ namespace UPBazaar.Api.Configuration;
 /// appsettings.{Environment}.json or <c>UPBAZAAR_KeyVault__Uri</c>. Left empty, nothing is read
 /// and configuration is exactly as before, which is what the tests rely on.
 ///
-/// Secret names use <c>--</c> for the section separator, Key Vault not allowing <c>:</c>: the
-/// connection string is the secret <c>ConnectionStrings--UPBazaar</c>, the signing key
-/// <c>Jwt--SigningKey</c>.
+/// Only secrets named <c>UPBazaar--...</c> are read (see <see cref="UpBazaarSecretManager"/>),
+/// the vault being shared with other applications. After the prefix, <c>--</c> stands for the
+/// section separator, Key Vault not allowing <c>:</c>: the connection string is the secret
+/// <c>UPBazaar--ConnectionStrings--UPBazaar</c>, the signing key <c>UPBazaar--Jwt--SigningKey</c>.
 ///
 /// Sign-in is <see cref="DefaultAzureCredential"/>: the Azure CLI or Visual Studio account on a
 /// developer's machine (<c>az login</c>), the managed identity once deployed to Azure. Either needs
@@ -46,6 +47,8 @@ public static class KeyVaultSetup
             new DefaultAzureCredential(),
             new AzureKeyVaultConfigurationOptions
             {
+                Manager = new UpBazaarSecretManager(),
+
                 // Rotated secrets are picked up without a restart.
                 ReloadInterval = TimeSpan.FromMinutes(30),
             });
