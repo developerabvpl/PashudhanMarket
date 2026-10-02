@@ -137,6 +137,10 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         // still registering services; ConfigureAppConfiguration would land too late for that.
         builder.UseSetting("ConnectionStrings:UPBazaar", _connectionString);
 
+        // Never the Key Vault: its connection string names a real database, and a test run must
+        // only ever touch the one it created.
+        builder.UseSetting("KeyVault:Uri", string.Empty);
+
         // Hangfire would want its own schema and a background server; the tests drive the
         // outbox directly instead.
         builder.UseSetting("Hangfire:Enabled", "false");

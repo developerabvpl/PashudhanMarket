@@ -26,7 +26,7 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPB
     public UPBazaarDbContext CreateDbContext(string[] args)
     {
         var connectionString =
-            Environment.GetEnvironmentVariable("UPBAZAAR_ConnectionStrings__UPBazaar")
+            DesignTimeConfiguration()["ConnectionStrings:UPBazaar"]
             ?? FallbackConnectionString;
 
         var options = new DbContextOptionsBuilder<UPBazaarDbContext>()
@@ -38,6 +38,23 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UPB
             .Options;
 
         return new UPBazaarDbContext(options, ResolveModules());
+    }
+
+    /// <summary>
+    /// Where a command's database comes from, highest first: a <c>UPBAZAAR_ConnectionStrings__UPBazaar</c>
+    /// variable, then the Key Vault named by <c>KeyVault:Uri</c> (user-secrets or
+    /// <c>UPBAZAAR_KeyVault__Uri</c>), then the local fallback. appsettings is not read: a migration
+    /// should never reach a database because of a file someone forgot was there.
+    /// </summary>
+    private static IConfiguration DesignTimeConfiguration()
+    {
+        var builder = new ConfigurationBuilder()
+            .AddUserSecrets(typeof(DesignTimeDbContextFactory).Assembly, optional: true)
+            .AddEnvironmentVariables("UPBAZAAR_");
+
+        builder.AddUpBazaarKeyVault(builder.Build());
+
+        return builder.AddEnvironmentVariables("UPBAZAAR_").Build();
     }
 
     /// <summary>

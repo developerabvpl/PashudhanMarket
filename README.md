@@ -34,6 +34,30 @@ Every setting also accepts a `UPBAZAAR_`-prefixed environment variable, so
 `UPBAZAAR_ConnectionStrings__UPBazaar` works in a container without colliding with anything
 else on the host. The design-time migration factory reads the same variable.
 
+### Secrets from Azure Key Vault
+
+To use a remote database whose connection string lives in Azure Key Vault, set the vault's
+address. The address is not a secret:
+
+```bash
+dotnet user-secrets set "KeyVault:Uri" "https://<vault-name>.vault.azure.net/" --project src/UPBazaar.Api
+```
+
+Then sign in to Azure (`az login`) with an account that holds the **Key Vault Secrets User** role
+on the vault. Deployed to Azure, the app's managed identity needs the same role instead.
+
+In the vault, secret names use `--` where configuration uses `:`, because Key Vault does not
+allow `:`. So the connection string goes in a secret named `ConnectionStrings--UPBazaar`, and the
+signing key, if you keep it there too, in `Jwt--SigningKey`.
+
+Order of precedence, highest first:
+1. `UPBAZAAR_` environment variables.
+2. The vault.
+3. user-secrets and appsettings.
+
+`dotnet ef` reads the vault the same way, so `dotnet ef database update` migrates the vault's
+database. Check which database that is before you run it. Integration tests never read the vault.
+
 Create or update the database:
 
 ```bash

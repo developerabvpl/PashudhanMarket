@@ -17,6 +17,12 @@ var builder = WebApplication.CreateBuilder(args);
 // a command targets.
 builder.Configuration.AddEnvironmentVariables("UPBAZAAR_");
 
+// Secrets from Azure Key Vault when KeyVault:Uri is set. The vault is read after the variables
+// above, since they may name it, and they are added again after it so that a variable still
+// overrides a vault secret - which is how a test run points at its own database.
+builder.Configuration.AddUpBazaarKeyVault(builder.Configuration);
+builder.Configuration.AddEnvironmentVariables("UPBAZAAR_");
+
 // Serilog: console for a terminal, a rolling file for anything after the fact. Both carry the
 // correlation id pushed by the middleware, and the destructuring policy masks PII on the way.
 builder.Host.UseSerilog((context, services, configuration) => configuration
