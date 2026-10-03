@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { TranslocoPipe } from '@jsverse/transloco';
 import { OrderDto } from '@upbazaar/data-access';
 import { InrCurrencyPipe } from '@upbazaar/util';
+import { hasDelivery, orderRefund } from './order-refund';
 
 /**
  * The order's money: how it is paid and what it comes to.
@@ -9,7 +10,12 @@ import { InrCurrencyPipe } from '@upbazaar/util';
  * The total counts only the goods the buyer keeps, so a cancelled order totals nothing. That is
  * right for the order but alarming for someone who paid online: they need to see what they paid
  * and what is coming back. So once anything paid online is being refunded, the card says both
- * beneath the total.
+ * beneath the total. A cash-on-delivery order has no online payment to show, but goods the buyer
+ * returned are still refunded - to their UPI id - and the card says that too (see orderRefund).
+ *
+ * Delivery reads "Free" only while something is being, or was, delivered. A cancelled order's
+ * charge is zero because it was given back; calling that "Free" beside a refund of the ₹49 that
+ * was paid for it would be wrong, so the row is left out and the refund rows carry the story.
  */
 @Component({
   selector: 'upb-order-payment-card',
@@ -31,6 +37,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
           <dd class="text-success">− {{ o.discount | inr: 'symbol' : 'auto' }}</dd>
         </div>
         }
+        @if (o.shippingFee > 0 || delivering()) {
         <div class="flex justify-between">
           <dt class="text-ink-muted">{{ 'checkout.delivery' | transloco }}</dt>
           <dd class="text-ink">
@@ -38,6 +45,7 @@ import { InrCurrencyPipe } from '@upbazaar/util';
             {{ 'checkout.free' | transloco }} }
           </dd>
         </div>
+        }
         @if (o.deliveryDiscount > 0) {
         <div class="flex justify-between">
           <dt class="text-ink-muted">{{ 'checkout.coupon.freeDelivery' | transloco: { code: o.couponCode ?? '' } }}</dt>
@@ -48,19 +56,21 @@ import { InrCurrencyPipe } from '@upbazaar/util';
           <dt class="text-ink">{{ 'checkout.total' | transloco }}</dt>
           <dd class="text-ink">{{ o.total | inr: 'symbol' : 'auto' }}</dd>
         </div>
-        @if (refunding()) {
+        @if (refund(); as r) {
+        @if (r.to === 'payment') {
         <div class="flex justify-between pt-1.5">
           <dt class="text-ink-muted">{{ 'orders.paidOnline' | transloco }}</dt>
-          <dd class="text-ink">{{ o.amountPaid | inr: 'symbol' : 'auto' }}</dd>
+          <dd class="text-ink">{{ r.paid | inr: 'symbol' : 'auto' }}</dd>
         </div>
-        <div class="flex justify-between">
-          <dt class="text-ink-muted">{{ 'orders.refund' | transloco }}</dt>
-          <dd class="font-medium text-success">{{ o.refundTotal | inr: 'symbol' : 'auto' }}</dd>
+        }
+        <div [class]="r.to === 'upi' ? 'flex justify-between pt-1.5' : 'flex justify-between'">
+          <dt class="text-ink-muted">{{ (r.to === 'upi' ? 'orders.refundToUpi' : 'orders.refund') | transloco }}</dt>
+          <dd class="font-medium text-success">{{ r.amount | inr: 'symbol' : 'auto' }}</dd>
         </div>
         }
       </dl>
-      @if (refunding()) {
-      <p class="mt-2 text-xs text-ink-muted">{{ 'orders.refundNote' | transloco }}</p>
+      @if (refund(); as r) {
+      <p class="mt-2 text-xs text-ink-muted">{{ (r.to === 'upi' ? 'orders.refundUpiNote' : 'orders.refundNote') | transloco }}</p>
       }
     </div>
     }
@@ -69,10 +79,9 @@ import { InrCurrencyPipe } from '@upbazaar/util';
 export class OrderPaymentCard {
   readonly order = input.required<OrderDto>();
 
-  /** Paid online, and some or all of it is going back. */
-  protected readonly refunding = computed(() => {
-    const o = this.order();
+  /** What is going back: some of an online payment, or cash-on-delivery returns to the buyer's UPI id. */
+  protected readonly refund = computed(() => orderRefund(this.order()));
 
-    return o.amountPaid !== null && o.amountPaid !== undefined && o.refundTotal > 0;
-  });
+  /** Something is, or was, on its way to the buyer - so a delivery charge of nothing means free delivery. */
+  protected readonly delivering = computed(() => hasDelivery(this.order()));
 }

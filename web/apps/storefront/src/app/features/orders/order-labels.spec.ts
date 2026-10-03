@@ -15,6 +15,16 @@ describe('order status badges', () => {
     expect(orderBadge('Confirmed', ['Confirmed']).key).toBe('orders.status.Confirmed');
   });
 
+  it('reads a delivered order the buyer sent some of back as partly returned, in the delivered colour', () => {
+    expect(orderBadge('Completed', ['Returned'], ['Partial'])).toEqual({
+      key: 'orders.status.PartlyReturned',
+      tone: 'bg-success/15 text-ink',
+    });
+    expect(orderBadge('Completed', ['Returning'], ['Full']).key).toBe('orders.status.Returning');
+    expect(orderBadge('Completed', ['Returned'], ['Full']).key).toBe('orders.status.Returned');
+    expect(orderBadge('Completed', ['Delivered'], ['None']).key).toBe('orders.status.Completed');
+  });
+
   it('words a return the buyer asked for apart from one the courier brought back', () => {
     const lines = [{ quantity: 1, returnQuantity: 1 }];
 

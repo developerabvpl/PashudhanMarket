@@ -112,7 +112,11 @@ describe('PaymentsPage', () => {
 
     expect(invoke).toHaveBeenCalledWith(apiV1AdminPaymentsRefundsGet, { Page: 1, PageSize: 25, Status: 'Due' });
     expect(fixture.nativeElement.textContent).toContain('UPB-260922-ABCDEF');
-    expect(fixture.nativeElement.textContent).toContain('pay_late');
+
+    // An online refund says where it goes in words, with the gateway's payment id beneath as the detail.
+    const refundTo = [...fixture.nativeElement.querySelectorAll('td.mat-column-gatewayPaymentId')] as HTMLElement[];
+    expect(refundTo[0].textContent?.replace(/\s+/g, ' ').trim()).toBe('Original payment (Razorpay) pay_late');
+    expect(refundTo[0].querySelector('span.font-mono')?.textContent).toBe('pay_late');
 
     // Cash paid at the door goes back to the buyer's UPI id, not through Razorpay.
     expect(fixture.nativeElement.textContent).toContain('UPI to asha@okicici');
@@ -139,6 +143,10 @@ describe('PaymentsPage', () => {
 
     const cells = [...fixture.nativeElement.querySelectorAll('td.mat-column-reason')] as HTMLElement[];
     expect(cells[0].textContent?.trim()).toBe('भुगतान हुआ, पर ऑर्डर उसे नहीं ले सका');
+
+    const refundTo = [...fixture.nativeElement.querySelectorAll('td.mat-column-gatewayPaymentId')] as HTMLElement[];
+    expect(refundTo[0].textContent).toContain('मूल भुगतान (Razorpay)');
+    expect(refundTo[1].textContent).toContain('asha@okicici');
     expect(cells[1].textContent?.trim()).toBe('खरीदार ने लौटाया; विक्रेता के पास वापस');
   });
 

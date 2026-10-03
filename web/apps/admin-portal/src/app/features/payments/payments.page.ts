@@ -103,8 +103,19 @@ type View = 'refunds' | 'payments';
           </ng-container>
           <ng-container matColumnDef="gatewayPaymentId">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.refundTo' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-mono text-xs">
-              {{ row.method === 'Upi' ? ('payments.upiTo' | transloco: { upi: row.upiId }) : (row.gatewayPaymentId ?? '—') }}
+            <!--
+              Where the money goes, in words: a UPI refund names the buyer's UPI id; any other goes back
+              through the payment it came from, whose gateway id is the detail finance looks up, not the answer.
+            -->
+            <td mat-cell *matCellDef="let row" class="text-sm">
+              @if (row.method === 'Upi') {
+              <span class="font-mono text-xs">{{ 'payments.upiTo' | transloco: { upi: row.upiId } }}</span>
+              } @else {
+              {{ 'payments.originalPayment' | transloco }}
+              @if (row.gatewayPaymentId) {
+              <span class="block font-mono text-xs text-ink-muted">{{ row.gatewayPaymentId }}</span>
+              }
+              }
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">

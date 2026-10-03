@@ -1,4 +1,4 @@
-import { PortalNavEntry, visibleNav } from './portal-nav';
+import { PortalNavEntry, startsOwnSection, visibleNav } from './portal-nav';
 
 const NAV: readonly PortalNavEntry[] = [
   { kind: 'link', label: 'nav.staffUsers', route: '/staff', permission: 'users.read' },
@@ -43,5 +43,28 @@ describe('visibleNav', () => {
 
     expect(entries).toContainEqual({ kind: 'link', label: 'nav.payments', route: '/payments', permission: 'payments.read' });
     expect(labels(entries)).toEqual(['nav.payments', 'nav.team']);
+  });
+});
+
+describe('startsOwnSection', () => {
+  const marked = (entries: readonly PortalNavEntry[]) =>
+    entries.filter((_, i) => startsOwnSection(entries, i)).map((e) => e.label);
+
+  it('rules off a page of its own that follows a group, so it does not read as part of it', () => {
+    // nav.team comes straight after the Money group, as Sellers follows Shipping in the admin menu.
+    expect(marked(NAV)).toEqual(['nav.team']);
+  });
+
+  it('leaves groups, which carry their own heading, and the first entry alone', () => {
+    expect(startsOwnSection(NAV, 0)).toBe(false);
+    expect(startsOwnSection(NAV, 1)).toBe(false);
+    expect(startsOwnSection(NAV, 2)).toBe(false);
+  });
+
+  it('draws nothing between pages that follow one another', () => {
+    // The seller menu: its own pages first, then one group - and that group shrunk to one page.
+    const pages = visibleNav(NAV, (p) => p === 'payments.read');
+
+    expect(marked(pages)).toEqual([]);
   });
 });

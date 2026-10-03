@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RoleDto, UserSummaryDto } from '@upbazaar/data-access';
+import { roleLabel } from './role-label';
 
 /** The user whose roles are being edited, and the roles available. */
 export interface StaffRolesData {
@@ -31,7 +32,7 @@ export interface StaffRolesData {
         @for (role of data.roles; track role.name) {
         <li>
           <mat-checkbox [checked]="isSelected(role.name)" (change)="toggle(role.name)">
-            <span class="font-medium">{{ role.name }}</span>
+            <span class="font-medium">{{ roleName(role.name) }}</span>
           </mat-checkbox>
           @if (role.description) {
           <p class="ml-9 text-sm text-ink-muted">{{ role.description }}</p>
@@ -60,6 +61,13 @@ export class StaffRolesDialog {
     inject<MatDialogRef<StaffRolesDialog, string[] | undefined>>(MatDialogRef);
 
   private readonly selected = signal<Set<string>>(new Set(this.data.user.roles));
+
+  private readonly transloco = inject(TranslocoService);
+
+  /** The role as people read it; its API name is still what is saved. */
+  protected roleName(name: string): string {
+    return roleLabel(this.transloco, name);
+  }
 
   protected isSelected(role: string): boolean {
     return this.selected().has(role);

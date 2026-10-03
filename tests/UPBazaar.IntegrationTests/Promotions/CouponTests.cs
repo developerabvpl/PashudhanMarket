@@ -31,7 +31,7 @@ public sealed class CouponTests(ApiFixture fixture)
     public async Task A_platform_coupon_takes_money_off_and_leaves_the_seller_paid_in_full()
     {
         var admin = await AdminClientAsync();
-        var (sellerId, _) = await SellerAsync(admin);
+        var (sellerId, seller) = await SellerAsync(admin);
         var code = await CreateAsync(admin, "/api/v1/admin/promotions/coupons", new { code = Code(), description = "Welcome", discountType = "Percent", value = 10m });
         var buyer = await BasketAsync(admin, sellerId);
 
@@ -45,6 +45,12 @@ public sealed class CouponTests(ApiFixture fixture)
         order.Total.ShouldBe(135m);
         order.CouponCode.ShouldBe(code);
         order.Parts.Single().Lines.Single().Discount.ShouldBe(15m);
+
+        // The seller sees the discount on their part, and that it is not theirs to bear.
+        var sellerView = await seller.GetFromJsonAsync<SellerOrderDto>(new Uri($"/api/v1/seller/orders/{order.Id}", UriKind.Relative));
+        sellerView!.Subtotal.ShouldBe(150m);
+        sellerView.Discount.ShouldBe(15m);
+        sellerView.DiscountFundedBy.ShouldBe("Platform");
 
         var shipment = await DeliverAsync(admin, order);
         shipment.CodAmount.ShouldBe(135m);
@@ -65,6 +71,10 @@ public sealed class CouponTests(ApiFixture fixture)
         var buyer = await BasketAsync(admin, sellerId);
         var order = await PlaceAsync(buyer, code);
         order.Total.ShouldBe(130m);
+
+        var sellerView = await seller.GetFromJsonAsync<SellerOrderDto>(new Uri($"/api/v1/seller/orders/{order.Id}", UriKind.Relative));
+        sellerView!.Discount.ShouldBe(20m);
+        sellerView.DiscountFundedBy.ShouldBe("Seller");
 
         await DeliverAsync(admin, order);
 

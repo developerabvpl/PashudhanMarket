@@ -108,6 +108,8 @@ internal sealed class GetSellerOrderQueryHandler(OrderReader reader) : IQueryHan
             partDto.Lines,
             part.CancellationReason,
             part.ReturnCondition?.ToString(),
-            part.ReturnRequest?.ToDto(includeUpiId: false));
+            part.ReturnRequest?.ToDto(includeUpiId: false),
+            part.Discount,
+            part.Discount > 0m ? order.CouponFundedBy : null);
     }
 }

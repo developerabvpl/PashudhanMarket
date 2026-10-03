@@ -242,6 +242,44 @@
         "belowMinimumUnknown": "Your basket does not reach that coupon's minimum order.",
         "concurrentChange": "That coupon was used by someone else at the same moment. Try again."
       }
+    },
+    "states": {
+      "AndamanandNicobarIslands": "Andaman and Nicobar Islands",
+      "AndhraPradesh": "Andhra Pradesh",
+      "ArunachalPradesh": "Arunachal Pradesh",
+      "Assam": "Assam",
+      "Bihar": "Bihar",
+      "Chandigarh": "Chandigarh",
+      "Chhattisgarh": "Chhattisgarh",
+      "DadraandNagarHaveliandDamanandDiu": "Dadra and Nagar Haveli and Daman and Diu",
+      "Delhi": "Delhi",
+      "Goa": "Goa",
+      "Gujarat": "Gujarat",
+      "Haryana": "Haryana",
+      "HimachalPradesh": "Himachal Pradesh",
+      "JammuandKashmir": "Jammu and Kashmir",
+      "Jharkhand": "Jharkhand",
+      "Karnataka": "Karnataka",
+      "Kerala": "Kerala",
+      "Ladakh": "Ladakh",
+      "Lakshadweep": "Lakshadweep",
+      "MadhyaPradesh": "Madhya Pradesh",
+      "Maharashtra": "Maharashtra",
+      "Manipur": "Manipur",
+      "Meghalaya": "Meghalaya",
+      "Mizoram": "Mizoram",
+      "Nagaland": "Nagaland",
+      "Odisha": "Odisha",
+      "Puducherry": "Puducherry",
+      "Punjab": "Punjab",
+      "Rajasthan": "Rajasthan",
+      "Sikkim": "Sikkim",
+      "TamilNadu": "Tamil Nadu",
+      "Telangana": "Telangana",
+      "Tripura": "Tripura",
+      "UttarPradesh": "Uttar Pradesh",
+      "Uttarakhand": "Uttarakhand",
+      "WestBengal": "West Bengal"
     }
   },
   "orders": {
@@ -272,7 +310,11 @@
       "Packed": "Packed",
       "Shipped": "Shipped",
       "Completed": "Delivered",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "Returning": "Being returned",
+      "Returned": "Returned",
+      "PartlyReturning": "Delivered · partly being returned",
+      "PartlyReturned": "Delivered · partly returned"
     },
     "partStatus": {
       "AwaitingPayment": "Awaiting payment",
@@ -326,7 +368,9 @@
       "chooseItems": "What are you sending back?",
       "refundAbout": "Refund of about {{amount}}, once it reaches the seller.",
       "couponNote": "If what you keep no longer reaches your coupon’s minimum order, its discount comes off the refund."
-    }
+    },
+    "refundToUpi": "Refund to your UPI ID",
+    "refundUpiNote": "You paid cash on delivery, so the refund for what you return is sent to the UPI ID you gave, once the goods are back with the seller."
   },
   "payments": {
     "due": "{{amount}} to pay",

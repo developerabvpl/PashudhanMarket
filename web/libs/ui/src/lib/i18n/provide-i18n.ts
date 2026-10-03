@@ -1,5 +1,6 @@
 import { EnvironmentProviders, Injectable, InjectionToken, inject, isDevMode, makeEnvironmentProviders } from '@angular/core';
 import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
+import { provideDocumentLanguage } from './document-language';
 
 export const AVAILABLE_LANGUAGES = ['en', 'hi'] as const;
 
@@ -60,5 +61,7 @@ export function provideI18n(translations: AppTranslations = ALL_TRANSLATIONS): E
       },
       loader: BundledTranslocoLoader,
     }),
+    // <html lang> follows the language showing, in every app that has translations at all.
+    provideDocumentLanguage(),
   ]);
 }

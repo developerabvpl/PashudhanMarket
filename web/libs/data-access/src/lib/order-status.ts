@@ -11,17 +11,49 @@ import type { OrderLineDto, ReturnRequestDto } from './api/models';
 const LEFT_THE_SELLER: ReadonlySet<string> = new Set(['Shipped', 'Delivered', 'Returning', 'Returned']);
 
 /**
+ * How much of a parcel the buyer is sending, or sent, back: None, Partial (some units of an
+ * accepted return) or Full. A parcel the courier brought back undelivered is None - that is not a
+ * return. The API sends one per parcel with a list row (OrderSummaryDto.partReturns); for a whole
+ * order {@link partReturn} works it out of the parcel's lines, by the same test.
+ */
+export type PartReturn = 'None' | 'Partial' | 'Full';
+
+/**
  * How far an order has got, as one word for a list row or a page header.
  *
  * The order's own status stays Confirmed from payment until every parcel is delivered, so on its
  * own it calls an order already on a lorry "Confirmed". While Confirmed, the order reads as its
  * furthest parcel instead: Shipped once any parcel has left its seller (on the way, delivered,
  * or since sent back), else Packed once any is packed, else Confirmed. Cancelled parcels do not
- * count. Any other order status - awaiting payment, delivered (Completed), cancelled - already
- * says it all and is kept. Each parcel's own status is shown beside it on the order's page.
+ * count.
+ *
+ * A delivered order (Completed) stays Completed when the buyer sends some of it back, since the
+ * goods did reach them - so on its own it calls an order whose parcel reads "Partly returned"
+ * plain "Delivered". Given what is going back of each parcel, a Completed order with an accepted
+ * return reads instead as:
+ *  - Returned when everything that was delivered has come back to its seller, Returning while any
+ *    of that is still on its way back;
+ *  - PartlyReturned or PartlyReturning ("Delivered - partly returned") when the buyer keeps
+ *    something: only some units of a parcel went back, or another parcel was delivered and kept.
+ * Without `partReturns` - a caller that only knows statuses - a Completed order stays Completed.
+ *
+ * Any other order status - awaiting payment, cancelled - already says it all and is kept. Each
+ * parcel's own status is shown beside it on the order's page.
  */
-export function orderProgress(status: string, partStatuses: readonly string[] | null | undefined): string {
-  if (status !== 'Confirmed' || !partStatuses) {
+export function orderProgress(
+  status: string,
+  partStatuses: readonly string[] | null | undefined,
+  partReturns?: readonly string[] | null
+): string {
+  if (!partStatuses) {
+    return status;
+  }
+
+  if (status === 'Completed') {
+    return returnProgress(partStatuses, partReturns ?? []) ?? status;
+  }
+
+  if (status !== 'Confirmed') {
     return status;
   }
 
@@ -30,6 +62,21 @@ export function orderProgress(status: string, partStatuses: readonly string[] | 
   }
 
   return partStatuses.includes('Packed') ? 'Packed' : status;
+}
+
+/** A delivered order's accepted returns as one word, or null when the buyer sent nothing back. */
+function returnProgress(partStatuses: readonly string[], partReturns: readonly string[]): string | null {
+  const returned = partStatuses.filter((_, i) => (partReturns[i] ?? 'None') !== 'None');
+
+  if (returned.length === 0) {
+    return null;
+  }
+
+  // A delivered parcel that is not going back is kept whole; a partial return keeps the rest.
+  const keepsSome = partReturns.includes('Partial') || partStatuses.includes('Delivered');
+  const allBack = returned.every((s) => s === 'Returned');
+
+  return (keepsSome ? 'Partly' : '') + (allBack ? 'Returned' : 'Returning');
 }
 
 /** The parts of a parcel needed to tell what of it is going, or went, back. */
@@ -54,6 +101,15 @@ export function isPartialReturn(part: ReturnablePart): boolean {
   const named = part.lines.some((l) => (l.returnQuantity ?? 0) > 0);
 
   return isBuyerReturn(part) && named && part.lines.some((l) => (l.returnQuantity ?? 0) < l.quantity);
+}
+
+/** What of the parcel the buyer is sending back, for {@link orderProgress}. */
+export function partReturn(part: ReturnablePart): PartReturn {
+  if (!isBuyerReturn(part)) {
+    return 'None';
+  }
+
+  return isPartialReturn(part) ? 'Partial' : 'Full';
 }
 
 /**

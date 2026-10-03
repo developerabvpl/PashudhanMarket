@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RoleDto, UserSummaryDto, toApiProblem } from '@upbazaar/data-access';
+import { roleLabel } from './role-label';
 import { StaffService } from './staff.service';
 
 /** Create when `user` is absent, edit when it is present. */
@@ -93,7 +94,7 @@ export interface StaffFormData {
           <mat-label>{{ 'account.roles' | transloco }}</mat-label>
           <mat-select formControlName="roles" multiple>
             @for (role of data.roles; track role.name) {
-            <mat-option [value]="role.name">{{ role.name }}</mat-option>
+            <mat-option [value]="role.name">{{ roleName(role.name) }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -146,6 +147,11 @@ export class StaffFormDialog {
     status: [this.data.user?.status ?? 'Active', [Validators.required]],
     roles: [[] as string[]],
   });
+
+  /** The role as people read it; its API name stays the option's value. */
+  protected roleName(name: string): string {
+    return roleLabel(this.transloco, name);
+  }
 
   protected async submit(): Promise<void> {
     this.form.markAllAsTouched();

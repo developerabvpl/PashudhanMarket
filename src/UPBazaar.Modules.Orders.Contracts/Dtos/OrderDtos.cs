@@ -208,6 +208,13 @@ public sealed record DeliveryAddressDto(
 /// </param>
 /// <param name="AmountPaid">What the buyer paid online; null for cash on delivery or until paid. <paramref name="Total"/> counts only what the buyer keeps, so a paid order that was cancelled totals nothing - the list shows this instead, with the refund, as the order's own page does.</param>
 /// <param name="RefundTotal">What of <paramref name="AmountPaid"/> goes back to the buyer, sent or not. Zero unless paid online.</param>
+/// <param name="PartReturns">
+/// What the buyer is sending back of each parcel, in the same order as <paramref name="PartStatuses"/>:
+/// None, Partial (some units of an accepted return) or Full (all of it). A parcel's status is
+/// Returning or Returned whether one jar or the whole box goes back, and the same whether the buyer
+/// returned it or the courier could not deliver it; with these a list can say "Delivered, partly
+/// returned" exactly as the order's own page does.
+/// </param>
 public sealed record OrderSummaryDto(
     Guid Id,
     string Number,
@@ -220,7 +227,8 @@ public sealed record OrderSummaryDto(
     DateTime PlacedAtUtc,
     IReadOnlyList<string> PartStatuses,
     decimal? AmountPaid,
-    decimal RefundTotal);
+    decimal RefundTotal,
+    IReadOnlyList<string> PartReturns);
 
 /// <summary>What Payments needs to take money for an order.</summary>
 /// <param name="OrderId">Public id.</param>

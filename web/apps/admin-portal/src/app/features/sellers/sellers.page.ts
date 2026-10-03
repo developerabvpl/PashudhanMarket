@@ -78,7 +78,8 @@ import { SellersPermissions } from '../../core/permissions';
             <dt class="text-ink-muted">{{ 'sellersAdmin.owner' | transloco }}</dt>
             <dd>
               @if (s.ownerName) {
-              {{ s.ownerName }}@if (s.ownerEmail) { <span class="text-ink-muted">· {{ s.ownerEmail }}</span> }
+              <!-- The separator's spaces are part of the text bound here: a space left between the name and the block is dropped when the template is compiled. -->
+              {{ s.ownerName }}@if (s.ownerEmail) {<span class="text-ink-muted">{{ ' · ' + s.ownerEmail }}</span>}
               } @else if (s.ownerUserId) {
               <span class="font-mono text-xs">{{ s.ownerUserId }}</span>
               } @else { {{ 'sellersAdmin.noOwner' | transloco }} }

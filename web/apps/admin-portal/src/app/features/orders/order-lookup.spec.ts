@@ -283,4 +283,63 @@ describe('OrderLookup', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Status: Shipped');
   });
+
+  /** Delivered, then the buyer sent back one of the two diyas and the seller found it damaged. */
+  const partlyReturned: OrderDto = {
+    ...order,
+    status: 'Completed',
+    parts: [
+      {
+        ...order.parts[0],
+        status: 'Returned',
+        returnCondition: 'Damaged',
+        lines: [{ ...order.parts[0].lines[0], returnQuantity: 1 }],
+        returnRequest: {
+          status: 'Approved',
+          reason: 'Damaged',
+          comment: null,
+          refundUpiId: null,
+          requestedAtUtc: '2026-03-20T10:00:00Z',
+          decisionNote: null,
+          decidedAtUtc: '2026-03-20T12:00:00Z',
+          refundDue: 1000,
+        },
+      },
+    ],
+  };
+
+  it('says a delivered order is partly returned, as its parcel does, rather than plain Delivered', async () => {
+    answerWith(partlyReturned);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Status: Delivered · partly returned');
+    expect(fixture.nativeElement.textContent).toContain('Partly returned');
+  });
+
+  it('says returned once the whole delivered order has come back', async () => {
+    answerWith({
+      ...partlyReturned,
+      parts: [{ ...partlyReturned.parts[0], lines: [{ ...order.parts[0].lines[0], returnQuantity: 2 }] }],
+    });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Status: Returned');
+  });
+
+  it('titles what the inspection of a returned parcel found', async () => {
+    answerWith(partlyReturned);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(text).toContain('Return inspection: Returned damaged; not restocked.');
+  });
 });

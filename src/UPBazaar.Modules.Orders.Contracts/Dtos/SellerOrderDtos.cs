@@ -34,6 +34,11 @@ public sealed record SellerOrderSummaryDto(
 /// A seller's part of one order in full: what to pack and where it goes. ReturnCondition is null
 /// until a part that came back has been inspected. ReturnRequest is the buyer's request to send it
 /// back, if any, without the buyer's UPI id: refunds are the platform's to pay, not the seller's.
+///
+/// Subtotal is the part at full price and Discount the coupon's share of it, so the seller sees
+/// what the buyer actually pays for the goods. DiscountFundedBy says who bears that discount -
+/// Seller (their earnings are worked out on the discounted price) or Platform (they are paid on
+/// the full price) - and is null when no coupon touched the part.
 /// </summary>
 public sealed record SellerOrderDto(
     Guid OrderId,
@@ -49,4 +54,6 @@ public sealed record SellerOrderDto(
     IReadOnlyList<OrderLineDto> Lines,
     string? CancellationReason,
     string? ReturnCondition,
-    ReturnRequestDto? ReturnRequest);
+    ReturnRequestDto? ReturnRequest,
+    decimal Discount = 0m,
+    string? DiscountFundedBy = null);

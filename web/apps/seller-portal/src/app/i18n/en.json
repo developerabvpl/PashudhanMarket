@@ -262,6 +262,12 @@
       "saved": "Sale set.",
       "ended": "Sale ended.",
       "onSale": "On sale {{price}}"
+    },
+    "partDiscount": "Coupon discount {{amount}}",
+    "partNet": "Buyer pays {{amount}} for the goods",
+    "discountFundedBy": {
+      "Seller": "You fund this coupon: your earnings are worked out on the discounted price.",
+      "Platform": "UP Bazaar funds this coupon: you are paid on the full price."
     }
   },
   "settlements": {
@@ -336,10 +342,20 @@
       "Good": "Returned and put back on sale.",
       "Damaged": "Returned damaged; not restocked."
     },
-    "unitsBack": "{{count}} coming back",
-    "unitsAsked": "{{count}} asked to return",
-    "unitsCameBack": "{{count}} came back",
-    "recordInspection": "Record inspection"
+    "unitsBack": {
+      "one": "{{count}} coming back",
+      "other": "{{count}} coming back"
+    },
+    "unitsAsked": {
+      "one": "{{count}} asked to return",
+      "other": "{{count}} asked to return"
+    },
+    "unitsCameBack": {
+      "one": "{{count}} came back",
+      "other": "{{count}} came back"
+    },
+    "recordInspection": "Record inspection",
+    "inspectionTitle": "Return inspection"
   },
   "reviews": {
     "starsLabel": "{{rating}} out of 5 stars",

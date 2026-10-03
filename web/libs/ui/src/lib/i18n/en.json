@@ -61,7 +61,9 @@
     "yes": "Yes",
     "no": "No",
     "optional": "optional",
-    "working": "Working..."
+    "working": "Working...",
+    "chooseFile": "Choose file",
+    "noFileChosen": "No file chosen"
   },
   "paginator": {
     "itemsPerPage": "Items per page",
@@ -295,7 +297,20 @@
     "confirmRolesTitle": "Change roles?",
     "confirmRolesBody": "{{name}} will have exactly these roles: {{roles}}. This takes effect the next time their token refreshes.",
     "confirmRolesNone": "{{name}} will be left with no roles, which removes all administrative access.",
-    "auditNote": "This change is recorded in the audit log against your account."
+    "auditNote": "This change is recorded in the audit log against your account.",
+    "roleNames": {
+      "SuperAdmin": "Super admin",
+      "Admin": "Admin",
+      "CatalogModerator": "Catalogue moderator",
+      "FinanceOfficer": "Finance officer",
+      "SupportAgent": "Support agent",
+      "SupportSupervisor": "Support supervisor",
+      "AcademyAuthor": "Academy author",
+      "SellerOwner": "Seller owner",
+      "SellerManager": "Seller manager",
+      "SellerDispatch": "Seller dispatch",
+      "Buyer": "Buyer"
+    }
   },
   "forbidden": {
     "title": "You do not have access",
@@ -407,6 +422,44 @@
         "belowMinimumUnknown": "Your basket does not reach that coupon's minimum order.",
         "concurrentChange": "That coupon was used by someone else at the same moment. Try again."
       }
+    },
+    "states": {
+      "AndamanandNicobarIslands": "Andaman and Nicobar Islands",
+      "AndhraPradesh": "Andhra Pradesh",
+      "ArunachalPradesh": "Arunachal Pradesh",
+      "Assam": "Assam",
+      "Bihar": "Bihar",
+      "Chandigarh": "Chandigarh",
+      "Chhattisgarh": "Chhattisgarh",
+      "DadraandNagarHaveliandDamanandDiu": "Dadra and Nagar Haveli and Daman and Diu",
+      "Delhi": "Delhi",
+      "Goa": "Goa",
+      "Gujarat": "Gujarat",
+      "Haryana": "Haryana",
+      "HimachalPradesh": "Himachal Pradesh",
+      "JammuandKashmir": "Jammu and Kashmir",
+      "Jharkhand": "Jharkhand",
+      "Karnataka": "Karnataka",
+      "Kerala": "Kerala",
+      "Ladakh": "Ladakh",
+      "Lakshadweep": "Lakshadweep",
+      "MadhyaPradesh": "Madhya Pradesh",
+      "Maharashtra": "Maharashtra",
+      "Manipur": "Manipur",
+      "Meghalaya": "Meghalaya",
+      "Mizoram": "Mizoram",
+      "Nagaland": "Nagaland",
+      "Odisha": "Odisha",
+      "Puducherry": "Puducherry",
+      "Punjab": "Punjab",
+      "Rajasthan": "Rajasthan",
+      "Sikkim": "Sikkim",
+      "TamilNadu": "Tamil Nadu",
+      "Telangana": "Telangana",
+      "Tripura": "Tripura",
+      "UttarPradesh": "Uttar Pradesh",
+      "Uttarakhand": "Uttarakhand",
+      "WestBengal": "West Bengal"
     }
   },
   "orders": {
@@ -437,7 +490,11 @@
       "Packed": "Packed",
       "Shipped": "Shipped",
       "Completed": "Delivered",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "Returning": "Being returned",
+      "Returned": "Returned",
+      "PartlyReturning": "Delivered · partly being returned",
+      "PartlyReturned": "Delivered · partly returned"
     },
     "partStatus": {
       "AwaitingPayment": "Awaiting payment",
@@ -491,7 +548,9 @@
       "chooseItems": "What are you sending back?",
       "refundAbout": "Refund of about {{amount}}, once it reaches the seller.",
       "couponNote": "If what you keep no longer reaches your coupon’s minimum order, its discount comes off the refund."
-    }
+    },
+    "refundToUpi": "Refund to your UPI ID",
+    "refundUpiNote": "You paid cash on delivery, so the refund for what you return is sent to the UPI ID you gave, once the goods are back with the seller."
   },
   "payments": {
     "due": "{{amount}} to pay",
@@ -545,7 +604,8 @@
       "Undelivered": "Could not be delivered; back with the seller",
       "BuyerReturn": "Returned by the buyer; back with the seller",
       "PaymentRefused": "Paid, but the order could not take the payment"
-    }
+    },
+    "originalPayment": "Original payment (Razorpay)"
   },
   "shipping": {
     "parcels": "Parcels",
@@ -686,6 +746,12 @@
       "saved": "Sale set.",
       "ended": "Sale ended.",
       "onSale": "On sale {{price}}"
+    },
+    "partDiscount": "Coupon discount {{amount}}",
+    "partNet": "Buyer pays {{amount}} for the goods",
+    "discountFundedBy": {
+      "Seller": "You fund this coupon: your earnings are worked out on the discounted price.",
+      "Platform": "UP Bazaar funds this coupon: you are paid on the full price."
     }
   },
   "sellersAdmin": {
@@ -875,13 +941,23 @@
       "Good": "Returned and put back on sale.",
       "Damaged": "Returned damaged; not restocked."
     },
-    "unitsBack": "{{count}} coming back",
-    "unitsAsked": "{{count}} asked to return",
-    "unitsCameBack": "{{count}} came back",
+    "unitsBack": {
+      "one": "{{count}} coming back",
+      "other": "{{count}} coming back"
+    },
+    "unitsAsked": {
+      "one": "{{count}} asked to return",
+      "other": "{{count}} asked to return"
+    },
+    "unitsCameBack": {
+      "one": "{{count}} came back",
+      "other": "{{count}} came back"
+    },
     "itemsBack": "Coming back:",
     "itemsCameBack": "Came back:",
     "refundDue": "Refund due: {{amount}}",
-    "recordInspection": "Record inspection"
+    "recordInspection": "Record inspection",
+    "inspectionTitle": "Return inspection"
   },
   "reviews": {
     "starsLabel": "{{rating}} out of 5 stars",

@@ -23,6 +23,9 @@ const TONES: Readonly<Record<string, string>> = {
   Cancelled: 'bg-surface-sunken text-ink-muted',
   Returning: 'bg-warning/15 text-ink',
   Returned: 'bg-surface-sunken text-ink-muted',
+  // A delivered order the buyer sent some of back is still theirs in part: it keeps the delivered green.
+  PartlyReturning: 'bg-success/15 text-ink',
+  PartlyReturned: 'bg-success/15 text-ink',
 };
 
 const NEUTRAL = 'bg-surface-sunken text-ink';
@@ -34,10 +37,16 @@ export function orderStatusBadge(status: string): StatusBadge {
 /**
  * An order's badge in the list and on its page: how far its parcels have got, by the rule in
  * {@link orderProgress} - a confirmed order reads Shipped once any parcel has left its seller,
- * Packed once any is packed - so the two never disagree.
+ * Packed once any is packed, and a delivered one the buyer sent back reads Returned or "Delivered ·
+ * partly returned" - so the two never disagree. The list passes the summary's partReturns; the
+ * order's page works them out of its parcels with partReturn.
  */
-export function orderBadge(status: string, partStatuses: readonly string[] | null | undefined): StatusBadge {
-  return orderStatusBadge(orderProgress(status, partStatuses));
+export function orderBadge(
+  status: string,
+  partStatuses: readonly string[] | null | undefined,
+  partReturns?: readonly string[] | null
+): StatusBadge {
+  return orderStatusBadge(orderProgress(status, partStatuses, partReturns));
 }
 
 /**

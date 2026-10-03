@@ -49,7 +49,9 @@
     "search": "खोजें",
     "actions": "कार्रवाई",
     "optional": "वैकल्पिक",
-    "working": "हो रहा है..."
+    "working": "हो रहा है...",
+    "chooseFile": "फ़ाइल चुनें",
+    "noFileChosen": "कोई फ़ाइल नहीं चुनी गई"
   },
   "paginator": {
     "itemsPerPage": "प्रति पृष्ठ आइटम",
@@ -193,7 +195,20 @@
     "confirmRolesTitle": "भूमिकाएँ बदलें?",
     "confirmRolesBody": "{{name}} के पास ठीक ये भूमिकाएँ होंगी: {{roles}}। यह उनका टोकन रीफ़्रेश होने पर लागू होगा।",
     "confirmRolesNone": "{{name}} के पास कोई भूमिका नहीं बचेगी, यानी सारी प्रशासनिक पहुँच हट जाएगी।",
-    "auditNote": "यह बदलाव आपके खाते के नाम से ऑडिट लॉग में दर्ज होगा।"
+    "auditNote": "यह बदलाव आपके खाते के नाम से ऑडिट लॉग में दर्ज होगा।",
+    "roleNames": {
+      "SuperAdmin": "सुपर एडमिन",
+      "Admin": "एडमिन",
+      "CatalogModerator": "कैटलॉग मॉडरेटर",
+      "FinanceOfficer": "वित्त अधिकारी",
+      "SupportAgent": "सहायता एजेंट",
+      "SupportSupervisor": "सहायता पर्यवेक्षक",
+      "AcademyAuthor": "अकादमी लेखक",
+      "SellerOwner": "विक्रेता मालिक",
+      "SellerManager": "विक्रेता मैनेजर",
+      "SellerDispatch": "विक्रेता डिस्पैच",
+      "Buyer": "खरीदार"
+    }
   },
   "forbidden": {
     "title": "आपके पास पहुँच नहीं है",
@@ -209,7 +224,11 @@
       "Packed": "पैक हो गया",
       "Shipped": "भेज दिया",
       "Completed": "पहुँचा दिया",
-      "Cancelled": "रद्द"
+      "Cancelled": "रद्द",
+      "Returning": "वापस जा रहा है",
+      "Returned": "वापस किया गया",
+      "PartlyReturning": "पहुँचा दिया · कुछ सामान वापस जा रहा है",
+      "PartlyReturned": "पहुँचा दिया · कुछ सामान वापस किया गया"
     },
     "partStatus": {
       "AwaitingPayment": "भुगतान बाकी",
@@ -283,7 +302,8 @@
       "Undelivered": "डिलीवर नहीं हो सका; विक्रेता के पास वापस",
       "BuyerReturn": "खरीदार ने लौटाया; विक्रेता के पास वापस",
       "PaymentRefused": "भुगतान हुआ, पर ऑर्डर उसे नहीं ले सका"
-    }
+    },
+    "originalPayment": "मूल भुगतान (Razorpay)"
   },
   "shipping": {
     "parcels": "पार्सल",
@@ -535,7 +555,8 @@
     "itemsBack": "वापस आ रहा है:",
     "itemsCameBack": "वापस आ गया:",
     "refundDue": "देय रिफ़ंड: {{amount}}",
-    "recordInspection": "जाँच दर्ज करें"
+    "recordInspection": "जाँच दर्ज करें",
+    "inspectionTitle": "वापसी की जाँच"
   },
   "reviews": {
     "starsLabel": "5 में से {{rating}} स्टार",

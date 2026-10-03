@@ -1,4 +1,7 @@
-import { DateIstPipe } from './date-ist.pipe';
+import { ChangeDetectionStrategy, Component, provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { TranslocoService, provideTransloco } from '@jsverse/transloco';
+import { DateIstPipe, formatIst, istDateLocale } from './date-ist.pipe';
 import { InrCurrencyPipe } from './inr-currency.pipe';
 
 describe('InrCurrencyPipe', () => {
@@ -26,7 +29,9 @@ describe('InrCurrencyPipe', () => {
 });
 
 describe('DateIstPipe', () => {
-  const pipe = new DateIstPipe();
+  // Built where it can ask for its dependencies, as a template builds it; with no translations
+  // provided it has no language to follow and writes Indian English.
+  const pipe = TestBed.runInInjectionContext(() => new DateIstPipe());
 
   it('renders a UTC instant in IST, not the runner timezone', () => {
     // 18:30 UTC is 00:00 IST the next day: the date must roll over.
@@ -39,6 +44,50 @@ describe('DateIstPipe', () => {
 
   it.each([null, undefined, '', 'nonsense'])('renders nothing for %s', (value) => {
     expect(pipe.transform(value as never)).toBe('');
+  });
+});
+
+describe('DateIstPipe in the language showing', () => {
+  @Component({
+    imports: [DateIstPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: '<time>{{ at | dateIst }}</time>',
+  })
+  class Host {
+    readonly at = '2026-10-03T06:00:00Z';
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideTransloco({ config: { availableLangs: ['en', 'hi'], defaultLang: 'en' } }),
+      ],
+    });
+  });
+
+  it('names the month in Hindi once the language is Hindi, without the view being told to redraw', async () => {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toBe('03 Oct 2026');
+
+    TestBed.inject(TranslocoService).setActiveLang('hi');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toBe(formatIst('2026-10-03T06:00:00Z', 'date', 'hi-IN'));
+    expect(fixture.nativeElement.textContent).not.toContain('Oct');
+    expect(fixture.nativeElement.textContent).toMatch(/^03 .+ 2026$/);
+  });
+
+  it('writes Hindi for Hindi and Indian English for everything else', () => {
+    expect(istDateLocale('hi')).toBe('hi-IN');
+    expect(istDateLocale('en')).toBe('en-IN');
+    expect(istDateLocale(undefined)).toBe('en-IN');
+  });
+
+  it('keeps the IST day in Hindi too', () => {
+    // 18:30 UTC is 00:00 IST the next day.
+    expect(formatIst('2026-03-14T18:30:00Z', 'short', 'hi-IN')).toBe('15/03/26');
   });
 });
 

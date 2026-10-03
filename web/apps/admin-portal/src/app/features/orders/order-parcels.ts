@@ -129,7 +129,11 @@ interface ReturnedLine {
           <button mat-stroked-button type="button" (click)="inspect(part)">{{ 'returns.recordInspection' | transloco }}</button>
         </div>
         } @else if (part.returnCondition) {
-        <span class="text-sm text-ink-muted">{{ 'returns.inspectedAs.' + part.returnCondition | transloco }}</span>
+        <!-- Titled, so the sentence reads as the outcome of the inspection rather than a stray note under the parcel. -->
+        <p class="w-full text-sm text-ink-muted">
+          <span class="font-medium text-ink">{{ 'returns.inspectionTitle' | transloco }}:</span>
+          {{ 'returns.inspectedAs.' + part.returnCondition | transloco }}
+        </p>
         }
 
         @if (canPack(part.id, part.status)) {

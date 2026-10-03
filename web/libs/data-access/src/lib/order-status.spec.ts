@@ -1,4 +1,4 @@
-import { isPartialReturn, orderProgress, partStatusKey } from './order-status';
+import { isPartialReturn, orderProgress, partReturn, partStatusKey } from './order-status';
 
 const line = (quantity: number, returnQuantity = 0) => ({ quantity, returnQuantity });
 
@@ -20,6 +20,43 @@ describe('orderProgress', () => {
     expect(orderProgress('Cancelled', ['Cancelled'])).toBe('Cancelled');
     expect(orderProgress('PendingPayment', ['AwaitingPayment'])).toBe('PendingPayment');
     expect(orderProgress('Confirmed', undefined)).toBe('Confirmed');
+  });
+});
+
+describe('orderProgress with buyer returns', () => {
+  it('reads a delivered order as partly returned when the buyer kept some of it', () => {
+    expect(orderProgress('Completed', ['Returned'], ['Partial'])).toBe('PartlyReturned');
+    expect(orderProgress('Completed', ['Returning'], ['Partial'])).toBe('PartlyReturning');
+    // One parcel went back whole, the other was kept.
+    expect(orderProgress('Completed', ['Returned', 'Delivered'], ['Full', 'None'])).toBe('PartlyReturned');
+  });
+
+  it('reads it as returned once everything delivered has gone back', () => {
+    expect(orderProgress('Completed', ['Returned'], ['Full'])).toBe('Returned');
+    expect(orderProgress('Completed', ['Returning'], ['Full'])).toBe('Returning');
+    expect(orderProgress('Completed', ['Returned', 'Returning'], ['Full', 'Full'])).toBe('Returning');
+    // A cancelled parcel, or one the courier brought back, never reached the buyer: neither is kept.
+    expect(orderProgress('Completed', ['Returned', 'Cancelled', 'Returned'], ['Full', 'None', 'None'])).toBe('Returned');
+  });
+
+  it('stays delivered with no accepted return, or when it is not told about returns', () => {
+    expect(orderProgress('Completed', ['Delivered'], ['None'])).toBe('Completed');
+    expect(orderProgress('Completed', ['Returned'])).toBe('Completed');
+    expect(orderProgress('Completed', ['Returned'], null)).toBe('Completed');
+  });
+
+  it('still reads an order with a parcel on its way as shipped', () => {
+    expect(orderProgress('Confirmed', ['Returned', 'Shipped'], ['Partial', 'None'])).toBe('Shipped');
+  });
+
+  it('works out what a parcel is sending back by the same test as its status', () => {
+    const approved = { status: 'Approved' };
+
+    expect(partReturn({ status: 'Returned', lines: [line(3, 1)], returnRequest: approved })).toBe('Partial');
+    expect(partReturn({ status: 'Returning', lines: [line(3, 3)], returnRequest: approved })).toBe('Full');
+    expect(partReturn({ status: 'Returned', lines: [line(3)], returnRequest: approved })).toBe('Full');
+    expect(partReturn({ status: 'Returned', lines: [line(3)], returnRequest: null })).toBe('None');
+    expect(partReturn({ status: 'Delivered', lines: [line(3, 1)], returnRequest: { status: 'Requested' } })).toBe('None');
   });
 });
 

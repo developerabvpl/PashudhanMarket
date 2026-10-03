@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { CurrentUserStore } from '@upbazaar/auth';
 import {
   Api,
@@ -115,8 +117,15 @@ describe('CodPage', () => {
     fill(element, 'remittedOn', '2026-09-25');
     const input = element.querySelector('input[name="file"]') as HTMLInputElement;
     Object.defineProperty(input, 'files', { value: [file] });
+    // The browser's own "Choose File / No file chosen" is hidden; the portal's words stand in for it.
+    expect(input.classList).toContain('sr-only');
+    expect(element.querySelector('label[for="cod-file"]')?.textContent?.trim()).toBe('Choose file');
+    expect(element.querySelector('#cod-file-name')?.textContent?.trim()).toBe('No file chosen');
+
     input.dispatchEvent(new Event('change'));
     await fixture.whenStable();
+    expect(element.querySelector('#cod-file-name')?.textContent?.trim()).toBe('report.csv');
+
     element.querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
 
@@ -146,5 +155,17 @@ describe('CodPage', () => {
 
     expect(element.querySelector('input[name="reference"]')).toBeNull();
     expect(button(element, 'Write off the rest')).toBeUndefined();
+  });
+
+  it('words the file picker in Hindi, which the browser would not', async () => {
+    const { fixture, element } = await render(true);
+
+    const transloco = TestBed.inject(TranslocoService);
+    transloco.setActiveLang('hi');
+    await firstValueFrom(transloco.load('hi'));
+    await fixture.whenStable();
+
+    expect(element.querySelector('label[for="cod-file"]')?.textContent?.trim()).toBe('फ़ाइल चुनें');
+    expect(element.querySelector('#cod-file-name')?.textContent?.trim()).toBe('कोई फ़ाइल नहीं चुनी गई');
   });
 });

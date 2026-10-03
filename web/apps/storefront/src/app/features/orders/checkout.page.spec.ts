@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { CurrentUserStore } from '@upbazaar/auth';
 import { Api, CALLER_SHOWS_ERRORS, apiV1OrdersDeliveryStatesGet, apiV1OrdersPost, apiV1PromotionsCouponsPreviewPost } from '@upbazaar/data-access';
 import { ToastService, provideI18n } from '@upbazaar/ui';
@@ -181,5 +182,17 @@ describe('CheckoutPage placing an order', () => {
 
     expect(toasts.toasts()).toEqual([]);
     expect(element.querySelector('#pincode')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('names the delivery states in Hindi while still sending the name the API listed', async () => {
+    const { fixture, element } = await render({ status: 500, error: {} });
+
+    const transloco = TestBed.inject(TranslocoService);
+    transloco.setActiveLang('hi');
+    await firstValueFrom(transloco.load('hi'));
+    await fixture.whenStable();
+
+    const option = [...element.querySelectorAll<HTMLOptionElement>('#state option')].find((o) => o.value === 'Uttar Pradesh');
+    expect(option?.textContent?.trim()).toBe('उत्तर प्रदेश');
   });
 });

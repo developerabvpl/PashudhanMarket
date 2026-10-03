@@ -7,6 +7,7 @@ export interface OrderSummaryDto {
   id: string;
   itemCount: number;
   number: string;
+  partReturns: Array<string>;
   partStatuses: Array<string>;
   paymentMethod: string;
   paymentStatus: string;

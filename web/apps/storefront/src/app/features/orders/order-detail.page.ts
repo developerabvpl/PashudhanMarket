@@ -9,6 +9,7 @@ import {
   apiV1OrdersOrderIdCancelPost,
   apiV1ShippingOrdersOrderIdShipmentsGet,
   isBuyerReturn,
+  partReturn,
   ordersGetMine,
 } from '@upbazaar/data-access';
 import { PageState, ToastService } from '@upbazaar/ui';
@@ -189,7 +190,11 @@ export class OrderDetailPage {
   protected readonly confirming = signal(false);
 
   /** How far the order has got: the same rule, and so the same word, as its row in My orders. */
-  protected readonly badge = computed(() => orderBadge(this.order()?.status ?? '', this.order()?.parts.map((p) => p.status)));
+  protected readonly badge = computed(() => {
+    const order = this.order();
+
+    return orderBadge(order?.status ?? '', order?.parts.map((p) => p.status), order?.parts.map(partReturn));
+  });
   protected readonly partBadge = partStatusBadge;
   protected readonly buyerReturn = isBuyerReturn;
 

@@ -64,7 +64,19 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                 x.Order.PlacedAtUtc,
                 x.Order.Parts.OrderBy(p => p.Id).Select(p => p.Status.ToString()).ToList(),
                 x.Order.AmountPaid,
-                x.Order.AmountPaid != null && x.Order.AmountPaid > x.Total ? x.Order.AmountPaid.Value - x.Total : 0m));
+                x.Order.AmountPaid != null && x.Order.AmountPaid > x.Total ? x.Order.AmountPaid.Value - x.Total : 0m,
+                // The web's order-status rule reads these beside the statuses; it works the same
+                // answer out of an order's parts on the order's own page (isPartialReturn there).
+                x.Order.Parts.OrderBy(p => p.Id)
+                    .Select(p =>
+                        p.ReturnRequest == null
+                        || p.ReturnRequest.Status != ReturnRequestStatus.Approved
+                        || (p.Status != OrderPartStatus.Returning && p.Status != OrderPartStatus.Returned)
+                            ? "None"
+                            : p.Lines.Any(l => l.ReturnRequestedQuantity > 0) && p.Lines.Any(l => l.ReturnRequestedQuantity < l.Quantity)
+                                ? "Partial"
+                                : "Full")
+                    .ToList()));
 }
 
 /// <summary>Maps orders to the DTOs the API and other modules see.</summary>

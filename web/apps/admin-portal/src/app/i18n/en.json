@@ -49,7 +49,9 @@
     "search": "Search",
     "actions": "Actions",
     "optional": "optional",
-    "working": "Working..."
+    "working": "Working...",
+    "chooseFile": "Choose file",
+    "noFileChosen": "No file chosen"
   },
   "paginator": {
     "itemsPerPage": "Items per page",
@@ -193,7 +195,20 @@
     "confirmRolesTitle": "Change roles?",
     "confirmRolesBody": "{{name}} will have exactly these roles: {{roles}}. This takes effect the next time their token refreshes.",
     "confirmRolesNone": "{{name}} will be left with no roles, which removes all administrative access.",
-    "auditNote": "This change is recorded in the audit log against your account."
+    "auditNote": "This change is recorded in the audit log against your account.",
+    "roleNames": {
+      "SuperAdmin": "Super admin",
+      "Admin": "Admin",
+      "CatalogModerator": "Catalogue moderator",
+      "FinanceOfficer": "Finance officer",
+      "SupportAgent": "Support agent",
+      "SupportSupervisor": "Support supervisor",
+      "AcademyAuthor": "Academy author",
+      "SellerOwner": "Seller owner",
+      "SellerManager": "Seller manager",
+      "SellerDispatch": "Seller dispatch",
+      "Buyer": "Buyer"
+    }
   },
   "forbidden": {
     "title": "You do not have access",
@@ -209,7 +224,11 @@
       "Packed": "Packed",
       "Shipped": "Shipped",
       "Completed": "Delivered",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "Returning": "Being returned",
+      "Returned": "Returned",
+      "PartlyReturning": "Delivered · partly being returned",
+      "PartlyReturned": "Delivered · partly returned"
     },
     "partStatus": {
       "AwaitingPayment": "Awaiting payment",
@@ -283,7 +302,8 @@
       "Undelivered": "Could not be delivered; back with the seller",
       "BuyerReturn": "Returned by the buyer; back with the seller",
       "PaymentRefused": "Paid, but the order could not take the payment"
-    }
+    },
+    "originalPayment": "Original payment (Razorpay)"
   },
   "shipping": {
     "parcels": "Parcels",
@@ -535,7 +555,8 @@
     "itemsBack": "Coming back:",
     "itemsCameBack": "Came back:",
     "refundDue": "Refund due: {{amount}}",
-    "recordInspection": "Record inspection"
+    "recordInspection": "Record inspection",
+    "inspectionTitle": "Return inspection"
   },
   "reviews": {
     "starsLabel": "{{rating}} out of 5 stars",

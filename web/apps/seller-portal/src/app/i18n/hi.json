@@ -262,6 +262,12 @@
       "saved": "सेल लगाई गई।",
       "ended": "सेल समाप्त की गई।",
       "onSale": "सेल पर {{price}}"
+    },
+    "partDiscount": "कूपन छूट {{amount}}",
+    "partNet": "खरीदार सामान के लिए {{amount}} देता है",
+    "discountFundedBy": {
+      "Seller": "यह कूपन आपके खर्च पर है: आपकी कमाई छूट के बाद की कीमत पर गिनी जाती है।",
+      "Platform": "यह कूपन यूपी बाज़ार के खर्च पर है: आपको पूरी कीमत पर भुगतान मिलता है।"
     }
   },
   "settlements": {
@@ -336,10 +342,20 @@
       "Good": "लौटा और फिर बिक्री पर डाला।",
       "Damaged": "खराब लौटा; स्टॉक में नहीं जोड़ा।"
     },
-    "unitsBack": "{{count}} वापस आ रहे हैं",
-    "unitsAsked": "{{count}} वापस करने को कहा",
-    "unitsCameBack": "{{count}} वापस आ गए",
-    "recordInspection": "जाँच दर्ज करें"
+    "unitsBack": {
+      "one": "{{count}} वापस आ रहा है",
+      "other": "{{count}} वापस आ रहे हैं"
+    },
+    "unitsAsked": {
+      "one": "{{count}} वापस करने को कहा",
+      "other": "{{count}} वापस करने को कहा"
+    },
+    "unitsCameBack": {
+      "one": "{{count}} वापस आ गया",
+      "other": "{{count}} वापस आ गए"
+    },
+    "recordInspection": "जाँच दर्ज करें",
+    "inspectionTitle": "वापसी की जाँच"
   },
   "reviews": {
     "starsLabel": "5 में से {{rating}} स्टार",

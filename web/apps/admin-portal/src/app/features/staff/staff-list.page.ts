@@ -14,6 +14,7 @@ import { ToastService } from '@upbazaar/ui';
 import { DateIstPipe } from '@upbazaar/util';
 import { IdentityPermissions } from '../../core/permissions';
 import { ConfirmDialog, confirm } from './confirm.dialog';
+import { roleLabels } from './role-label';
 import { StaffFormDialog, StaffFormData } from './staff-form.dialog';
 import { StaffRolesDialog, StaffRolesData } from './staff-roles.dialog';
 import { StaffService } from './staff.service';
@@ -107,7 +108,7 @@ import { StaffService } from './staff.service';
           <ng-container matColumnDef="roles">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnRoles' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.roles.length > 0 ? row.roles.join(', ') : ('staff.noRoles' | transloco) }}
+              {{ row.roles.length > 0 ? roleNames(row.roles) : ('staff.noRoles' | transloco) }}
             </td>
           </ng-container>
 
@@ -182,6 +183,11 @@ export class StaffListPage {
 
   constructor() {
     void this.load();
+  }
+
+  /** A user's roles in the language showing; called from the template so a language change redraws them. */
+  protected roleNames(roles: readonly string[]): string {
+    return roleLabels(this.transloco, roles);
   }
 
   protected async load(): Promise<void> {
@@ -277,7 +283,7 @@ export class StaffListPage {
     const confirmed = await confirm(this.dialog, {
       title: 'staff.confirmRolesTitle',
       body: selected.length > 0 ? 'staff.confirmRolesBody' : 'staff.confirmRolesNone',
-      params: { name: user.displayName, roles: selected.join(', ') },
+      params: { name: user.displayName, roles: this.roleNames(selected) },
       confirmLabel: 'common.confirm',
     });
 

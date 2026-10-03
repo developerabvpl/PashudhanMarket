@@ -61,7 +61,9 @@
     "yes": "हाँ",
     "no": "नहीं",
     "optional": "वैकल्पिक",
-    "working": "हो रहा है..."
+    "working": "हो रहा है...",
+    "chooseFile": "फ़ाइल चुनें",
+    "noFileChosen": "कोई फ़ाइल नहीं चुनी गई"
   },
   "paginator": {
     "itemsPerPage": "प्रति पृष्ठ आइटम",
@@ -295,7 +297,20 @@
     "confirmRolesTitle": "भूमिकाएँ बदलें?",
     "confirmRolesBody": "{{name}} के पास ठीक ये भूमिकाएँ होंगी: {{roles}}। यह उनका टोकन रीफ़्रेश होने पर लागू होगा।",
     "confirmRolesNone": "{{name}} के पास कोई भूमिका नहीं बचेगी, यानी सारी प्रशासनिक पहुँच हट जाएगी।",
-    "auditNote": "यह बदलाव आपके खाते के नाम से ऑडिट लॉग में दर्ज होगा।"
+    "auditNote": "यह बदलाव आपके खाते के नाम से ऑडिट लॉग में दर्ज होगा।",
+    "roleNames": {
+      "SuperAdmin": "सुपर एडमिन",
+      "Admin": "एडमिन",
+      "CatalogModerator": "कैटलॉग मॉडरेटर",
+      "FinanceOfficer": "वित्त अधिकारी",
+      "SupportAgent": "सहायता एजेंट",
+      "SupportSupervisor": "सहायता पर्यवेक्षक",
+      "AcademyAuthor": "अकादमी लेखक",
+      "SellerOwner": "विक्रेता मालिक",
+      "SellerManager": "विक्रेता मैनेजर",
+      "SellerDispatch": "विक्रेता डिस्पैच",
+      "Buyer": "खरीदार"
+    }
   },
   "forbidden": {
     "title": "आपके पास पहुँच नहीं है",
@@ -407,6 +422,44 @@
         "belowMinimumUnknown": "आपकी टोकरी इस कूपन के न्यूनतम ऑर्डर तक नहीं पहुँचती।",
         "concurrentChange": "उसी समय किसी और ने यह कूपन इस्तेमाल कर लिया। फिर से कोशिश करें।"
       }
+    },
+    "states": {
+      "AndamanandNicobarIslands": "अंडमान और निकोबार द्वीपसमूह",
+      "AndhraPradesh": "आंध्र प्रदेश",
+      "ArunachalPradesh": "अरुणाचल प्रदेश",
+      "Assam": "असम",
+      "Bihar": "बिहार",
+      "Chandigarh": "चंडीगढ़",
+      "Chhattisgarh": "छत्तीसगढ़",
+      "DadraandNagarHaveliandDamanandDiu": "दादरा और नगर हवेली और दमन और दीव",
+      "Delhi": "दिल्ली",
+      "Goa": "गोवा",
+      "Gujarat": "गुजरात",
+      "Haryana": "हरियाणा",
+      "HimachalPradesh": "हिमाचल प्रदेश",
+      "JammuandKashmir": "जम्मू और कश्मीर",
+      "Jharkhand": "झारखंड",
+      "Karnataka": "कर्नाटक",
+      "Kerala": "केरल",
+      "Ladakh": "लद्दाख",
+      "Lakshadweep": "लक्षद्वीप",
+      "MadhyaPradesh": "मध्य प्रदेश",
+      "Maharashtra": "महाराष्ट्र",
+      "Manipur": "मणिपुर",
+      "Meghalaya": "मेघालय",
+      "Mizoram": "मिज़ोरम",
+      "Nagaland": "नागालैंड",
+      "Odisha": "ओडिशा",
+      "Puducherry": "पुडुचेरी",
+      "Punjab": "पंजाब",
+      "Rajasthan": "राजस्थान",
+      "Sikkim": "सिक्किम",
+      "TamilNadu": "तमिलनाडु",
+      "Telangana": "तेलंगाना",
+      "Tripura": "त्रिपुरा",
+      "UttarPradesh": "उत्तर प्रदेश",
+      "Uttarakhand": "उत्तराखंड",
+      "WestBengal": "पश्चिम बंगाल"
     }
   },
   "orders": {
@@ -437,7 +490,11 @@
       "Packed": "पैक हो गया",
       "Shipped": "भेज दिया",
       "Completed": "पहुँचा दिया",
-      "Cancelled": "रद्द"
+      "Cancelled": "रद्द",
+      "Returning": "वापस जा रहा है",
+      "Returned": "वापस किया गया",
+      "PartlyReturning": "पहुँचा दिया · कुछ सामान वापस जा रहा है",
+      "PartlyReturned": "पहुँचा दिया · कुछ सामान वापस किया गया"
     },
     "partStatus": {
       "AwaitingPayment": "भुगतान बाकी",
@@ -491,7 +548,9 @@
       "chooseItems": "आप क्या वापस भेज रहे हैं?",
       "refundAbout": "लगभग {{amount}} का रिफ़ंड, विक्रेता तक पहुँचने पर।",
       "couponNote": "अगर आपके पास रखा सामान कूपन के न्यूनतम ऑर्डर तक नहीं पहुँचता, तो उसकी छूट रिफ़ंड से कटेगी।"
-    }
+    },
+    "refundToUpi": "आपकी UPI आईडी पर रिफ़ंड",
+    "refundUpiNote": "आपने कैश ऑन डिलीवरी से भुगतान किया था, इसलिए लौटाए गए सामान का रिफ़ंड आपकी दी हुई UPI आईडी पर भेजा जाता है, जब सामान विक्रेता के पास वापस पहुँच जाता है।"
   },
   "payments": {
     "due": "{{amount}} का भुगतान बाकी",
@@ -545,7 +604,8 @@
       "Undelivered": "डिलीवर नहीं हो सका; विक्रेता के पास वापस",
       "BuyerReturn": "खरीदार ने लौटाया; विक्रेता के पास वापस",
       "PaymentRefused": "भुगतान हुआ, पर ऑर्डर उसे नहीं ले सका"
-    }
+    },
+    "originalPayment": "मूल भुगतान (Razorpay)"
   },
   "shipping": {
     "parcels": "पार्सल",
@@ -686,6 +746,12 @@
       "saved": "सेल लगाई गई।",
       "ended": "सेल समाप्त की गई।",
       "onSale": "सेल पर {{price}}"
+    },
+    "partDiscount": "कूपन छूट {{amount}}",
+    "partNet": "खरीदार सामान के लिए {{amount}} देता है",
+    "discountFundedBy": {
+      "Seller": "यह कूपन आपके खर्च पर है: आपकी कमाई छूट के बाद की कीमत पर गिनी जाती है।",
+      "Platform": "यह कूपन यूपी बाज़ार के खर्च पर है: आपको पूरी कीमत पर भुगतान मिलता है।"
     }
   },
   "sellersAdmin": {
@@ -875,13 +941,23 @@
       "Good": "लौटा और फिर बिक्री पर डाला।",
       "Damaged": "खराब लौटा; स्टॉक में नहीं जोड़ा।"
     },
-    "unitsBack": "{{count}} वापस आ रहे हैं",
-    "unitsAsked": "{{count}} वापस करने को कहा",
-    "unitsCameBack": "{{count}} वापस आ गए",
+    "unitsBack": {
+      "one": "{{count}} वापस आ रहा है",
+      "other": "{{count}} वापस आ रहे हैं"
+    },
+    "unitsAsked": {
+      "one": "{{count}} वापस करने को कहा",
+      "other": "{{count}} वापस करने को कहा"
+    },
+    "unitsCameBack": {
+      "one": "{{count}} वापस आ गया",
+      "other": "{{count}} वापस आ गए"
+    },
     "itemsBack": "वापस आ रहा है:",
     "itemsCameBack": "वापस आ गया:",
     "refundDue": "देय रिफ़ंड: {{amount}}",
-    "recordInspection": "जाँच दर्ज करें"
+    "recordInspection": "जाँच दर्ज करें",
+    "inspectionTitle": "वापसी की जाँच"
   },
   "reviews": {
     "starsLabel": "5 में से {{rating}} स्टार",

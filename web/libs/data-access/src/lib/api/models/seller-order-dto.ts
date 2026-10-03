@@ -9,6 +9,8 @@ export interface SellerOrderDto {
   codAmount: number;
   currency: string;
   deliveryAddress: DeliveryAddressDto;
+  discount?: number;
+  discountFundedBy?: (string | null);
   lines: Array<OrderLineDto>;
   orderId: string;
   orderNumber: string;

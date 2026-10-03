@@ -52,3 +52,13 @@ export function visibleNav(
     return links.length === 1 ? [links[0]] : [{ ...entry, links }];
   });
 }
+
+/**
+ * Whether an entry of the narrow menu needs a rule drawn above it: a page of its own that comes
+ * straight after a group. A group opens with its name, which sets it apart from whatever is above;
+ * a lone page has no heading, so without the rule it reads as one more page of the group before
+ * it - "Sellers" under "Shipping" in the admin menu. Pages that follow one another need nothing.
+ */
+export function startsOwnSection(entries: readonly PortalNavEntry[], index: number): boolean {
+  return index > 0 && entries[index].kind === 'link' && entries[index - 1].kind === 'group';
+}

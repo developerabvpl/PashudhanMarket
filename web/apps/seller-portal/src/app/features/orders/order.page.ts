@@ -20,7 +20,7 @@ import {
 } from '@upbazaar/data-access';
 import { ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe, joinParts } from '@upbazaar/util';
-import { itemsTitleKey, lineReturnKey } from './part-labels';
+import { discountFundingKey, itemsTitleKey, lineReturnKey, partDiscount } from './part-labels';
 import { ReturnDecision } from './return-decision';
 import { ReturnInspection } from './return-inspection';
 
@@ -67,10 +67,18 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
           </li>
           }
         </ul>
+        <!-- The value is at full price; a coupon's share and what the buyer pays for the goods show beside it. -->
         <p class="mt-3 text-sm">
           {{ 'sellerPortal.partValue' | transloco: { amount: (o.subtotal | inr) } }}
+          @if (discount(o); as off) {
+          · {{ 'sellerPortal.partDiscount' | transloco: { amount: (-off | inr) } }}
+          · {{ 'sellerPortal.partNet' | transloco: { amount: (o.subtotal - off | inr) } }}
+          }
           @if (o.codAmount > 0) { · {{ 'sellerPortal.codCollect' | transloco: { amount: (o.codAmount | inr) } }} }
         </p>
+        @if (discountFunding(o); as funding) {
+        <p class="mt-1 text-xs text-ink-muted">{{ funding | transloco }}</p>
+        }
       </div>
 
       <div class="upb-card p-5 text-sm">
@@ -105,7 +113,10 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
       }
 
       @if (o.status === 'Returned') { @if (o.returnCondition) {
-      <p class="upb-card p-5 text-sm">{{ 'returns.inspectedAs.' + o.returnCondition | transloco }}</p>
+      <div class="upb-card p-5 text-sm">
+        <h2 class="font-medium text-ink">{{ 'returns.inspectionTitle' | transloco }}</h2>
+        <p class="mt-2">{{ 'returns.inspectedAs.' + o.returnCondition | transloco }}</p>
+      </div>
       } @else {
       <upb-return-inspection [order]="o" (inspected)="order.set($event)" />
       } }
@@ -192,6 +203,8 @@ export class OrderPage {
   protected readonly statusKey = partStatusKey;
   protected readonly itemsTitle = itemsTitleKey;
   protected readonly lineReturn = lineReturnKey;
+  protected readonly discount = partDiscount;
+  protected readonly discountFunding = discountFundingKey;
 
   /** A confirmed part with no live booking, or a booking that stopped half way. */
   protected readonly canPack = computed(() => {

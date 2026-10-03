@@ -77,10 +77,23 @@ type Filter = 'Owed' | 'Overdue' | 'Short' | 'Over' | 'All';
           <mat-label>{{ 'cod.remittedOn' | transloco }}</mat-label>
           <input matInput name="remittedOn" type="date" required [value]="remittedOn()" (input)="remittedOn.set(value($event))" />
         </mat-form-field>
-        <label class="flex flex-col gap-1 text-sm text-ink">
-          {{ 'cod.file' | transloco }}
-          <input name="file" type="file" accept=".csv,text/csv" required (change)="file.set(picked($event))" />
-        </label>
+        <div class="flex flex-col gap-1 text-sm text-ink">
+          <span id="cod-file-title">{{ 'cod.file' | transloco }}</span>
+          <!--
+            The browser words a file input itself - "Choose File", "No file chosen" - in its own language,
+            not the portal's. So the input is hidden but still focusable, its label is the button (showing
+            the focus ring in its place), and the chosen file's name is written out beside it.
+          -->
+          <span class="flex flex-wrap items-center gap-2">
+            <input id="cod-file" class="peer sr-only" name="file" type="file" accept=".csv,text/csv" required
+              aria-describedby="cod-file-title cod-file-name" (change)="file.set(picked($event))" />
+            <label class="cursor-pointer rounded-control border border-border px-3 py-1.5 font-medium hover:bg-surface-sunken peer-focus-visible:ring-2 peer-focus-visible:ring-accent-500"
+              for="cod-file">
+              {{ 'common.chooseFile' | transloco }}
+            </label>
+            <span id="cod-file-name" class="text-ink-muted">{{ file()?.name ?? ('common.noFileChosen' | transloco) }}</span>
+          </span>
+        </div>
         <button mat-flat-button color="primary" type="submit" [disabled]="busy() || !reference().trim() || !remittedOn() || !file()">
           {{ 'cod.upload' | transloco }}
         </button>

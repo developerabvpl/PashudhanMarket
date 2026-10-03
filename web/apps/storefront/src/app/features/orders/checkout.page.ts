@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { CurrentUserStore } from '@upbazaar/auth';
 import {
   Api,
@@ -22,6 +22,7 @@ import { OrderPayment } from '../payments/order-payment';
 import { CouponField } from './coupon-field';
 import { LastAddress } from './last-address';
 import { placementFailure } from './placement-errors';
+import { stateLabel } from './state-label';
 
 type AddressField = keyof DeliveryAddressDto;
 
@@ -167,7 +168,7 @@ const EMPTY: DeliveryAddressDto = {
                   (change)="set('state', $event)">
                   <option value="" [selected]="!address().state">{{ 'checkout.chooseState' | transloco }}</option>
                   @for (state of states(); track state) {
-                  <option [value]="state" [selected]="state === address().state">{{ state }}</option>
+                  <option [value]="state" [selected]="state === address().state">{{ stateName(state) }}</option>
                   }
                 </select>
                 <upb-field-errors fieldId="state" [errors]="errorsFor('state')" />
@@ -308,6 +309,7 @@ export class CheckoutPage {
   private readonly lastAddress = inject(LastAddress);
   private readonly payment = inject(OrderPayment);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
   private readonly couponField = viewChild(CouponField);
 
   protected readonly address = signal<DeliveryAddressDto>(EMPTY);
@@ -361,6 +363,11 @@ export class CheckoutPage {
 
     void this.loadStates();
     void this.payment.isOnlineEnabled().then((enabled) => this.onlineEnabled.set(enabled));
+  }
+
+  /** The state as the buyer reads it; the option keeps the API's name as its value. */
+  protected stateName(state: string): string {
+    return stateLabel(this.transloco, state);
   }
 
   protected errorsFor(field: AddressField): readonly string[] {

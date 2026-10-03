@@ -55,6 +55,9 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         queue!.Items.ShouldHaveSingleItem().Comment.ShouldBe("Two diyas arrived cracked.");
         var sellerView = await seller.GetFromJsonAsync<SellerOrderDto>(new Uri($"/api/v1/seller/orders/{order.Id}", UriKind.Relative));
         sellerView!.ReturnRequest!.RefundUpiId.ShouldBeNull();
+        // No coupon touched the part, so there is no discount and nobody funding one.
+        sellerView.Discount.ShouldBe(0m);
+        sellerView.DiscountFundedBy.ShouldBeNull();
 
         var approved = await seller.PostAsJsonAsync(DecisionUri("seller", order), new { approve = true });
         approved.StatusCode.ShouldBe(HttpStatusCode.OK, await approved.Content.ReadAsStringAsync());
@@ -77,6 +80,11 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
 
         // The goods did reach the buyer, so the order is completed, not cancelled.
         back.Status.ShouldBe("Completed");
+
+        // The buyer's list is told the whole parcel went back, so it need not call the order "Delivered".
+        var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(new Uri("/api/v1/orders", UriKind.Relative)))!.Items.Single(o => o.Id == order.Id);
+        listed.PartStatuses.ShouldBe(["Returned"]);
+        listed.PartReturns.ShouldBe(["Full"]);
 
         await ProcessOutboxAsync();
         var refund = (await RefundsForAsync(admin, order.Id)).ShouldHaveSingleItem();
@@ -206,6 +214,11 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         var returning = await OrderAsync(buyer, order.Id);
         returning.Subtotal.ShouldBe(75m);
         returning.Parts.Single().ReturnRequest!.RefundDue.ShouldBe(75m);
+
+        // One of two went back: the list row is told it is a partial return, as the order's own page works out.
+        var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(new Uri("/api/v1/orders", UriKind.Relative)))!.Items.Single(o => o.Id == order.Id);
+        listed.PartStatuses.ShouldBe(["Returning"]);
+        listed.PartReturns.ShouldBe(["Partial"]);
 
         var pickup = (await ShipmentsAsync(buyer, order)).Single(s => s.Direction == "Return");
         await CourierAsync(pickup.Awb!, "RETURN PICKED UP");

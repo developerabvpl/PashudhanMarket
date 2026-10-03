@@ -7,6 +7,7 @@ import {
   apiV1AdminOrdersGet,
   apiV1AdminOrdersOrderIdGet,
   orderProgress,
+  partReturn,
   toApiProblem,
 } from '@upbazaar/data-access';
 import { PageState } from '@upbazaar/ui';
@@ -210,9 +211,12 @@ export class OrderLookup {
     void this.load(orderId);
   }
 
-  /** The order's status in the buyer's words, Shipped or Packed once its parcels have got that far. */
+  /**
+   * The order's status in the buyer's words: Shipped or Packed once its parcels have got that far,
+   * and Returned or "Delivered · partly returned" once the buyer has sent some of it back.
+   */
   protected progress(order: OrderDto): string {
-    return orderProgress(order.status, order.parts.map((p) => p.status));
+    return orderProgress(order.status, order.parts.map((p) => p.status), order.parts.map(partReturn));
   }
 
   /**
