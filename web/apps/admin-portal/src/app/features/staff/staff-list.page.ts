@@ -79,20 +79,21 @@ import { StaffService } from './staff.service';
         <button mat-stroked-button type="submit">{{ 'common.search' | transloco }}</button>
       </form>
 
-      <div class="upb-card mt-4 overflow-x-auto">
+      <div class="upb-card mt-4 overflow-hidden">
         @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
         }
 
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="rows()" class="w-full">
           <ng-container matColumnDef="displayName">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnName' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.displayName }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.displayName }}</td>
           </ng-container>
 
           <ng-container matColumnDef="email">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnEmail' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.email ?? row.mobile ?? '—' }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.email ?? row.mobile ?? '—' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="userType">
@@ -114,7 +115,7 @@ import { StaffService } from './staff.service';
 
           <ng-container matColumnDef="createdAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'staff.columnCreated' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.createdAtUtc | dateIst }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.createdAtUtc | dateIst }}</td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
@@ -137,6 +138,7 @@ import { StaffService } from './staff.service';
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
+        </div>
 
         @if (!loading() && rows().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'staff.empty' | transloco }}</p>

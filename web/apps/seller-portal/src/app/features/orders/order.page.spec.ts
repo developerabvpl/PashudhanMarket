@@ -115,6 +115,16 @@ describe('seller OrderPage', () => {
     expect(card?.querySelector('h2')?.textContent?.trim()).toBe('Return inspection');
   });
 
+  it('keeps a line’s count and what came back of it on one line, leaving a long name to wrap', async () => {
+    const { element } = await render(returned);
+
+    const count = element.querySelector('[data-line-count]') as HTMLElement;
+    expect(count.textContent).toContain('1 came back');
+    expect(count.classList.contains('whitespace-nowrap')).toBe(true);
+    expect(count.classList.contains('shrink-0')).toBe(true);
+    expect(count.previousElementSibling?.classList.contains('min-w-0')).toBe(true);
+  });
+
   it('counts one unit that came back in the singular, in Hindi too', async () => {
     expect((await render(returned)).text).toContain('1 came back');
 

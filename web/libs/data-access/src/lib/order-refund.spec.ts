@@ -1,4 +1,4 @@
-import { OrderDto } from '@upbazaar/data-access';
+import type { OrderDto } from './api/models';
 import { hasDelivery, orderRefund } from './order-refund';
 
 type Parts = OrderDto['parts'];

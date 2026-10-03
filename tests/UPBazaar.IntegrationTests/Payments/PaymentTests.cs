@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using UPBazaar.Infrastructure.Outbox;
 using UPBazaar.Infrastructure.Persistence;
+using UPBazaar.Infrastructure.Persistence.Migrations;
 using UPBazaar.IntegrationTests.Infrastructure;
 using UPBazaar.Modules.Catalog.Contracts.Dtos;
 using UPBazaar.Modules.Inventory.Contracts.Dtos;
@@ -154,6 +155,68 @@ public sealed class PaymentTests(ApiFixture fixture)
         refund.GatewayPaymentId.ShouldBe("pay_late");
         refund.ReasonCode.ShouldBe("PaymentRefused");
         refund.Reason.ShouldStartWith("Payment could not be applied to the order: ");
+    }
+
+    [DatabaseFact]
+    public async Task An_unpaid_payment_whose_order_is_cancelled_is_abandoned_and_late_money_is_still_owed_back()
+    {
+        var (admin, buyer, _, order) = await UnpaidOrderAsync(price: 90m, quantity: 2);
+        var session = await StartAsync(buyer, order.Id);
+
+        (await buyer.PostAsJsonAsync(new Uri($"/api/v1/orders/{order.Id}/cancel", UriKind.Relative), new { }))
+            .EnsureSuccessStatusCode();
+
+        await ProcessOutboxAsync();
+
+        // No longer "awaiting the buyer": nobody can pay for a cancelled order.
+        var abandoned = await PaymentForAsync(admin, order.Number);
+        abandoned.Status.ShouldBe("Abandoned");
+        abandoned.OrderOutcome.ShouldBe("Pending");
+        abandoned.RefundDue.ShouldBe(0m);
+
+        var filtered = await admin.GetFromJsonAsync<PagedList<PaymentDto>>(
+            new Uri($"/api/v1/admin/payments?status=Abandoned&search={order.Number}", UriKind.Relative));
+        filtered!.Items.ShouldHaveSingleItem().Id.ShouldBe(abandoned.Id);
+
+        // The bank can still capture after that. The money is recorded and all of it is owed back.
+        (await VerifyAsync(buyer, session.GatewayOrderId, "pay_after_abandon")).Outcome.ShouldBe("RefundDue");
+
+        var late = await PaymentForAsync(admin, order.Number);
+        late.Status.ShouldBe("Paid");
+        late.OrderOutcome.ShouldBe("Refused");
+        late.RefundDue.ShouldBe(180m);
+    }
+
+    /// <summary>
+    /// The AbandonedPayments migration catches up payments left awaiting a buyer by orders that were
+    /// cancelled before a cancellation abandoned them. The fixture's database was empty when it ran,
+    /// so the backfill is run again here over a payment put back the old way - still Created.
+    /// </summary>
+    [DatabaseFact]
+    public async Task The_backfill_abandons_unpaid_payments_of_cancelled_orders_and_leaves_open_ones_alone()
+    {
+        var (admin, buyer, _, cancelled) = await UnpaidOrderAsync(price: 70m, quantity: 1);
+        await StartAsync(buyer, cancelled.Id);
+
+        (await buyer.PostAsJsonAsync(new Uri($"/api/v1/orders/{cancelled.Id}/cancel", UriKind.Relative), new { }))
+            .EnsureSuccessStatusCode();
+
+        await ProcessOutboxAsync();
+
+        var (_, otherBuyer, _, open) = await UnpaidOrderAsync(price: 70m, quantity: 1);
+        await StartAsync(otherBuyer, open.Id);
+
+        using (var scope = fixture.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<UPBazaarDbContext>();
+
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE payments.Payments SET Status = 'Created' WHERE OrderId = {cancelled.Id}");
+            await dbContext.Database.ExecuteSqlRawAsync(AbandonedPayments.BackfillSql);
+        }
+
+        (await PaymentForAsync(admin, cancelled.Number)).Status.ShouldBe("Abandoned");
+        (await PaymentForAsync(admin, open.Number)).Status.ShouldBe("Created");
     }
 
     [DatabaseFact]
@@ -390,6 +453,10 @@ public sealed class PaymentTests(ApiFixture fixture)
             }
         }
     }
+
+    private static async Task<PaymentDto> PaymentForAsync(HttpClient admin, string orderNumber) =>
+        (await admin.GetFromJsonAsync<PagedList<PaymentDto>>(
+            new Uri($"/api/v1/admin/payments?search={orderNumber}", UriKind.Relative)))!.Items.ShouldHaveSingleItem();
 
     private static async Task<CheckoutSessionDto> StartAsync(HttpClient buyer, Guid orderId)
     {

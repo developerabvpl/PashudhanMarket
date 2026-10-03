@@ -71,24 +71,25 @@ type View = 'refunds' | 'payments';
       </form>
       }
 
-      <div class="upb-card mt-4 overflow-x-auto">
+      <div class="upb-card mt-4 overflow-hidden">
         @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
         }
 
         @if (view() === 'refunds') {
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="refunds()" class="w-full">
           <ng-container matColumnDef="createdAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.owedSince' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.createdAtUtc | dateIst: 'datetime' }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.createdAtUtc | dateIst: 'datetime' }}</td>
           </ng-container>
           <ng-container matColumnDef="orderNumber">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.order' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-mono text-sm">{{ row.orderNumber }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-mono text-sm">{{ row.orderNumber }}</td>
           </ng-container>
           <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.amount' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-semibold">{{ row.amount | inr }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-semibold">{{ row.amount | inr }}</td>
           </ng-container>
           <ng-container matColumnDef="reason">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.reason' | transloco }}</th>
@@ -107,7 +108,7 @@ type View = 'refunds' | 'payments';
               Where the money goes, in words: a UPI refund names the buyer's UPI id; any other goes back
               through the payment it came from, whose gateway id is the detail finance looks up, not the answer.
             -->
-            <td mat-cell *matCellDef="let row" class="text-sm">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap text-sm">
               @if (row.method === 'Upi') {
               <span class="font-mono text-xs">{{ 'payments.upiTo' | transloco: { upi: row.upiId } }}</span>
               } @else {
@@ -130,30 +131,36 @@ type View = 'refunds' | 'payments';
           <tr mat-header-row *matHeaderRowDef="refundColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: refundColumns"></tr>
         </table>
+        </div>
 
         @if (!loading() && refunds().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'payments.noRefundsDue' | transloco }}</p>
         }
         } @else {
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="payments()" class="w-full">
           <ng-container matColumnDef="createdAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.started' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.createdAtUtc | dateIst: 'datetime' }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.createdAtUtc | dateIst: 'datetime' }}</td>
           </ng-container>
           <ng-container matColumnDef="orderNumber">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.order' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-mono text-sm">{{ row.orderNumber }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-mono text-sm">{{ row.orderNumber }}</td>
           </ng-container>
           <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.amount' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-semibold">{{ row.amount | inr }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-semibold">{{ row.amount | inr }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.status' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
-              {{ 'payments.statuses.' + row.status | transloco }}
+              <!-- One line for the label, so "Not paid" and its note do not break mid-phrase; a gateway's failure text may wrap. -->
+              <span class="upb-nowrap">{{ 'payments.statuses.' + row.status | transloco }}</span>
               @if (row.status === 'Paid') {
-              <span class="block text-xs text-ink-muted">{{ 'payments.outcomes.' + row.orderOutcome | transloco }}</span>
+              <span class="upb-nowrap block text-xs text-ink-muted">{{ 'payments.outcomes.' + row.orderOutcome | transloco }}</span>
+              } @else if (row.status === 'Abandoned') {
+              <!-- The order was cancelled before the buyer paid: nothing is awaited, and nothing is owed. -->
+              <span class="upb-nowrap block text-xs text-ink-muted">{{ 'payments.abandonedNote' | transloco }}</span>
               } @else if (row.lastFailure) {
               <span class="block text-xs text-danger">{{ row.lastFailure }}</span>
               }
@@ -161,14 +168,14 @@ type View = 'refunds' | 'payments';
           </ng-container>
           <ng-container matColumnDef="gateway">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.razorpayIds' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-mono text-xs">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-mono text-xs">
               {{ row.gatewayOrderId }}
               <span class="block">{{ row.gatewayPaymentId ?? '—' }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="refundDue">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.refundDueColumn' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" [class.text-danger]="row.refundDue > 0">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap" [class.text-danger]="row.refundDue > 0">
               {{ row.refundDue > 0 ? (row.refundDue | inr) : '—' }}
             </td>
           </ng-container>
@@ -176,6 +183,7 @@ type View = 'refunds' | 'payments';
           <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: paymentColumns"></tr>
         </table>
+        </div>
 
         @if (!loading() && payments().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'payments.none' | transloco }}</p>

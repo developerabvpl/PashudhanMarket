@@ -5,7 +5,9 @@ import { TranslocoPipe } from '@jsverse/transloco';
  * The three non-content states every list and detail screen needs: loading, empty, failed.
  *
  * Having one component means the skeleton, the empty copy and the retry affordance look and
- * behave the same in all three apps.
+ * behave the same in all three apps. The retry button takes the app's primary colour (the
+ * --color-primary token): marigold in the storefront, Material's blue in the two portals, where
+ * it used to be the storefront's orange among blue buttons.
  */
 @Component({
   selector: 'upb-page-state',
@@ -23,7 +25,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
       <p class="font-medium text-ink">{{ message() ?? 'state.error' | transloco }}</p>
       <button
         type="button"
-        class="mt-4 rounded-control bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        class="mt-4 rounded-control bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
         (click)="retry.emit()"
       >
         {{ 'state.retry' | transloco }}

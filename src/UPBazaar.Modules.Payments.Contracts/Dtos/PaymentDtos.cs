@@ -40,7 +40,7 @@ public sealed record PaymentResultDto(Guid OrderId, string Outcome);
 /// <param name="BuyerId">Who is paying.</param>
 /// <param name="Amount">Amount due or taken.</param>
 /// <param name="Currency">ISO currency code.</param>
-/// <param name="Status">Created (awaiting the buyer) or Paid.</param>
+/// <param name="Status">Created (awaiting the buyer), Paid, or Abandoned (the order was cancelled before the buyer paid, most often because the time to pay ran out).</param>
 /// <param name="OrderOutcome">
 /// Pending, Confirmed, Refused (money taken for an order that could not accept it), or Cancelled
 /// (the order took it and was cancelled later; its refunds are recorded part by part).

@@ -1,5 +1,4 @@
 import { OrderPartDto } from '@upbazaar/data-access';
-import { joinParts } from '@upbazaar/util';
 
 /** A product that is coming, or came, back, and how many of it. */
 export interface ReturnedLine {
@@ -35,9 +34,14 @@ export function returnedLines(part: ReturnablePart): ReturnedLine[] {
     .filter((l) => l.quantity > 0);
 }
 
-/** Those lines as one phrase, "1 × Gobar Diya, 2 × Dhoop Batti": separated, where they used to run together. */
-export function returnedLinesText(part: ReturnablePart): string {
-  return joinParts(returnedLines(part).map((l) => `${l.quantity} × ${l.name}`));
+/**
+ * Those lines as the screen lists them, "2 × Gobar Diya" - one to a row. They used to be joined
+ * with commas into one phrase, but product names have commas of their own ("Agarbatti 200g, Low
+ * Smoke, Guggal, 7 inch"), so two products read as one long run with no telling where the first
+ * ended.
+ */
+export function returnedLineLabels(part: ReturnablePart): string[] {
+  return returnedLines(part).map((l) => `${l.quantity} × ${l.name}`);
 }
 
 /**

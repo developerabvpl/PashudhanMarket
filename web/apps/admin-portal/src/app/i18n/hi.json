@@ -150,6 +150,8 @@
     "deliveryDiscount": "मुफ़्त डिलीवरी ({{code}})",
     "paidOnline": "ऑनलाइन भुगतान किया",
     "refund": "रिफ़ंड",
+    "paidOnDelivery": "डिलीवरी पर भुगतान किया",
+    "refundToUpi": "रिफ़ंड (ख़रीदार की UPI पर)",
     "partCoupon": "{{amount}} कूपन",
     "notFound": "इस नंबर या आईडी का कोई ऑर्डर नहीं मिला।",
     "manyMatches": "{{count}} ऑर्डर मिले। एक चुनें:"
@@ -287,8 +289,10 @@
     "refundRecorded": "रिफ़ंड दर्ज हो गया।",
     "statuses": {
       "Created": "ख़रीदार का इंतज़ार",
-      "Paid": "भुगतान हुआ"
+      "Paid": "भुगतान हुआ",
+      "Abandoned": "भुगतान नहीं हुआ"
     },
+    "abandonedNote": "ऑर्डर रद्द हुआ",
     "outcomes": {
       "Pending": "अभी लागू नहीं",
       "Confirmed": "ऑर्डर पुष्ट",
@@ -602,6 +606,10 @@
     "rupees": "रुपये की छूट",
     "fundedBy": "ख़र्च कौन उठाएगा",
     "funding": {
+      "Platform": "प्लेटफ़ॉर्म उठाता है",
+      "Seller": "जुड़ने वाले विक्रेता उठाते हैं"
+    },
+    "fundingOption": {
       "Platform": "प्लेटफ़ॉर्म उठाता है",
       "Seller": "जुड़ने वाले विक्रेता उठाते हैं"
     },

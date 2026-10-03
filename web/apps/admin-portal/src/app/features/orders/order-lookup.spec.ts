@@ -153,7 +153,7 @@ describe('OrderLookup', () => {
 
     const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
 
-    expect(text).toContain('Asked to return: 1 × Gaunyl');
+    expect(text).toContain('Asked to return:1 × Gaunyl');
     expect(text).not.toContain('2 × Gaunyl');
     expect(text).not.toContain('× Kande');
     expect(text).not.toContain('Coming back');
@@ -210,6 +210,71 @@ describe('OrderLookup', () => {
     expect(text).toContain('Online payment pay-1');
     expect(text).toContain('Paid online₹2,000.00');
     expect(text).toContain('Refund₹2,000.00');
+  });
+
+  it('shows what a returned cash on delivery order was paid at the door and what goes back by UPI', async () => {
+    const part = order.parts[0];
+    const agarbatti = 'Dev Cow Dung Pure Holy Agarbatti 200g, Low Smoke, Guggal, 7 inch';
+    answerWith({
+      ...order,
+      status: 'Completed',
+      paymentMethod: 'CashOnDelivery',
+      paymentStatus: 'CashOnDelivery',
+      paymentReference: null,
+      amountPaid: null,
+      refundTotal: 0,
+      cashCollected: 426,
+      subtotal: 0,
+      shippingFee: 49,
+      total: 49,
+      parts: [
+        {
+          ...part,
+          status: 'Returned',
+          returnRequest: {
+            status: 'Approved',
+            reason: 'Damaged',
+            comment: null,
+            refundUpiId: 'priya@okhdfcbank',
+            refundDue: 377,
+            requestedAtUtc: '2026-03-16T10:00:00Z',
+            decisionNote: null,
+            decidedAtUtc: '2026-03-16T12:00:00Z',
+          },
+          lines: [
+            { ...part.lines[0], name: agarbatti, quantity: 1, returnQuantity: 1 },
+            { ...part.lines[0], productId: 'p2', name: 'Cow Dung Diya (Pack of 12)', quantity: 2, returnQuantity: 2 },
+          ],
+        },
+      ],
+    });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const text = (element.textContent as string).replace(/\s+/g, ' ');
+    expect(text).toContain('Total₹49.00');
+    expect(text).toContain('Paid on delivery₹426.00');
+    expect(text).toContain("Refund (to buyer's UPI)₹377.00");
+    expect(text).not.toContain('Paid online');
+
+    // What came back is a list, one product to a row: the names have commas of their own.
+    const items = [...element.querySelectorAll('[data-returned-lines] li')].map((li) => li.textContent?.trim());
+    expect(items).toEqual([`1 × ${agarbatti}`, '2 × Cow Dung Diya (Pack of 12)']);
+  });
+
+  it('keeps the numeric columns of the items table on one line, headings included', async () => {
+    answerWith(order);
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    const headings = [...(fixture.nativeElement as HTMLElement).querySelectorAll('article table thead th')] as HTMLElement[];
+    expect(headings.map((th) => th.textContent?.trim())).toEqual(['SKU', 'Qty', 'Unit price', 'Line total']);
+    expect(headings.slice(1).every((th) => th.classList.contains('whitespace-nowrap'))).toBe(true);
   });
 
   it('labels the order status in the page language, not the raw API value', async () => {

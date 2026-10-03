@@ -80,6 +80,27 @@ public sealed class PaymentTests
     }
 
     [Fact]
+    public void An_unpaid_payment_whose_order_is_cancelled_is_abandoned_and_late_money_is_still_owed_back()
+    {
+        var payment = NewPayment();
+        payment.RecordFailedAttempt("Card declined.");
+
+        payment.RecordOrderCancelled();
+        payment.RecordOrderCancelled();
+
+        payment.Status.ShouldBe(PaymentStatus.Abandoned);
+        payment.OrderOutcome.ShouldBe(OrderOutcome.Pending);
+
+        // The buyer's bank can still capture after the deadline: the money is recorded, the
+        // cancelled order refuses it, and all of it is owed back.
+        payment.MarkPaid("pay_late", Now).IsSuccess.ShouldBeTrue();
+        payment.Status.ShouldBe(PaymentStatus.Paid);
+
+        payment.RecordOrderRefused("This order is not waiting for payment.", Now);
+        payment.RefundDue.ShouldBe(500m);
+    }
+
+    [Fact]
     public void A_refund_is_marked_made_only_once()
     {
         var payment = NewPayment();

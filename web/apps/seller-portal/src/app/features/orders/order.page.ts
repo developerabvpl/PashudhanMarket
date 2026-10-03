@@ -57,8 +57,9 @@ type ParcelField = 'weightGrams' | 'lengthCm' | 'breadthCm' | 'heightCm';
         <ul class="mt-2 divide-y divide-border text-sm">
           @for (line of o.lines; track line.productId) {
           <li class="flex justify-between gap-3 py-2">
-            <span><span class="font-mono text-xs">{{ line.sku }}</span> {{ line.name }}</span>
-            <span class="font-medium">
+            <!-- A long name wraps in its own column; the count and what came back of it each stay on one line. -->
+            <span class="min-w-0"><span class="font-mono text-xs">{{ line.sku }}</span> {{ line.name }}</span>
+            <span class="shrink-0 whitespace-nowrap text-right font-medium" data-line-count>
               × {{ line.quantity }}
               @if (lineReturn(o, line.returnQuantity); as note) {
               <span class="block text-xs font-normal text-warning">{{ note | transloco: { count: line.returnQuantity } }}</span>

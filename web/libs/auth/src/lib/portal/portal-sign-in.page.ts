@@ -41,7 +41,12 @@ import { AuthService } from '../auth.service';
         }
 
         <mat-card-header class="p-6 pb-0">
-          <h1 class="text-xl font-semibold">{{ title() | transloco }}</h1>
+          <!--
+            The space under the title is on the heading itself: Material's own CSS sets the header's and the
+            content's padding (none between them) and outranks Tailwind's utilities on its elements, so the
+            title sat flush against the first field.
+          -->
+          <h1 class="pb-4 text-xl font-semibold">{{ title() | transloco }}</h1>
         </mat-card-header>
 
         <mat-card-content class="p-6">

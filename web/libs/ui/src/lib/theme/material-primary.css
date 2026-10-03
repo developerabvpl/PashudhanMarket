@@ -1,0 +1,16 @@
+/**
+ * The shared components' primary colour, for the two portals.
+ *
+ * tokens.css sets --color-primary to the storefront's marigold. A portal is Material's azure
+ * theme, and a marigold retry button among its blue ones looked like a stray from another app. So
+ * here the token follows Material's own primary: change the Material theme and this follows.
+ *
+ * Imported by a portal's styles.css after the Material theme and tokens.css. Plain custom
+ * properties on `html`, not a nested @theme - Tailwind hoists every @theme to the top level, so
+ * overriding the variables it already declared is the supported way (see tokens.css). The
+ * storefront does not import this.
+ */
+html {
+  --color-primary: var(--mat-sys-primary);
+  --color-primary-hover: color-mix(in oklab, var(--mat-sys-primary) 85%, black);
+}

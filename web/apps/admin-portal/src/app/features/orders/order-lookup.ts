@@ -8,6 +8,7 @@ import {
   apiV1AdminOrdersGet,
   apiV1AdminOrdersOrderIdGet,
   orderProgress,
+  orderRefund,
   partReturn,
   toApiProblem,
 } from '@upbazaar/data-access';
@@ -26,8 +27,11 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  *
  * The money is broken down the way the buyer's own order page breaks it down - coupon and
  * free-delivery discounts included - so the parcels' full-price subtotals visibly add up to the
- * total. The total counts only what the buyer keeps; for an order paid online that is being
- * refunded, what was paid and what goes back are shown beneath it.
+ * total. The total counts only what the buyer keeps; once anything is going back, what was paid and
+ * what goes back are shown beneath it, by the rule the buyer's own order page uses (orderRefund):
+ * "Paid online" and "Refund" for an online order, and for a cash-on-delivery order whose return
+ * was accepted, "Paid on delivery" and the refund sent to the buyer's UPI id - which the summary
+ * used to leave out, so a returned cash order showed a total of its delivery charge and no more.
  *
  * The order's status is shown in the buyer's words (orders.status.*), translated like the rest,
  * so support reads "Delivered" where the API says Completed - the same word the buyer sees.
@@ -116,24 +120,28 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             }
           </dd>
 
-          @if (found.amountPaid !== null && found.amountPaid !== undefined && found.refundTotal > 0) {
-          <dt class="text-ink-muted">{{ 'admin.paidOnline' | transloco }}</dt>
-          <dd class="text-ink">{{ found.amountPaid | inr }}</dd>
+          @if (refund(); as r) {
+          <!-- Cash collected is null only on a response from before the API said; the refund still shows. -->
+          @if (r.paid !== null) {
+          <dt class="text-ink-muted">{{ (r.to === 'upi' ? 'admin.paidOnDelivery' : 'admin.paidOnline') | transloco }}</dt>
+          <dd class="text-ink">{{ r.paid | inr }}</dd>
+          }
 
-          <dt class="text-ink-muted">{{ 'admin.refund' | transloco }}</dt>
-          <dd class="text-ink">{{ found.refundTotal | inr }}</dd>
+          <dt class="text-ink-muted">{{ (r.to === 'upi' ? 'admin.refundToUpi' : 'admin.refund') | transloco }}</dt>
+          <dd class="text-ink">{{ r.amount | inr }}</dd>
           }
         </dl>
 
         <h3 class="mt-6 font-medium text-ink">{{ 'admin.lines' | transloco }}</h3>
+        <!-- The numeric columns never wrap, heading or figure: a long product name wraps in its own column instead. -->
         <table class="mt-2 w-full text-left text-sm">
           <caption class="upb-sr-only">{{ 'admin.lines' | transloco }}</caption>
           <thead>
             <tr class="border-b border-border text-ink-muted">
               <th scope="col" class="py-2">{{ 'catalog.sku' | transloco }}</th>
-              <th scope="col" class="py-2 text-right">{{ 'admin.quantity' | transloco }}</th>
-              <th scope="col" class="py-2 text-right">{{ 'admin.unitPrice' | transloco }}</th>
-              <th scope="col" class="py-2 text-right">{{ 'admin.lineTotal' | transloco }}</th>
+              <th scope="col" class="whitespace-nowrap py-2 pl-4 text-right">{{ 'admin.quantity' | transloco }}</th>
+              <th scope="col" class="whitespace-nowrap py-2 pl-4 text-right">{{ 'admin.unitPrice' | transloco }}</th>
+              <th scope="col" class="whitespace-nowrap py-2 pl-4 text-right">{{ 'admin.lineTotal' | transloco }}</th>
             </tr>
           </thead>
           <tbody>
@@ -143,9 +151,9 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                 <span class="font-mono text-xs">{{ line.sku }}</span>
                 <span class="block text-ink-muted">{{ line.name }}</span>
               </td>
-              <td class="py-2 text-right">{{ line.quantity }}</td>
-              <td class="py-2 text-right">{{ line.unitPrice | inr }}</td>
-              <td class="py-2 text-right font-medium">{{ line.lineTotal | inr }}</td>
+              <td class="whitespace-nowrap py-2 pl-4 text-right">{{ line.quantity }}</td>
+              <td class="whitespace-nowrap py-2 pl-4 text-right">{{ line.unitPrice | inr }}</td>
+              <td class="whitespace-nowrap py-2 pl-4 text-right font-medium">{{ line.lineTotal | inr }}</td>
             </tr>
             }
           </tbody>
@@ -174,6 +182,13 @@ export class OrderLookup {
 
   /** Every line across the sellers' parts: support reads an order as one list, not per parcel. */
   protected readonly lines = computed(() => this.order()?.parts.flatMap((part) => part.lines) ?? []);
+
+  /** What is going back to the buyer and what they paid, online or at the door; null while nothing is. */
+  protected readonly refund = computed(() => {
+    const order = this.order();
+
+    return order ? orderRefund(order) : null;
+  });
 
   constructor() {
     effect(() => {

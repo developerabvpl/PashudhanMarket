@@ -18,7 +18,7 @@ import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
 import { OrderingPermissions, ShippingPermissions } from '../../core/permissions';
 import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
-import { returnedLines, returnedLinesLabelKey, returnedLinesText } from './returned-lines';
+import { returnedLines, returnedLinesLabelKey, returnedLineLabels } from './returned-lines';
 import { ShipmentCharges } from './shipment-charges';
 
 /**
@@ -66,9 +66,15 @@ import { ShipmentCharges } from './shipment-charges';
           </p>
           @if (request.comment) { <p class="mt-1 text-ink-muted">{{ 'returns.buyerSays' | transloco: { comment: request.comment } }}</p> }
           @if (request.decisionNote) { <p class="mt-1 text-ink-muted">{{ request.decisionNote }}</p> }
-          @if (returnedText(part); as items) {
-          <p class="mt-1 text-ink">{{ returnedLabel(part) | transloco }} {{ items }}</p>
-          }
+          <!-- One product to a row: names have commas of their own, so a comma-joined phrase ran them together. -->
+          @if (returnedLabels(part); as items) { @if (items.length > 0) {
+          <p class="mt-1 text-ink">{{ returnedLabel(part) | transloco }}</p>
+          <ul class="ml-4 list-disc text-ink" data-returned-lines>
+            @for (item of items; track $index) {
+            <li>{{ item }}</li>
+            }
+          </ul>
+          } }
           @if (request.refundDue !== null && request.refundDue !== undefined) {
           <p class="mt-1 text-ink-muted">{{ 'returns.refundDue' | transloco: { amount: (request.refundDue | inr) } }}</p>
           }
@@ -149,7 +155,7 @@ export class OrderParcels {
 
   /** What goes back to the seller from a part: the units a buyer named, or all of an undelivered parcel. */
   protected readonly returned = returnedLines;
-  protected readonly returnedText = returnedLinesText;
+  protected readonly returnedLabels = returnedLineLabels;
   protected readonly returnedLabel = returnedLinesLabelKey;
 
   /** Conditions chosen for what came back, by part and product; Good until changed. */

@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { OrderDto } from '@upbazaar/data-access';
+import { OrderDto, hasDelivery, orderRefund } from '@upbazaar/data-access';
 import { InrCurrencyPipe } from '@upbazaar/util';
-import { hasDelivery, orderRefund } from './order-refund';
+import { unpaidCancellation } from './order-amount';
 
 /**
  * The order's money: how it is paid and what it comes to.
@@ -17,6 +17,11 @@ import { hasDelivery, orderRefund } from './order-refund';
  * Delivery reads "Free" only while something is being, or was, delivered. A cancelled order's
  * charge is zero because it was given back; calling that "Free" beside a refund of the ₹49 that
  * was paid for it would be wrong, so the row is left out and the refund rows carry the story.
+ *
+ * An order cancelled before any money changed hands - an online order whose payment never came, a
+ * cash order that never reached the door - has no sums worth showing: "Subtotal ₹0, Total ₹0" read
+ * as an order that cost nothing, while its row in My orders said "Not paid". The card says the same
+ * as the row instead, and why (see unpaidCancellation).
  */
 @Component({
   selector: 'upb-order-payment-card',
@@ -27,6 +32,10 @@ import { hasDelivery, orderRefund } from './order-refund';
     <div class="rounded-card border border-border bg-surface p-4 text-sm">
       <h2 class="font-medium text-ink">{{ 'orders.payment' | transloco }}</h2>
       <p class="mt-2 text-ink-muted">{{ 'orders.paymentMethod.' + o.paymentMethod | transloco }}</p>
+      @if (unpaid(); as why) {
+      <p class="mt-3 font-medium text-ink">{{ (why === 'notPaid' ? 'orders.notPaid' : 'orders.nothingToPay') | transloco }}</p>
+      <p class="mt-1 text-ink-muted">{{ (why === 'notPaid' ? 'orders.notPaidNote' : 'orders.nothingToPayNote') | transloco }}</p>
+      } @else {
       <dl class="mt-3 space-y-1.5">
         <div class="flex justify-between">
           <dt class="text-ink-muted">{{ 'cart.subtotal' | transloco }}</dt>
@@ -74,6 +83,7 @@ import { hasDelivery, orderRefund } from './order-refund';
       @if (refund(); as r) {
       <p class="mt-2 text-xs text-ink-muted">{{ (r.to === 'upi' ? 'orders.refundUpiNote' : 'orders.refundNote') | transloco }}</p>
       }
+      }
     </div>
     }
   `,
@@ -86,4 +96,7 @@ export class OrderPaymentCard {
 
   /** Something is, or was, on its way to the buyer - so a delivery charge of nothing means free delivery. */
   protected readonly delivering = computed(() => hasDelivery(this.order()));
+
+  /** Cancelled before any money changed hands: the card says so in words rather than in zeroes. */
+  protected readonly unpaid = computed(() => unpaidCancellation(this.order()));
 }

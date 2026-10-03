@@ -74,6 +74,18 @@ const cancelledPayment: PaymentDto = {
   refundDue: 476,
 };
 
+/** Never paid: the time to pay ran out and the order was cancelled, so nobody is awaited any more. */
+const abandonedPayment: PaymentDto = {
+  ...payment,
+  id: 'pmt4',
+  orderNumber: 'UPB-261003-ZQ49VB',
+  amount: 328,
+  status: 'Abandoned',
+  orderOutcome: 'Pending',
+  gatewayPaymentId: null,
+  paidAtUtc: null,
+};
+
 function page<T>(items: T[]) {
   return { items, page: 1, pageSize: 25, totalCount: items.length, hasNextPage: false, totalPages: 1 };
 }
@@ -90,7 +102,7 @@ describe('PaymentsPage', () => {
       }
 
       if (fn === apiV1AdminPaymentsGet) {
-        return page([payment, cancelledPayment]);
+        return page([payment, cancelledPayment, abandonedPayment]);
       }
 
       throw new Error('unexpected call');
@@ -196,5 +208,25 @@ describe('PaymentsPage', () => {
     expect(rows[0].textContent).toContain('Order confirmed');
     expect(rows[1].textContent).toContain('Order cancelled');
     expect(rows[1].textContent).not.toContain('Order confirmed');
+  });
+
+  it('says an unpaid payment of a cancelled order was not paid, rather than still awaiting the buyer', async () => {
+    const fixture = TestBed.createComponent(PaymentsPage);
+    await fixture.whenStable();
+
+    const toggle = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button: HTMLButtonElement) => button.closest('mat-button-toggle')?.getAttribute('value') === 'payments'
+    ) as HTMLButtonElement;
+
+    toggle.click();
+    await fixture.whenStable();
+
+    const status = ([...fixture.nativeElement.querySelectorAll('td.mat-column-status')] as HTMLElement[])[2];
+    expect(status.textContent?.replace(/\s+/g, ' ').trim()).toBe('Not paidOrder cancelled');
+    expect(status.textContent).not.toContain('Awaiting buyer');
+
+    // The table scrolls inside its own wrapper, so a narrow screen never scrolls the page or the paginator.
+    expect(fixture.nativeElement.querySelector('.upb-table-scroll > table')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.upb-table-scroll mat-paginator')).toBeNull();
   });
 });

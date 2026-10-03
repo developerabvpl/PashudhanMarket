@@ -42,19 +42,20 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
         </mat-button-toggle-group>
       </header>
 
-      <div class="upb-card mt-4 overflow-x-auto">
+      <div class="upb-card mt-4 overflow-hidden">
         @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
         }
 
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="requests()" class="w-full">
           <ng-container matColumnDef="requestedAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'returns.requestedAt' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.requestedAtUtc | dateIst: 'datetime' }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.requestedAtUtc | dateIst: 'datetime' }}</td>
           </ng-container>
           <ng-container matColumnDef="order">
             <th mat-header-cell *matHeaderCellDef>{{ 'returns.order' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">
               <a class="font-mono text-sm" routerLink="/orders" [queryParams]="{ orderId: row.orderId }">{{ row.orderNumber }}</a>
             </td>
           </ng-container>
@@ -67,14 +68,14 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
           </ng-container>
           <ng-container matColumnDef="value">
             <th mat-header-cell *matHeaderCellDef>{{ 'returns.value' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">
               {{ row.subtotal | inr }}
               <span class="block text-xs text-ink-muted">{{ 'orders.paymentMethod.' + row.paymentMethod | transloco }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.status' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="text-sm">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap text-sm">
               {{ 'returns.statuses.' + row.status | transloco }}
               <!-- A buyer's return that is back reads "Returned", not the courier's "Could not be delivered". -->
               <span class="block text-xs text-ink-muted">{{ partStatus(row.partStatus, row.partReturn) | transloco }}</span>
@@ -84,6 +85,7 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
+        </div>
 
         @if (!loading() && requests().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'returns.none' | transloco }}</p>

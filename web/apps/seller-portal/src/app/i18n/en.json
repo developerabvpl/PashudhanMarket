@@ -203,6 +203,8 @@
     "gstin": "GSTIN",
     "bankAccountHolder": "Account holder name",
     "bankAccountNumber": "Bank account number",
+    "bankAccountHidden": "Only the last four digits are shown, for your security.",
+    "bankAccountReenter": "For your security we do not show the number you gave (ending {{last4}}). Please enter it again.",
     "ifsc": "IFSC",
     "kycNote": "Your legal and bank details cannot be changed after approval without contacting support.",
     "submit": "Submit application",

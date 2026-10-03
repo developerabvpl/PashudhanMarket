@@ -12,6 +12,9 @@
 /* Material's type scale names Roboto with no fallback; this puts it on the tokens' --font-sans. */
 @import '../../../libs/ui/src/lib/theme/material-fonts.css';
 
+/* Shared components' primary colour follows Material's, so their buttons are the portal's blue. */
+@import '../../../libs/ui/src/lib/theme/material-primary.css';
+
 /* Tailwind scans from this file's folder, so shared library templates need declaring. */
 @source '../../../libs/ui/src/**/*.{html,ts}';
 @source '../../../libs/auth/src/**/*.{html,ts}';

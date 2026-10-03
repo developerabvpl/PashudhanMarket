@@ -58,15 +58,16 @@ import { PayoutDialog } from './payout.dialog';
         </div>
       </header>
 
-      <div class="upb-card mt-4 overflow-x-auto">
+      <div class="upb-card mt-4 overflow-hidden">
         @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
         }
 
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="payouts()" class="w-full">
           <ng-container matColumnDef="createdAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'settlements.made' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.createdAtUtc | dateIst }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.createdAtUtc | dateIst }}</td>
           </ng-container>
           <ng-container matColumnDef="seller">
             <th mat-header-cell *matHeaderCellDef>{{ 'settlements.seller' | transloco }}</th>
@@ -78,15 +79,15 @@ import { PayoutDialog } from './payout.dialog';
           </ng-container>
           <ng-container matColumnDef="gross">
             <th mat-header-cell *matHeaderCellDef>{{ 'settlements.gross' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.grossAmount | inr }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.grossAmount | inr }}</td>
           </ng-container>
           <ng-container matColumnDef="net">
             <th mat-header-cell *matHeaderCellDef>{{ 'settlements.net' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="font-semibold">{{ row.netAmount | inr }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap font-semibold">{{ row.netAmount | inr }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.status' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="text-sm">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap text-sm">
               {{ 'settlements.statuses.' + row.status | transloco }}
               @if (row.utr) { <span class="block font-mono text-xs text-ink-muted">{{ row.utr }}</span> }
             </td>
@@ -101,6 +102,7 @@ import { PayoutDialog } from './payout.dialog';
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
+        </div>
 
         @if (!loading() && payouts().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'settlements.none' | transloco }}</p>

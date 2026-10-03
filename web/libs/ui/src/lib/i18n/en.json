@@ -252,6 +252,8 @@
     "deliveryDiscount": "Free delivery ({{code}})",
     "paidOnline": "Paid online",
     "refund": "Refund",
+    "paidOnDelivery": "Paid on delivery",
+    "refundToUpi": "Refund (to buyer's UPI)",
     "partCoupon": "{{amount}} coupon",
     "notFound": "No order with that number or ID.",
     "manyMatches": "{{count}} orders match. Choose one:"
@@ -479,6 +481,9 @@
     "refundNote": "Refunds go back to the account you paid from.",
     "refundOf": "Refund {{amount}}",
     "notPaid": "Not paid",
+    "notPaidNote": "This order was cancelled before the payment was completed.",
+    "nothingToPay": "Nothing to pay",
+    "nothingToPayNote": "This order was cancelled, so there is nothing to pay on delivery.",
     "cancel": "Cancel this order",
     "cancelQuestion": "Cancel the whole order? This cannot be undone.",
     "cancelConfirm": "Yes, cancel it",
@@ -601,8 +606,10 @@
     "refundRecorded": "Refund recorded.",
     "statuses": {
       "Created": "Awaiting buyer",
-      "Paid": "Paid"
+      "Paid": "Paid",
+      "Abandoned": "Not paid"
     },
+    "abandonedNote": "Order cancelled",
     "outcomes": {
       "Pending": "Not yet applied",
       "Confirmed": "Order confirmed",
@@ -700,6 +707,8 @@
     "gstin": "GSTIN",
     "bankAccountHolder": "Account holder name",
     "bankAccountNumber": "Bank account number",
+    "bankAccountHidden": "Only the last four digits are shown, for your security.",
+    "bankAccountReenter": "For your security we do not show the number you gave (ending {{last4}}). Please enter it again.",
     "ifsc": "IFSC",
     "kycNote": "Your legal and bank details cannot be changed after approval without contacting support.",
     "submit": "Submit application",
@@ -1069,6 +1078,10 @@
     "funding": {
       "Platform": "platform pays",
       "Seller": "sellers who join pay"
+    },
+    "fundingOption": {
+      "Platform": "Platform pays",
+      "Seller": "Sellers who join pay"
     },
     "maxDiscount": "Most it takes off (₹)",
     "minOrderValue": "Minimum order (₹)",

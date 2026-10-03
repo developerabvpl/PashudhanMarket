@@ -1,0 +1,37 @@
+/**
+ * Material tables in the portals: room to breathe, and somewhere to go on a narrow screen.
+ *
+ * A browser squeezes a table's columns down to their longest word before it lets anything
+ * overflow. So on a tablet an order number broke at its hyphen, "Mark refunded" stacked into two
+ * lines, a date dropped its "pm" - and what still did not fit ran out of the card's right edge,
+ * where the last column's buttons could not be seen. And Material gives a cell no padding above or
+ * below, only a row height, so a cell of three short lines touched both of its borders.
+ *
+ * Wrap a table in `upb-table-scroll` and:
+ *  - the table scrolls sideways inside the wrapper once its columns cannot shrink further, so the
+ *    page itself never scrolls, and the paginator beside the wrapper stays where it is;
+ *  - every cell gets padding above and below; Material's row height stays as the least a row can
+ *    be - on a table row `height` is a minimum - so a row grows with what is in it;
+ *  - headings and buttons stay on one line;
+ *  - `upb-nowrap` on a cell keeps it on one line: for order numbers, amounts, dates and ids, which
+ *    are read as one thing. Free text - a reason, a product name - is left to wrap.
+ *
+ * Not in a cascade layer, unlike tokens.css: Material's own styles are unlayered, and unlayered
+ * rules beat layered ones whatever their specificity. Imported by a portal's styles.css after the
+ * Material theme. The storefront has no Material and does not import this.
+ */
+.upb-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.upb-table-scroll .mat-mdc-header-cell,
+.upb-table-scroll .mat-mdc-cell {
+  padding-block: 0.625rem;
+}
+
+.upb-table-scroll .mat-mdc-header-cell,
+.upb-table-scroll .mat-mdc-button-base,
+.upb-table-scroll .upb-nowrap {
+  white-space: nowrap;
+}

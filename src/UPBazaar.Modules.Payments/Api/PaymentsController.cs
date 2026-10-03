@@ -198,7 +198,7 @@ public sealed record MarkRefundedRequest(string GatewayRefundId);
 
 /// <param name="Page">1-based page number. Defaults to 1.</param>
 /// <param name="PageSize">Items per page, 1 to 100. Defaults to 20.</param>
-/// <param name="Status">Created or Paid.</param>
+/// <param name="Status">Created, Paid or Abandoned.</param>
 /// <param name="Search">Order number, or a Razorpay order or payment id.</param>
 public sealed record ListPaymentsRequest(int? Page, int? PageSize, string? Status, string? Search);
 

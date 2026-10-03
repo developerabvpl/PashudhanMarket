@@ -38,8 +38,11 @@ import { AuthService } from '../auth.service';
         }
 
         <mat-card-header class="p-6 pb-0">
-          <!-- One child: Material lays the header out as a row, and its CSS outranks Tailwind's. -->
-          <div>
+          <!--
+            One child: Material lays the header out as a row, and its CSS outranks Tailwind's. For the same
+            reason the space under the heading is on this wrapper, not on the header or the content.
+          -->
+          <div class="pb-4">
             <h1 class="text-xl font-semibold">{{ 'forgotPassword.title' | transloco }}</h1>
             <p class="mt-1 text-sm text-ink-muted">{{ 'forgotPassword.body' | transloco }}</p>
           </div>
@@ -137,8 +140,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         }
 
         <mat-card-header class="p-6 pb-0">
-          <!-- One child: Material lays the header out as a row, and its CSS outranks Tailwind's. -->
-          <div>
+          <!--
+            One child: Material lays the header out as a row, and its CSS outranks Tailwind's. For the same
+            reason the space under the heading is on this wrapper, not on the header or the content.
+          -->
+          <div class="pb-4">
             <h1 class="text-xl font-semibold">{{ 'changePassword.title' | transloco }}</h1>
             <p class="mt-1 text-sm text-ink-muted">{{ 'changePassword.body' | transloco }}</p>
           </div>

@@ -12,6 +12,13 @@ public enum PaymentStatus
 
     /// <summary>The gateway has captured the money.</summary>
     Paid = 1,
+
+    /// <summary>
+    /// The order was cancelled before the buyer paid - most often because the time to pay ran out.
+    /// Nobody is waiting on the buyer any more, so it must not read as "awaiting". Money that still
+    /// arrives against it late is recorded as usual, refused by the cancelled order, and owed back.
+    /// </summary>
+    Abandoned = 2,
 }
 
 /// <summary>What Orders made of a captured payment.</summary>
@@ -148,7 +155,10 @@ public sealed class Payment : AggregateRoot, IAuditable
         return Result.Success();
     }
 
-    /// <summary>A card was declined or the buyer gave up. The payment stays open for another try.</summary>
+    /// <summary>
+    /// A card was declined or the buyer gave up. The payment stays open for another try - unless its
+    /// order is gone, when there is nothing left to try for.
+    /// </summary>
     public void RecordFailedAttempt(string reason)
     {
         if (Status == PaymentStatus.Created)
@@ -166,12 +176,20 @@ public sealed class Payment : AggregateRoot, IAuditable
     }
 
     /// <summary>
-    /// The order this payment confirmed has been cancelled since. Only a confirmed payment moves:
-    /// one still pending is refused when it reaches the cancelled order, and a refused one is
-    /// already owed back whole.
+    /// The order this payment is for has been cancelled. A payment that confirmed it says so; one
+    /// the buyer never paid is abandoned, so it stops reading as awaiting the buyer. Money taken
+    /// but not yet applied is left alone - it is refused when it reaches the cancelled order - and
+    /// a refused payment is already owed back whole.
     /// </summary>
     public void RecordOrderCancelled()
     {
+        if (Status == PaymentStatus.Created)
+        {
+            Status = PaymentStatus.Abandoned;
+
+            return;
+        }
+
         if (OrderOutcome == OrderOutcome.Confirmed)
         {
             OrderOutcome = OrderOutcome.Cancelled;

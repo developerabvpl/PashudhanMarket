@@ -1,4 +1,5 @@
-import { OrderDto, isBuyerReturn } from '@upbazaar/data-access';
+import type { OrderDto } from './api/models';
+import { isBuyerReturn } from './order-status';
 
 /** Money going back to the buyer: how much, and by which road. */
 export interface OrderRefund {

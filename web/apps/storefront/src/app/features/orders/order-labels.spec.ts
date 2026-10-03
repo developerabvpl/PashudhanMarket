@@ -7,7 +7,7 @@ describe('order status badges', () => {
   it('maps a known status to its i18n key and colour', () => {
     expect(orderStatusBadge('Cancelled')).toEqual({
       key: 'orders.status.Cancelled',
-      tone: 'bg-surface-sunken text-ink-muted',
+      tone: 'bg-danger/10 text-ink',
     });
     expect(partStatusBadge({ status: 'Shipped', lines: [] }).key).toBe('orders.partStatus.Shipped');
   });
@@ -38,11 +38,23 @@ describe('order status badges', () => {
   it('says partly returned when the buyer kept some of the parcel', () => {
     const part = { status: 'Returned', lines: [{ quantity: 3, returnQuantity: 1 }], returnRequest: { status: 'Approved' } };
 
-    expect(partStatusBadge(part)).toEqual({ key: 'orders.returnStatus.PartlyReturned', tone: 'bg-surface-sunken text-ink-muted' });
+    expect(partStatusBadge(part)).toEqual({ key: 'orders.returnStatus.PartlyReturned', tone: 'bg-ink/10 text-ink' });
   });
 
   it('still renders a status the storefront does not know yet, in a neutral colour', () => {
-    expect(orderStatusBadge('OnHold').tone).toBe('bg-surface-sunken text-ink');
+    expect(orderStatusBadge('OnHold').tone).toBe('bg-ink/10 text-ink');
+  });
+
+  it('gives every status a pill that shows on the page background as well as on a white card', () => {
+    const statuses = ['PendingPayment', 'Confirmed', 'Packed', 'Shipped', 'Completed', 'Cancelled', 'Returning', 'Returned', 'PartlyReturned', 'OnHold'];
+
+    for (const status of statuses) {
+      const tone = orderStatusBadge(status).tone;
+
+      expect(tone, status).toMatch(/^bg-\S+ text-\S+$/);
+      // The page behind an order's header is surface-sunken: a pill of that colour is no pill at all.
+      expect(tone, status).not.toContain('bg-surface');
+    }
   });
 });
 

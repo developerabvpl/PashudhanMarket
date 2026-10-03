@@ -24,7 +24,7 @@ internal sealed class ListPaymentsQueryValidator : AbstractValidator<ListPayment
         RuleFor(x => x.Search).MaximumLength(64);
         RuleFor(x => x.Status)
             .Must(s => s is null || Enum.TryParse<PaymentStatus>(s, ignoreCase: true, out _))
-            .WithMessage("Status must be Created or Paid.");
+            .WithMessage("Status must be Created, Paid or Abandoned.");
     }
 }
 

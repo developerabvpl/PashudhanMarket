@@ -150,6 +150,8 @@
     "deliveryDiscount": "Free delivery ({{code}})",
     "paidOnline": "Paid online",
     "refund": "Refund",
+    "paidOnDelivery": "Paid on delivery",
+    "refundToUpi": "Refund (to buyer's UPI)",
     "partCoupon": "{{amount}} coupon",
     "notFound": "No order with that number or ID.",
     "manyMatches": "{{count}} orders match. Choose one:"
@@ -287,8 +289,10 @@
     "refundRecorded": "Refund recorded.",
     "statuses": {
       "Created": "Awaiting buyer",
-      "Paid": "Paid"
+      "Paid": "Paid",
+      "Abandoned": "Not paid"
     },
+    "abandonedNote": "Order cancelled",
     "outcomes": {
       "Pending": "Not yet applied",
       "Confirmed": "Order confirmed",
@@ -604,6 +608,10 @@
     "funding": {
       "Platform": "platform pays",
       "Seller": "sellers who join pay"
+    },
+    "fundingOption": {
+      "Platform": "Platform pays",
+      "Seller": "Sellers who join pay"
     },
     "maxDiscount": "Most it takes off (₹)",
     "minOrderValue": "Minimum order (₹)",

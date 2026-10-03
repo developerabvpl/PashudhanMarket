@@ -12,6 +12,12 @@ export interface StatusBadge {
   readonly tone: string;
 }
 
+/**
+ * Every tone is a tint, never the page's own background colour. Cancelled and Returned used to be
+ * `bg-surface-sunken`: a pill on the white rows of the order list, but invisible in the header of
+ * the order's page, which sits straight on the sunken page background - so those two statuses
+ * read as loose text where every other one had a pill.
+ */
 const TONES: Readonly<Record<string, string>> = {
   PendingPayment: 'bg-warning/15 text-ink',
   AwaitingPayment: 'bg-warning/15 text-ink',
@@ -20,15 +26,16 @@ const TONES: Readonly<Record<string, string>> = {
   Shipped: 'bg-info/15 text-ink',
   Delivered: 'bg-success/15 text-ink',
   Completed: 'bg-success/15 text-ink',
-  Cancelled: 'bg-surface-sunken text-ink-muted',
+  Cancelled: 'bg-danger/10 text-ink',
   Returning: 'bg-warning/15 text-ink',
-  Returned: 'bg-surface-sunken text-ink-muted',
+  // Over and done, without the alarm of a cancellation: a plain grey that shows on white and on the page.
+  Returned: 'bg-ink/10 text-ink',
   // A delivered order the buyer sent some of back is still theirs in part: it keeps the delivered green.
   PartlyReturning: 'bg-success/15 text-ink',
   PartlyReturned: 'bg-success/15 text-ink',
 };
 
-const NEUTRAL = 'bg-surface-sunken text-ink';
+const NEUTRAL = 'bg-ink/10 text-ink';
 
 export function orderStatusBadge(status: string): StatusBadge {
   return { key: `orders.status.${status}`, tone: TONES[status] ?? NEUTRAL };

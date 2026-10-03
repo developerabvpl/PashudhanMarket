@@ -84,11 +84,12 @@ export const PRODUCT_STATUSES = ['Draft', 'InReview', 'Active', 'Archived'] as c
         <button mat-stroked-button type="submit">{{ 'common.search' | transloco }}</button>
       </form>
 
-      <div class="upb-card mt-4 overflow-x-auto">
+      <div class="upb-card mt-4 overflow-hidden">
         @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
         }
 
+        <div class="upb-table-scroll">
         <table mat-table [dataSource]="products()" class="w-full">
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>{{ 'catalogAdmin.product' | transloco }}</th>
@@ -107,7 +108,7 @@ export const PRODUCT_STATUSES = ['Draft', 'InReview', 'Active', 'Archived'] as c
           </ng-container>
           <ng-container matColumnDef="price">
             <th mat-header-cell *matHeaderCellDef>{{ 'catalogAdmin.price' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.price | inr }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap">{{ row.price | inr }}</td>
           </ng-container>
           <ng-container matColumnDef="available">
             <th mat-header-cell *matHeaderCellDef>{{ 'catalogAdmin.available' | transloco }}</th>
@@ -115,7 +116,7 @@ export const PRODUCT_STATUSES = ['Draft', 'InReview', 'Active', 'Archived'] as c
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>{{ 'catalogAdmin.status' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="text-sm">
+            <td mat-cell *matCellDef="let row" class="upb-nowrap text-sm">
               {{ 'sellerPortal.productStatus.' + row.status | transloco }}
               @if (!row.hasPackage && row.status !== 'Archived') {
               <span class="block text-xs text-danger">{{ 'catalogAdmin.noPackage' | transloco }}</span>
@@ -124,12 +125,13 @@ export const PRODUCT_STATUSES = ['Draft', 'InReview', 'Active', 'Archived'] as c
           </ng-container>
           <ng-container matColumnDef="updatedAtUtc">
             <th mat-header-cell *matHeaderCellDef>{{ 'catalogAdmin.lastChanged' | transloco }}</th>
-            <td mat-cell *matCellDef="let row" class="text-sm">{{ row.updatedAtUtc | dateIst: 'datetime' }}</td>
+            <td mat-cell *matCellDef="let row" class="upb-nowrap text-sm">{{ row.updatedAtUtc | dateIst: 'datetime' }}</td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
+        </div>
 
         @if (!loading() && products().length === 0) {
         <p class="p-8 text-center text-ink-muted">{{ 'catalogAdmin.none' | transloco }}</p>

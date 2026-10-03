@@ -115,4 +115,21 @@ describe('ProductEditPage', () => {
     expect(invoke).not.toHaveBeenCalledWith(apiV1AdminCatalogSellersGet, expect.anything());
     expect(invoke).not.toHaveBeenCalledWith(apiV1AdminInventoryStockProductIdGet, expect.anything());
   });
+
+  it('keeps the title on the left and the status on the right of one row, however long the name', async () => {
+    const { fixture } = setUp(['catalog.products.read']);
+    await fixture.whenStable();
+
+    const header = (fixture.nativeElement as HTMLElement).querySelector('[data-product-header]') as HTMLElement;
+    const status = header.lastElementChild as HTMLElement;
+
+    // No wrapping row: a long name wraps inside its own column instead of pushing the status under it.
+    expect(header.classList.contains('flex-wrap')).toBe(false);
+    expect(header.classList.contains('justify-between')).toBe(true);
+    expect(header.firstElementChild?.classList.contains('min-w-0')).toBe(true);
+    expect(header.firstElementChild?.querySelector('h1')).not.toBeNull();
+    expect(status.tagName).toBe('SPAN');
+    expect(status.classList.contains('shrink-0')).toBe(true);
+    expect(status.classList.contains('whitespace-nowrap')).toBe(true);
+  });
 });

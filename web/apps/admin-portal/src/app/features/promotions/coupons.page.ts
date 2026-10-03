@@ -61,8 +61,8 @@ import { PromotionsPermissions } from '../../core/permissions';
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'coupons.fundedBy' | transloco }}</mat-label>
           <mat-select name="fundedBy" [value]="fundedBy()" (selectionChange)="fundedBy.set($event.value)">
-            <mat-option value="Platform">{{ 'coupons.funding.Platform' | transloco }}</mat-option>
-            <mat-option value="Seller">{{ 'coupons.funding.Seller' | transloco }}</mat-option>
+            <mat-option value="Platform">{{ 'coupons.fundingOption.Platform' | transloco }}</mat-option>
+            <mat-option value="Seller">{{ 'coupons.fundingOption.Seller' | transloco }}</mat-option>
           </mat-select>
         </mat-form-field>
         @if (discountType() === 'Percent') {

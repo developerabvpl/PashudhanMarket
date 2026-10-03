@@ -53,9 +53,9 @@ const PAGE_SIZE = 20;
                 </span>
                 @let money = amount(order);
                 <span class="text-right">
-                  @if (money.unpaid) {
-                  <!-- Cancelled without ever being paid: "Not paid", where a total of ₹0 read as an order that cost nothing. -->
-                  <span class="block text-sm font-medium text-ink-muted">{{ 'orders.notPaid' | transloco }}</span>
+                  @if (money.note; as note) {
+                  <!-- Cancelled before any money changed hands: "Not paid" or "Nothing to pay", where a total of ₹0 read as an order that cost nothing. -->
+                  <span class="block text-sm font-medium text-ink-muted">{{ (note === 'notPaid' ? 'orders.notPaid' : 'orders.nothingToPay') | transloco }}</span>
                   } @else {
                   <span class="block font-semibold text-ink">{{ money.amount | inr: 'symbol' : 'auto' }}</span>
                   }

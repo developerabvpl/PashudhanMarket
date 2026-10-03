@@ -78,8 +78,12 @@ interface Package {
     <section class="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <a class="text-sm" routerLink="/catalog/products">← {{ 'catalogAdmin.allProducts' | transloco }}</a>
 
-      <header class="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <!--
+        Title left, status right, as on the seller's own product page. The row does not wrap: with a
+        long name the status used to drop to a line of its own, at the left under the title.
+      -->
+      <header class="flex items-start justify-between gap-3" data-product-header>
+        <div class="min-w-0">
           <h1 class="text-2xl font-semibold text-ink">
             {{ isNew() ? ('catalogAdmin.newProduct' | transloco) : product()?.name }}
           </h1>
@@ -90,7 +94,7 @@ interface Package {
           }
         </div>
         @if (product(); as p) {
-        <span class="rounded-full bg-surface-sunken px-3 py-1 text-sm">{{ 'sellerPortal.productStatus.' + p.status | transloco }}</span>
+        <span class="shrink-0 whitespace-nowrap rounded-full bg-surface-sunken px-3 py-1 text-sm">{{ 'sellerPortal.productStatus.' + p.status | transloco }}</span>
         }
       </header>
 

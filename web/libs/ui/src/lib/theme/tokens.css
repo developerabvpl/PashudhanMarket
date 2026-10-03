@@ -26,6 +26,14 @@
   --color-accent-500: oklch(0.58 0.19 267);
   --color-accent-600: oklch(0.50 0.20 266);
 
+  /*
+   * The primary action of a shared component - the retry button of a failed page - in whichever app
+   * it is rendered. Marigold here, for the storefront; the portals point it at Material's primary
+   * (theme/material-primary.css), so the same button is blue beside their Material buttons.
+   */
+  --color-primary: var(--color-brand-600);
+  --color-primary-hover: var(--color-brand-700);
+
   /* Neutrals */
   --color-ink: oklch(0.22 0.01 60);
   --color-ink-muted: oklch(0.48 0.01 60);

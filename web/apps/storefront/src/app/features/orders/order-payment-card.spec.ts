@@ -59,11 +59,39 @@ describe('OrderPaymentCard', () => {
     expect(text).not.toContain('Refund');
   });
 
-  it('shows no refund on a cancelled cash on delivery order, which collected nothing', async () => {
+  it('says a cancelled cash on delivery order has nothing to pay, with no zero totals and no refund', async () => {
     const text = await render({ ...cancelledPaid, paymentMethod: 'CashOnDelivery', amountPaid: null, refundTotal: 0 });
 
     expect(text).toContain('Cash on delivery');
+    expect(text).toContain('Nothing to pay');
+    expect(text).toContain('This order was cancelled, so there is nothing to pay on delivery.');
     expect(text).not.toContain('Refund');
+    expect(text).not.toContain('₹0');
+  });
+
+  it('says an online order that was never paid for was not paid, instead of totalling it at nothing', async () => {
+    const text = await render({ ...cancelledPaid, amountPaid: null, refundTotal: 0, parts: [part('Cancelled')] });
+
+    expect(text).toContain('Online payment');
+    expect(text).toContain('Not paid');
+    expect(text).toContain('This order was cancelled before the payment was completed.');
+    expect(text).not.toContain('Subtotal');
+    expect(text).not.toContain('Total');
+    expect(text).not.toContain('₹0');
+  });
+
+  it('says so in Hindi too', async () => {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideI18n(translations)] });
+
+    const transloco = TestBed.inject(TranslocoService);
+    transloco.setActiveLang('hi');
+    await firstValueFrom(transloco.load('hi'));
+
+    const fixture = TestBed.createComponent(OrderPaymentCard);
+    fixture.componentRef.setInput('order', { ...cancelledPaid, amountPaid: null, refundTotal: 0 });
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('भुगतान पूरा होने से पहले यह ऑर्डर रद्द हो गया।');
   });
 
   it('does not call delivery free on a cancelled order whose charge was paid and is being refunded', async () => {

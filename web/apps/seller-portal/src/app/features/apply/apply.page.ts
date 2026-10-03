@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -78,6 +78,12 @@ const SECTIONS: readonly { title: string; fields: readonly { key: Field; label: 
  * application with a note that it is being reviewed; Rejected shows the reviewer's note above
  * the form, filled in, to correct and resubmit; Approved refreshes the session so seller access
  * is live, and moves on to the orders queue.
+ *
+ * The bank account number is the one field the API never sends back in full - only its last four
+ * digits. A pending application, which is read-only, shows them behind a mask ("•••• 5566") with a
+ * line saying why, where the field used to sit empty as if nothing had been given. A rejected one,
+ * which is edited and sent again, leaves the field empty to be typed afresh - the mask must never
+ * be submitted as the number - and says which number is on record.
  */
 @Component({
   selector: 'upb-apply-page',
@@ -114,8 +120,13 @@ const SECTIONS: readonly { title: string; fields: readonly { key: Field; label: 
                   @if (field.optional) { ({{ 'common.optional' | transloco }}) }
                 </mat-label>
                 <input matInput [name]="field.key" [required]="!field.optional" [readonly]="readOnly()"
-                  [value]="form()[field.key] ?? ''" (input)="set(field.key, $event)" />
+                  [value]="shown(field.key)" (input)="set(field.key, $event)" />
               </mat-form-field>
+              @if (field.key === 'bankAccountNumber') { @if (bankLast4(); as last4) {
+              <p class="mt-1 text-xs text-ink-muted" data-bank-note>
+                {{ readOnly() ? ('sellerPortal.bankAccountHidden' | transloco) : ('sellerPortal.bankAccountReenter' | transloco: { last4: last4 }) }}
+              </p>
+              } }
               <upb-field-errors [fieldId]="field.key" [errors]="errorsFor(field.key)" />
             </div>
             }
@@ -144,6 +155,9 @@ export class ApplyPage implements OnInit {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
+  /** The last four digits of the account number on record - all of it the API sends back; null before applying. */
+  protected readonly bankLast4 = computed(() => this.access.seller()?.kyc.bankAccountLast4 || null);
+
   /** A pending application waits for review; nothing to edit until a reviewer says so. */
   protected readOnly(): boolean {
     return this.access.seller()?.status === 'Pending';
@@ -157,6 +171,21 @@ export class ApplyPage implements OnInit {
     } else if (seller) {
       this.form.set(fromSeller(seller));
     }
+  }
+
+  /**
+   * What a field shows: what is in the form, except that a pending application's bank account
+   * number - which the API withholds, and the form therefore holds empty - shows its last four
+   * digits behind a mask. Only while read-only, so the mask can never be typed over and submitted.
+   */
+  protected shown(field: Field): string {
+    const last4 = this.bankLast4();
+
+    if (field === 'bankAccountNumber' && this.readOnly() && last4) {
+      return `•••• ${last4}`;
+    }
+
+    return this.form()[field] ?? '';
   }
 
   protected set(field: Field, event: Event): void {

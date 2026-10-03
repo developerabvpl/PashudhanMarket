@@ -66,6 +66,14 @@ describe('CouponsPage', () => {
     expect(element.textContent).toContain('2 sellers joined');
   });
 
+  it('capitalises who pays in the form like its other options, and keeps it lower case mid-sentence in the list', async () => {
+    const { element } = await render(true, { fundedBy: 'Platform' });
+
+    // The closed select shows the chosen option's own label.
+    expect(element.querySelector('mat-select[name="fundedBy"]')?.textContent?.trim()).toBe('Platform pays');
+    expect(element.querySelector('ul')?.textContent).toContain('· platform pays');
+  });
+
   it('says one seller, not one sellers', async () => {
     const { element } = await render(true, { sellersJoined: 1 });
 
