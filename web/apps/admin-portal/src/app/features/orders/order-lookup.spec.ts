@@ -112,6 +112,53 @@ describe('OrderLookup', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
+  it('finds with a Material button in the portal theme, not the storefront-styled one', async () => {
+    const fixture = await render();
+    const find = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
+
+    expect(find.hasAttribute('mat-flat-button')).toBe(true);
+    expect(find.className).not.toContain('bg-brand-600');
+    expect(find.textContent?.trim()).toBe('Find order');
+  });
+
+  it('lists only the units the buyer asked to return while the return awaits a decision', async () => {
+    const part = order.parts[0];
+    answerWith({
+      ...order,
+      status: 'Completed',
+      parts: [
+        {
+          ...part,
+          status: 'Delivered',
+          returnRequest: {
+            status: 'Requested',
+            reason: 'Damaged',
+            comment: null,
+            refundUpiId: null,
+            requestedAtUtc: '2026-03-16T10:00:00Z',
+            decisionNote: null,
+            decidedAtUtc: null,
+          },
+          lines: [
+            { ...part.lines[0], name: 'Gaunyl', quantity: 2, returnQuantity: 1 },
+            { ...part.lines[0], productId: 'p2', name: 'Kande', quantity: 1, returnQuantity: 0 },
+          ],
+        },
+      ],
+    });
+    const fixture = await render();
+
+    submitLookup(fixture.nativeElement, ORDER_ID);
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
+
+    expect(text).toContain('Asked to return: 1 × Gaunyl');
+    expect(text).not.toContain('2 × Gaunyl');
+    expect(text).not.toContain('× Kande');
+    expect(text).not.toContain('Coming back');
+  });
+
   it('shows the order once it loads', async () => {
     answerWith(order);
     const fixture = await render();

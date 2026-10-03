@@ -111,6 +111,28 @@ describe('OrderPaymentCard', () => {
     expect(text).not.toContain('account you paid from');
   });
 
+  it('tells a cash buyer who returned everything what they paid on delivery beside the refund', async () => {
+    // ₹377 of goods and ₹49 delivery were paid at the door; the goods went back, the delivery is kept.
+    const text = await render({
+      ...cancelledPaid,
+      status: 'Completed',
+      paymentMethod: 'CashOnDelivery',
+      paymentStatus: 'CashOnDelivery',
+      subtotal: 0,
+      shippingFee: 49,
+      total: 49,
+      amountPaid: null,
+      refundTotal: 0,
+      cashCollected: 426,
+      parts: [{ ...part('Returned'), returnRequest: { status: 'Approved', refundDue: 377, refundUpiId: 'asha@okicici' } }],
+    } as unknown as OrderDto);
+
+    expect(text).toContain('Total₹49');
+    expect(text).toContain('Paid on delivery₹426');
+    expect(text).toContain('Refund to your UPI ID₹377');
+    expect(text).not.toContain('Paid online');
+  });
+
   it('says where the cash refund goes in Hindi too', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideI18n(translations)] });
 

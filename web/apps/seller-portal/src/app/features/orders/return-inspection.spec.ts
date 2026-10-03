@@ -37,6 +37,8 @@ describe('ReturnInspection', () => {
     await fixture.whenStable();
 
     const element = fixture.nativeElement as HTMLElement;
+    // A block of its own, so the page's spacing between cards applies to it: an inline host sat flush against the next card.
+    expect(element.classList.contains('block')).toBe(true);
     const damaged = element.querySelector('input[name="condition-p1"][value="Damaged"]') as HTMLInputElement;
     damaged.click();
     await fixture.whenStable();

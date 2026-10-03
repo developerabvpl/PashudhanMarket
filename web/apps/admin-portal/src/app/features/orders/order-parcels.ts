@@ -18,14 +18,8 @@ import { ToastService } from '@upbazaar/ui';
 import { InrCurrencyPipe } from '@upbazaar/util';
 import { OrderingPermissions, ShippingPermissions } from '../../core/permissions';
 import { PackParcelData, PackParcelDialog } from './pack-parcel.dialog';
+import { returnedLines, returnedLinesLabelKey, returnedLinesText } from './returned-lines';
 import { ShipmentCharges } from './shipment-charges';
-
-/** A product that is coming, or came, back, and how many of it. */
-interface ReturnedLine {
-  productId: string;
-  name: string;
-  quantity: number;
-}
 
 /**
  * One row per seller's parcel: its status, its courier booking, and "Pack and book" for a part
@@ -72,11 +66,8 @@ interface ReturnedLine {
           </p>
           @if (request.comment) { <p class="mt-1 text-ink-muted">{{ 'returns.buyerSays' | transloco: { comment: request.comment } }}</p> }
           @if (request.decisionNote) { <p class="mt-1 text-ink-muted">{{ request.decisionNote }}</p> }
-          @if (returned(part).length > 0) {
-          <p class="mt-1 text-ink">
-            {{ (part.status === 'Returned' ? 'returns.itemsCameBack' : 'returns.itemsBack') | transloco }}
-            @for (line of returned(part); track line.productId) { <span class="mr-2">{{ line.quantity }} × {{ line.name }}</span> }
-          </p>
+          @if (returnedText(part); as items) {
+          <p class="mt-1 text-ink">{{ returnedLabel(part) | transloco }} {{ items }}</p>
           }
           @if (request.refundDue !== null && request.refundDue !== undefined) {
           <p class="mt-1 text-ink-muted">{{ 'returns.refundDue' | transloco: { amount: (request.refundDue | inr) } }}</p>
@@ -155,6 +146,11 @@ export class OrderParcels {
   protected readonly shipments = signal<readonly ShipmentDto[]>([]);
   protected readonly rejectNote = signal('');
   protected readonly statusKey = partStatusKey;
+
+  /** What goes back to the seller from a part: the units a buyer named, or all of an undelivered parcel. */
+  protected readonly returned = returnedLines;
+  protected readonly returnedText = returnedLinesText;
+  protected readonly returnedLabel = returnedLinesLabelKey;
 
   /** Conditions chosen for what came back, by part and product; Good until changed. */
   private readonly conditions = signal<Readonly<Record<string, string>>>({});
@@ -244,16 +240,6 @@ export class OrderParcels {
       this.toast.success('shipping.booked');
       this.changed.emit();
     }
-  }
-
-  /** What goes back to the seller from a part: returned units, or all of an undelivered parcel. */
-  protected returned(part: OrderPartDto): ReturnedLine[] {
-    const named = part.lines.some((l) => (l.returnQuantity ?? 0) > 0);
-    const buyerReturn = part.returnRequest?.status === 'Approved';
-
-    return part.lines
-      .map((l) => ({ productId: l.productId, name: l.name, quantity: buyerReturn && named ? (l.returnQuantity ?? 0) : l.quantity }))
-      .filter((l) => l.quantity > 0);
   }
 
   protected conditionOf(partId: string, productId: string): string {

@@ -6,3 +6,4 @@ export * from './lib/portal/two-factor-challenge.page';
 export * from './lib/portal/password-pages';
 export * from './lib/portal/account-menu';
 export * from './lib/portal/nav-menus';
+export * from './lib/portal/portal-forbidden.page';

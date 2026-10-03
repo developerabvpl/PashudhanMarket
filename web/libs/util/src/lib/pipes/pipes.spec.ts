@@ -89,6 +89,24 @@ describe('DateIstPipe in the language showing', () => {
     // 18:30 UTC is 00:00 IST the next day.
     expect(formatIst('2026-03-14T18:30:00Z', 'short', 'hi-IN')).toBe('15/03/26');
   });
+
+  it('writes the am/pm marker in Hindi, where Intl leaves it in Latin letters', () => {
+    // 18:38 UTC is 12:08 am IST the next day; 08:38 UTC is 2:08 pm IST.
+    const night = formatIst('2026-10-22T18:38:00Z', 'datetime', 'hi-IN');
+    const afternoon = formatIst('2026-10-22T08:38:00Z', 'datetime', 'hi-IN');
+
+    expect(night).toContain('12:08 पूर्वाह्न');
+    expect(afternoon).toContain('02:08 अपराह्न');
+    expect(night).not.toMatch(/[ap]\.?m/i);
+    expect(afternoon).not.toMatch(/[ap]\.?m/i);
+    expect(formatIst('2026-10-22T08:38:00Z', 'time', 'hi-IN')).toBe('02:08 अपराह्न');
+  });
+
+  it('keeps Western digits in Hindi, and leaves English as it was', () => {
+    expect(formatIst('2026-10-22T18:38:00Z', 'datetime', 'hi-IN')).toMatch(/^23 .+ 2026, 12:08 /);
+    expect(formatIst('2026-10-22T18:38:00Z', 'datetime', 'hi-IN')).not.toMatch(/[०-९]/);
+    expect(formatIst('2026-10-22T18:38:00Z', 'datetime', 'en-IN')).toBe('23 Oct 2026, 12:08 am');
+  });
 });
 
 describe('InrCurrencyPipe auto decimals', () => {

@@ -5,7 +5,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { Api, ReturnRequestSummaryDto, apiV1AdminOrdersReturnsGet } from '@upbazaar/data-access';
+import { Api, ReturnRequestSummaryDto, apiV1AdminOrdersReturnsGet, partReturnStatusKey } from '@upbazaar/data-access';
 import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
 
 /**
@@ -76,7 +76,8 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
             <th mat-header-cell *matHeaderCellDef>{{ 'payments.status' | transloco }}</th>
             <td mat-cell *matCellDef="let row" class="text-sm">
               {{ 'returns.statuses.' + row.status | transloco }}
-              <span class="block text-xs text-ink-muted">{{ 'orders.partStatus.' + row.partStatus | transloco }}</span>
+              <!-- A buyer's return that is back reads "Returned", not the courier's "Could not be delivered". -->
+              <span class="block text-xs text-ink-muted">{{ partStatus(row.partStatus, row.partReturn) | transloco }}</span>
             </td>
           </ng-container>
 
@@ -111,6 +112,9 @@ export class ReturnsPage {
   protected readonly pageSize = signal(25);
   protected readonly status = signal('Requested');
   protected readonly loading = signal(false);
+
+  /** The parcel's status in the words the order's own page uses, by the shared order-status rule. */
+  protected readonly partStatus = partReturnStatusKey;
 
   constructor() {
     void this.load();

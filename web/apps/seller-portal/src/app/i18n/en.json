@@ -106,8 +106,7 @@
   },
   "forbidden": {
     "title": "You do not have access",
-    "body": "This page needs a permission your account does not have.",
-    "required": "Required: {{permissions}}",
+    "body": "Your account is not allowed to open this page. If you need it, ask whoever manages your account to give you access.",
     "back": "Go back"
   },
   "cart": {
@@ -220,7 +219,12 @@
     "inStock": "{{count}} available",
     "noProducts": "No products here yet.",
     "brand": "Brand",
-    "liveLocked": "This listing is live. To change its wording or category, contact a moderator. Price, stock and package can be changed below.",
+    "statusNote": {
+      "Draft": "This listing is a draft: buyers cannot see it yet. Finish it, then submit it for review.",
+      "InReview": "This listing is waiting for a moderator to review it. Its wording and category cannot be changed until then. Price, stock and package can be changed below.",
+      "Active": "This listing is live. To change its wording or category, contact a moderator. Price, stock and package can be changed below.",
+      "Archived": "This listing is archived: buyers cannot see or buy it."
+    },
     "sentBack": "A moderator sent this back:",
     "submitForReview": "Submit for review",
     "submittedForReview": "Sent for review.",
@@ -293,6 +297,8 @@
     "balanceAccruing": "In return window",
     "balanceOnHold": "Return asked",
     "balancePayable": "In next Monday's payout",
+    "carriedForward": "Carried forward {{amount}}",
+    "carriedForwardNote": "Courier charges and adjustments come to {{amount}} more than what is ready to be paid, so nothing is paid out on Monday. The difference is taken from your later earnings; you do not have to pay it yourself.",
     "balancePending": "Being transferred",
     "balancePaid": "Paid so far",
     "youGet": "You get",

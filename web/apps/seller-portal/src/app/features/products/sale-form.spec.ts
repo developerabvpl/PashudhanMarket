@@ -92,6 +92,8 @@ describe('SaleForm', () => {
     const { fixture, invoke, element } = await render(onSale);
 
     expect(element.textContent).toContain('On sale at ₹99');
+    // A block of its own, so the page's spacing between cards applies to it: an inline host sat flush against the Stock card.
+    expect(element.classList.contains('block')).toBe(true);
 
     [...element.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'End sale')!.click();
     await fixture.whenStable();

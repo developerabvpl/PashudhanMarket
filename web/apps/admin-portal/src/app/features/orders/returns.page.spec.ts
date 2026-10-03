@@ -48,4 +48,29 @@ describe('ReturnsPage', () => {
     const link = fixture.nativeElement.querySelector('a') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/orders?orderId=o1');
   });
+
+  it('reads an accepted return that is back with the seller as returned, not as an undelivered parcel', async () => {
+    const back = { ...request, status: 'Approved', partStatus: 'Returned', partReturn: 'Full' };
+    const partly = { ...request, partId: 'part2', status: 'Approved', partStatus: 'Returned', partReturn: 'Partial' };
+    const invoke = vi.fn(async () => ({ items: [back, partly], page: 1, pageSize: 25, totalCount: 2, hasNextPage: false, totalPages: 1 }));
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        provideI18n(translations),
+        { provide: Api, useValue: { invoke } },
+        { provide: CurrentUserStore, useValue: { has: () => true, hasAll: () => true } },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(ReturnsPage);
+    await fixture.whenStable();
+
+    const rows = [...fixture.nativeElement.querySelectorAll('tr[mat-row]')].map((row) => (row as HTMLElement).textContent ?? '');
+
+    expect(rows[0]).toContain('Returned');
+    expect(rows[1]).toContain('Partly returned');
+    expect(fixture.nativeElement.textContent).not.toContain('Could not be delivered');
+  });
 });

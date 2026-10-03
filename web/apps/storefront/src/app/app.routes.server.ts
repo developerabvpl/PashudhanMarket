@@ -18,6 +18,34 @@ import { Api, apiV1CatalogProductsGet } from '@upbazaar/data-access';
  *
  * Anything tied to a signed-in user stays client-only. Prerendering it would ship a signed-out
  * shell that the client immediately replaces, and those pages must not be indexed anyway.
+ *
+ * ## Language
+ *
+ * A prerendered page is drawn once, at build time, for nobody in particular: it is English, with
+ * `<html lang="en">`, whatever the upb.lang cookie of the visitor who later asks for it says. The
+ * client-only shell is the same. (`nx serve` renders every route per request, so there a Hindi
+ * cookie does get Hindi HTML back - which is why a product page looked right in development while
+ * /products did not. The built site has no server to do that.)
+ *
+ * Rendering these routes per request (RenderMode.Server) would put Hindi in the HTML, and was
+ * weighed and turned down: the build is `outputMode: "static"` so that IIS can serve it with no
+ * Node process, and that mode does not allow server-rendered routes at all. It would also give up
+ * what prerendering is for - a page served from disk, the same for every visitor and cacheable -
+ * for the sake of the first paint of returning Hindi visitors. Crawlers send no cookie and read
+ * the English page either way.
+ *
+ * So the pages stay prerendered in English and the browser puts the language right before it
+ * paints anything. A few lines at the top of index.html read the cookie while the page is still
+ * being parsed: they set `<html lang>` at once - on the client-only routes too, long before the
+ * app starts - and, when the page was drawn in another language, keep the app's root hidden until
+ * the app has redrawn it (provideInitialLanguage in libs/ui shows it again once the app is stable,
+ * and a timer in index.html does regardless). A Hindi visitor therefore sees the page appear in
+ * Hindi a moment later than an English visitor sees it in English, instead of English first and
+ * Hindi after. English visitors, and anyone without the cookie, are not held back at all.
+ *
+ * If Hindi pages must ever be in the HTML itself - for a crawler, or a visitor without scripts -
+ * the answer is a prerendered Hindi copy under its own URL (/hi/products), not per-request
+ * rendering: a cookie cannot choose between two static files.
  */
 export const serverRoutes: ServerRoute[] = [
   { path: 'products', renderMode: RenderMode.Prerender },

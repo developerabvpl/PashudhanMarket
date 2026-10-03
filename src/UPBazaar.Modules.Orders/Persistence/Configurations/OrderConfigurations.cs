@@ -36,6 +36,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Ignore(x => x.Discount);
         builder.Ignore(x => x.DeliveryDiscount);
         builder.Ignore(x => x.RefundTotal);
+        builder.Ignore(x => x.CashCollected);
         builder.Ignore(x => x.CanCancel);
 
         builder.ComplexProperty(x => x.DeliveryAddress, address =>

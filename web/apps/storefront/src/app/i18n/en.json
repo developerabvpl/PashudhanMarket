@@ -134,8 +134,7 @@
   },
   "forbidden": {
     "title": "You do not have access",
-    "body": "This page needs a permission your account does not have.",
-    "required": "Required: {{permissions}}",
+    "body": "Your account is not allowed to open this page. If you need it, ask whoever manages your account to give you access.",
     "back": "Go back"
   },
   "footer": {
@@ -299,6 +298,7 @@
     "refund": "Refund",
     "refundNote": "Refunds go back to the account you paid from.",
     "refundOf": "Refund {{amount}}",
+    "notPaid": "Not paid",
     "cancel": "Cancel this order",
     "cancelQuestion": "Cancel the whole order? This cannot be undone.",
     "cancelConfirm": "Yes, cancel it",
@@ -332,8 +332,18 @@
     },
     "shippedWith": "With {{courier}}, AWB {{awb}}",
     "track": "Track parcel",
-    "lineReturning": "{{count}} of {{quantity}} being returned",
-    "lineReturned": "{{count}} of {{quantity}} returned",
+    "lineReturning": {
+      "one": "{{count}} of {{quantity}} being returned",
+      "other": "{{count}} of {{quantity}} being returned"
+    },
+    "lineReturned": {
+      "one": "{{count}} of {{quantity}} returned",
+      "other": "{{count}} of {{quantity}} returned"
+    },
+    "lineAsked": {
+      "one": "{{count}} of {{quantity}} asked to return",
+      "other": "{{count}} of {{quantity}} asked to return"
+    },
     "returnStatus": {
       "Returning": "Being returned",
       "Returned": "Returned",
@@ -370,6 +380,7 @@
       "couponNote": "If what you keep no longer reaches your coupon’s minimum order, its discount comes off the refund."
     },
     "refundToUpi": "Refund to your UPI ID",
+    "paidOnDelivery": "Paid on delivery",
     "refundUpiNote": "You paid cash on delivery, so the refund for what you return is sent to the UPI ID you gave, once the goods are back with the seller."
   },
   "payments": {

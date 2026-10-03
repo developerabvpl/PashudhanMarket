@@ -10,8 +10,9 @@ import { hasDelivery, orderRefund } from './order-refund';
  * The total counts only the goods the buyer keeps, so a cancelled order totals nothing. That is
  * right for the order but alarming for someone who paid online: they need to see what they paid
  * and what is coming back. So once anything paid online is being refunded, the card says both
- * beneath the total. A cash-on-delivery order has no online payment to show, but goods the buyer
- * returned are still refunded - to their UPI id - and the card says that too (see orderRefund).
+ * beneath the total. A cash-on-delivery order has no online payment, but the buyer did pay - at the
+ * door - and goods they returned are refunded to their UPI id: the card says what was paid on
+ * delivery and what comes back in the same two rows (see orderRefund).
  *
  * Delivery reads "Free" only while something is being, or was, delivered. A cancelled order's
  * charge is zero because it was given back; calling that "Free" beside a refund of the ₹49 that
@@ -57,13 +58,14 @@ import { hasDelivery, orderRefund } from './order-refund';
           <dd class="text-ink">{{ o.total | inr: 'symbol' : 'auto' }}</dd>
         </div>
         @if (refund(); as r) {
-        @if (r.to === 'payment') {
+        <!-- What was paid - online, or in cash at the door - then what of it comes back. -->
+        @if (r.paid !== null) {
         <div class="flex justify-between pt-1.5">
-          <dt class="text-ink-muted">{{ 'orders.paidOnline' | transloco }}</dt>
+          <dt class="text-ink-muted">{{ (r.to === 'upi' ? 'orders.paidOnDelivery' : 'orders.paidOnline') | transloco }}</dt>
           <dd class="text-ink">{{ r.paid | inr: 'symbol' : 'auto' }}</dd>
         </div>
         }
-        <div [class]="r.to === 'upi' ? 'flex justify-between pt-1.5' : 'flex justify-between'">
+        <div [class]="r.paid === null ? 'flex justify-between pt-1.5' : 'flex justify-between'">
           <dt class="text-ink-muted">{{ (r.to === 'upi' ? 'orders.refundToUpi' : 'orders.refund') | transloco }}</dt>
           <dd class="font-medium text-success">{{ r.amount | inr: 'symbol' : 'auto' }}</dd>
         </div>

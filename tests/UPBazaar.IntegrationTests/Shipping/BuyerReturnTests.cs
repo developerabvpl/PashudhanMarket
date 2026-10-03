@@ -86,6 +86,21 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         listed.PartStatuses.ShouldBe(["Returned"]);
         listed.PartReturns.ShouldBe(["Full"]);
 
+        // Cash was paid at the door: the buyer is shown what they paid then and what comes back,
+        // on the order and in the list alike - not a total of whatever they still keep.
+        back.CashCollected.ShouldBe(order.Total);
+        back.AmountPaid.ShouldBeNull();
+        listed.CashCollected.ShouldBe(order.Total);
+        listed.CashRefundTotal.ShouldBe(150m);
+        listed.RefundTotal.ShouldBe(0m);
+
+        // Staff's queue is told it is the buyer's return, all of it, so it does not read "Could not be delivered".
+        var decided = await admin.GetFromJsonAsync<PagedList<ReturnRequestSummaryDto>>(
+            new Uri("/api/v1/admin/orders/returns?pageSize=100", UriKind.Relative));
+        var row = decided!.Items.Single(r => r.OrderId == order.Id);
+        row.PartStatus.ShouldBe("Returned");
+        row.PartReturn.ShouldBe("Full");
+
         await ProcessOutboxAsync();
         var refund = (await RefundsForAsync(admin, order.Id)).ShouldHaveSingleItem();
         refund.Method.ShouldBe("Upi");
@@ -135,7 +150,7 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
 
         var queue = await admin.GetFromJsonAsync<PagedList<ReturnRequestSummaryDto>>(
             new Uri("/api/v1/admin/orders/returns?status=Requested&pageSize=100", UriKind.Relative));
-        queue!.Items.ShouldContain(r => r.OrderId == order.Id && r.PaymentMethod == "Online");
+        queue!.Items.ShouldContain(r => r.OrderId == order.Id && r.PaymentMethod == "Online" && r.PartReturn == "None");
 
         (await admin.PostAsJsonAsync(DecisionUri("admin", order), new { approve = true })).StatusCode.ShouldBe(HttpStatusCode.OK);
         await ProcessOutboxAsync();
@@ -219,6 +234,12 @@ public sealed class BuyerReturnTests(ApiFixture fixture)
         var listed = (await buyer.GetFromJsonAsync<PagedList<OrderSummaryDto>>(new Uri("/api/v1/orders", UriKind.Relative)))!.Items.Single(o => o.Id == order.Id);
         listed.PartStatuses.ShouldBe(["Returning"]);
         listed.PartReturns.ShouldBe(["Partial"]);
+        listed.CashCollected.ShouldBeNull();
+        listed.CashRefundTotal.ShouldBe(0m);
+
+        var queued = await admin.GetFromJsonAsync<PagedList<ReturnRequestSummaryDto>>(
+            new Uri("/api/v1/admin/orders/returns?status=Approved&pageSize=100", UriKind.Relative));
+        queued!.Items.Single(r => r.OrderId == order.Id).PartReturn.ShouldBe("Partial");
 
         var pickup = (await ShipmentsAsync(buyer, order)).Single(s => s.Direction == "Return");
         await CourierAsync(pickup.Awb!, "RETURN PICKED UP");

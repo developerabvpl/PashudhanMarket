@@ -118,9 +118,21 @@ export function partReturn(part: ReturnablePart): PartReturn {
  * returned" when the buyer kept some of it.
  */
 export function partStatusKey(part: ReturnablePart): string {
-  if (!isBuyerReturn(part)) {
-    return `orders.partStatus.${part.status}`;
-  }
+  return partReturnStatusKey(part.status, partReturn(part));
+}
 
-  return isPartialReturn(part) ? `orders.returnStatus.Partly${part.status}` : `orders.returnStatus.${part.status}`;
+/**
+ * The same key for a caller that has no lines to look at - a row in a queue of return requests -
+ * only the parcel's status and what the API says is going back of it (None, Partial or Full, as
+ * {@link PartReturn}). Anything else, a response from before the API said, reads as None.
+ */
+export function partReturnStatusKey(status: string, returning: string | null | undefined): string {
+  switch (returning) {
+    case 'Partial':
+      return `orders.returnStatus.Partly${status}`;
+    case 'Full':
+      return `orders.returnStatus.${status}`;
+    default:
+      return `orders.partStatus.${status}`;
+  }
 }

@@ -24,6 +24,7 @@ import {
   toApiProblem,
 } from '@upbazaar/data-access';
 import { FieldErrors, ToastService } from '@upbazaar/ui';
+import { listingStatusNoteKey } from './listing-status-note';
 import { SaleForm } from './sale-form';
 
 interface Details {
@@ -58,12 +59,13 @@ interface Package {
     <section class="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <a class="text-sm" routerLink="/products">← {{ 'sellerPortal.productsTitle' | transloco }}</a>
 
-      <header class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold text-ink">
+      <!-- The chip keeps its place on the right however long the name is: a wrapping row dropped it under a long title. -->
+      <header class="flex items-start justify-between gap-3">
+        <h1 class="min-w-0 text-2xl font-semibold text-ink">
           {{ isNew() ? ('seller.newProduct' | transloco) : product()?.name }}
         </h1>
         @if (product(); as p) {
-        <span class="rounded-full bg-surface-sunken px-3 py-1 text-sm">{{ 'sellerPortal.productStatus.' + p.status | transloco }}</span>
+        <span class="shrink-0 whitespace-nowrap rounded-full bg-surface-sunken px-3 py-1 text-sm">{{ 'sellerPortal.productStatus.' + p.status | transloco }}</span>
         }
       </header>
 
@@ -76,8 +78,8 @@ interface Package {
 
       <form class="upb-card space-y-1 p-5" (submit)="saveDetails($event)">
         <h2 class="font-medium text-ink">{{ 'sellerPortal.sectionDetails' | transloco }}</h2>
-        @if (!editable()) {
-        <p class="text-sm text-ink-muted">{{ 'sellerPortal.liveLocked' | transloco }}</p>
+        @if (statusNote(); as note) {
+        <p class="text-sm text-ink-muted">{{ note | transloco }}</p>
         }
         <div class="grid gap-x-4 sm:grid-cols-2">
           @if (isNew()) {
@@ -206,6 +208,13 @@ export class ProductEditPage {
 
   /** Wording and category are the seller's to change only on a new listing or a draft. */
   protected readonly editable = computed(() => this.isNew() || this.product()?.status === 'Draft');
+
+  /**
+   * Where the listing stands, in a sentence over its details: a draft is not on sale until it is
+   * submitted, one in review waits for a moderator, and only a live one is "live". It used to say
+   * "This listing is live" on anything that could not be edited, a listing still in review included.
+   */
+  protected readonly statusNote = computed(() => listingStatusNoteKey(this.product()?.status));
 
   private readonly api = inject(Api);
   private readonly router = inject(Router);

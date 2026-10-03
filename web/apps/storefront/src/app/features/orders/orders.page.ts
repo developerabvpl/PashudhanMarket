@@ -53,7 +53,12 @@ const PAGE_SIZE = 20;
                 </span>
                 @let money = amount(order);
                 <span class="text-right">
+                  @if (money.unpaid) {
+                  <!-- Cancelled without ever being paid: "Not paid", where a total of ₹0 read as an order that cost nothing. -->
+                  <span class="block text-sm font-medium text-ink-muted">{{ 'orders.notPaid' | transloco }}</span>
+                  } @else {
                   <span class="block font-semibold text-ink">{{ money.amount | inr: 'symbol' : 'auto' }}</span>
+                  }
                   @if (money.refund !== null) {
                   <span class="block text-xs font-medium text-success">{{ 'orders.refundOf' | transloco: { amount: (money.refund | inr: 'symbol' : 'auto') } }}</span>
                   }
@@ -92,7 +97,7 @@ export class OrdersPage {
    * seller, and "Delivered - partly returned" or Returned once the buyer has sent some of it back.
    */
   protected readonly badge = orderBadge;
-  /** What was paid, with the refund beneath, once anything paid online is going back. */
+  /** What was paid - online or at the door - with the refund beneath, once anything is going back. */
   protected readonly amount = orderAmount;
 
   private readonly api = inject(Api);

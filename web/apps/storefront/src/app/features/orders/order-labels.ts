@@ -57,3 +57,33 @@ export function orderBadge(
 export function partStatusBadge(part: ReturnablePart): StatusBadge {
   return { key: partStatusKey(part), tone: TONES[part.status] ?? NEUTRAL };
 }
+
+/**
+ * What a line's return units are doing, as the note under it: asked for while the seller has not
+ * answered, going back once the return is accepted, returned once the parcel is with the seller.
+ * Nothing for a line with no units going back, or when the request was refused.
+ *
+ * It starts at the request, not the acceptance: a buyer who asked to return one jar of three sees
+ * which one they asked about while they wait. Each note has a wording for one unit and for several
+ * (.one / .other), as cart.itemCount has - Hindi says "1 वापस किया गया" but "2 वापस किए गए".
+ */
+export function lineReturnKey(part: ReturnablePart, returnQuantity: number | null | undefined): string | null {
+  if (!returnQuantity) {
+    return null;
+  }
+
+  const one = returnQuantity === 1;
+
+  switch (part.returnRequest?.status) {
+    case 'Requested':
+      return one ? 'orders.lineAsked.one' : 'orders.lineAsked.other';
+    case 'Approved':
+      if (part.status === 'Returned') {
+        return one ? 'orders.lineReturned.one' : 'orders.lineReturned.other';
+      }
+
+      return part.status === 'Returning' ? (one ? 'orders.lineReturning.one' : 'orders.lineReturning.other') : null;
+    default:
+      return null;
+  }
+}

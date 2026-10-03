@@ -42,6 +42,8 @@ describe('ReturnDecision', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('It arrived damaged');
+    // A block of its own, so the page's spacing between cards applies to it: an inline host sat flush against the next card.
+    expect(fixture.nativeElement.classList.contains('block')).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('Two diyas arrived cracked.');
 
     button(fixture, 'Accept return').click();

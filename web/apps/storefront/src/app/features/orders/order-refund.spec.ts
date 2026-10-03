@@ -36,6 +36,16 @@ describe('orderRefund', () => {
     });
   });
 
+  it('says what a cash buyer paid at the door beside what comes back, once the API tells it', () => {
+    const parts = [part('Returned', { status: 'Approved', refundDue: 377 })];
+
+    expect(orderRefund({ paymentMethod: 'CashOnDelivery', amountPaid: null, refundTotal: 0, cashCollected: 426, parts })).toEqual({
+      amount: 377,
+      to: 'upi',
+      paid: 426,
+    });
+  });
+
   it('owes a cash buyer nothing for parcels that were cancelled or never delivered', () => {
     const parts = [part('Cancelled'), part('Returned')];
 

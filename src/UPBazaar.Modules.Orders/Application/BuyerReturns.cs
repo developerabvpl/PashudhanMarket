@@ -223,7 +223,14 @@ internal sealed class ListReturnRequestsQueryHandler(UPBazaarDbContext dbContext
                 x.part.ReturnRequest.RefundDue ?? x.part.Lines.Sum(l =>
                     (l.UnitPrice * l.ReturnRequestedQuantity) - Math.Round((l.Discount - l.RevokedDiscount) * l.ReturnRequestedQuantity / l.Quantity, 2)),
                 x.order.Currency,
-                x.part.ReturnRequest.RequestedAtUtc))
+                x.part.ReturnRequest.RequestedAtUtc,
+                // The same rule as the order list's PartReturns (OrderReader.Summaries).
+                x.part.ReturnRequest.Status != ReturnRequestStatus.Approved
+                || (x.part.Status != OrderPartStatus.Returning && x.part.Status != OrderPartStatus.Returned)
+                    ? "None"
+                    : x.part.Lines.Any(l => l.ReturnRequestedQuantity > 0) && x.part.Lines.Any(l => l.ReturnRequestedQuantity < l.Quantity)
+                        ? "Partial"
+                        : "Full"))
             .ToListAsync(cancellationToken);
 
         return new PagedList<ReturnRequestSummaryDto>(items, query.Page, query.PageSize, total);

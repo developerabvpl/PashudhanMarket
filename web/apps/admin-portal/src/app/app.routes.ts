@@ -1,6 +1,5 @@
 import { Route } from '@angular/router';
 import {
-  ForbiddenPage,
   authGuard,
 } from '@upbazaar/auth';
 
@@ -63,6 +62,6 @@ export const appRoutes: Route[] = [
   },
   { path: 'two-factor', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.TwoFactorChallengePage) },
   { path: 'forgot-password', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.ForgotPasswordPage) },
-  { path: 'forbidden', component: ForbiddenPage },
+  { path: 'forbidden', loadComponent: () => import('@upbazaar/auth/portal').then((m) => m.PortalForbiddenPage) },
   { path: '**', redirectTo: 'staff' },
 ];

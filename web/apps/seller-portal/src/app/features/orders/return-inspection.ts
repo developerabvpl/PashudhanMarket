@@ -17,6 +17,8 @@ type Condition = 'Good' | 'Damaged';
  */
 @Component({
   selector: 'upb-return-inspection',
+  // A custom element is inline by default, and the page's spacing between cards skips inline boxes.
+  host: { class: 'block' },
   imports: [TranslocoPipe, MatButtonModule, MatFormFieldModule, MatInputModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

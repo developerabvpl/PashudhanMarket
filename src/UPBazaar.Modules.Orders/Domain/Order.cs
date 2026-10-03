@@ -128,6 +128,22 @@ public sealed class Order : AggregateRoot, IAuditable
     public decimal RefundTotal => AmountPaid is { } paid ? Math.Max(0m, paid - Total) : 0m;
 
     /// <summary>
+    /// For cash on delivery, what the buyer paid at the door: the amount due on every parcel that
+    /// was delivered. Null for an order paid online, and until something is delivered.
+    ///
+    /// Worked out rather than stored, because it cannot drift: the courier collects a parcel's
+    /// <see cref="OrderPart.AmountDue"/>, and nothing changes that once the parcel is delivered - a
+    /// cancelled part's delivery share never moves onto a delivered one, and a return changes what
+    /// is kept, not what was bought. It stays put when goods go back, which is the point: a buyer
+    /// who returned everything sees what they paid and what is refunded, not a total of the
+    /// delivery charge alone.
+    /// </summary>
+    public decimal? CashCollected =>
+        PaymentMethod == PaymentMethod.CashOnDelivery && _parts.Any(p => p.DeliveredAtUtc is not null)
+            ? _parts.Where(p => p.DeliveredAtUtc is not null).Sum(p => p.AmountDue)
+            : null;
+
+    /// <summary>
     /// A buyer may cancel until something has shipped. After that the goods are on a truck and
     /// it is a return, which is Shipping's to handle.
     /// </summary>

@@ -31,6 +31,12 @@ namespace UPBazaar.Modules.Orders.Contracts.Dtos;
 /// <param name="CouponCode">The coupon the order used, if any.</param>
 /// <param name="AmountPaid">What the buyer paid online, fixed when it was paid; null for cash on delivery or until paid. <paramref name="Total"/> falls as goods drop out, and this does not.</param>
 /// <param name="RefundTotal">What of <paramref name="AmountPaid"/> goes back to the buyer - cancelled parts, parcels that came back, approved returns - whether or not it has been sent yet. Zero unless paid online.</param>
+/// <param name="CashCollected">
+/// For cash on delivery, what the buyer paid at the door: the amount due on each parcel that was
+/// delivered, as it stood then. Null for an order paid online, and until a parcel is delivered.
+/// Like <paramref name="AmountPaid"/> it does not fall when goods are later returned, so the buyer
+/// can be shown what they paid beside what is coming back.
+/// </param>
 public sealed record OrderDto(
     Guid Id,
     string Number,
@@ -54,7 +60,8 @@ public sealed record OrderDto(
     bool CanCancel,
     string? CouponCode,
     decimal? AmountPaid,
-    decimal RefundTotal);
+    decimal RefundTotal,
+    decimal? CashCollected = null);
 
 /// <summary>One seller's share of an order.</summary>
 /// <param name="Id">Public id.</param>
@@ -120,6 +127,13 @@ public sealed record ReturnRequestDto(
 /// <param name="Subtotal">What will be refunded once the goods are back: set on approval, and before then what was paid for the units asked about.</param>
 /// <param name="Currency">ISO currency code.</param>
 /// <param name="RequestedAtUtc">When the buyer asked.</param>
+/// <param name="PartReturn">
+/// What of the parcel the buyer is sending back, as <see cref="OrderSummaryDto.PartReturns"/> has it:
+/// None until the request is accepted (and when it is refused), then Partial when the buyer keeps
+/// some of it or Full. <paramref name="PartStatus"/> is Returned whether one jar or the whole box
+/// came back - and the same for a parcel the courier could not deliver - so a queue needs this to
+/// say "Returned" or "Partly returned" rather than "Could not be delivered".
+/// </param>
 public sealed record ReturnRequestSummaryDto(
     Guid OrderId,
     string OrderNumber,
@@ -132,7 +146,8 @@ public sealed record ReturnRequestSummaryDto(
     string PaymentMethod,
     decimal Subtotal,
     string Currency,
-    DateTime RequestedAtUtc);
+    DateTime RequestedAtUtc,
+    string PartReturn = "None");
 
 /// <summary>
 /// One product in an order, frozen as it was bought. Name, SKU and price are copied in so the
@@ -215,6 +230,12 @@ public sealed record DeliveryAddressDto(
 /// returned it or the courier could not deliver it; with these a list can say "Delivered, partly
 /// returned" exactly as the order's own page does.
 /// </param>
+/// <param name="CashCollected">For cash on delivery, what the buyer paid at the door for the parcels delivered; null for an order paid online, and until a parcel is delivered.</param>
+/// <param name="CashRefundTotal">
+/// For cash on delivery, what goes back to the buyer's UPI id for accepted returns, sent or not;
+/// zero otherwise. <paramref name="RefundTotal"/> stays "of the amount paid online", so a returned
+/// cash order needs this for its row to say what was paid and what comes back.
+/// </param>
 public sealed record OrderSummaryDto(
     Guid Id,
     string Number,
@@ -228,7 +249,9 @@ public sealed record OrderSummaryDto(
     IReadOnlyList<string> PartStatuses,
     decimal? AmountPaid,
     decimal RefundTotal,
-    IReadOnlyList<string> PartReturns);
+    IReadOnlyList<string> PartReturns,
+    decimal? CashCollected = null,
+    decimal CashRefundTotal = 0m);
 
 /// <summary>What Payments needs to take money for an order.</summary>
 /// <param name="OrderId">Public id.</param>

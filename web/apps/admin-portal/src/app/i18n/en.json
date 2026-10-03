@@ -11,7 +11,7 @@
     "products": "Products",
     "orders": "Orders",
     "payments": "Payments",
-    "shipments": "Shipments",
+    "pickupLocations": "Pickup locations",
     "staffUsers": "Staff users",
     "signOut": "Sign out",
     "primary": "Main",
@@ -212,8 +212,7 @@
   },
   "forbidden": {
     "title": "You do not have access",
-    "body": "This page needs a permission your account does not have.",
-    "required": "Required: {{permissions}}",
+    "body": "Your account is not allowed to open this page. If you need it, ask whoever manages your account to give you access.",
     "back": "Go back"
   },
   "orders": {
@@ -336,7 +335,8 @@
     "forwardShipment": "Delivery to the buyer",
     "returnShipment": "Return pickup",
     "noPickups": "No pickup locations yet. Add the platform warehouse first.",
-    "sellerIdOptional": "Seller id (blank for the platform warehouse)",
+    "sellerId": "Seller id",
+    "sellerIdHint": "Leave blank for the platform warehouse.",
     "pickupName": "Name as registered in Shiprocket",
     "sellerIdInvalid": "A seller id looks like 00000000-0000-0000-0000-000000000000.",
     "pickupSaved": "Pickup location saved.",
@@ -554,6 +554,7 @@
     },
     "itemsBack": "Coming back:",
     "itemsCameBack": "Came back:",
+    "itemsAsked": "Asked to return:",
     "refundDue": "Refund due: {{amount}}",
     "recordInspection": "Record inspection",
     "inspectionTitle": "Return inspection"

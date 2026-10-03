@@ -1,7 +1,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { AuthService, CurrentUserStore } from '@upbazaar/auth';
-import { Api, SellerAccessDto, SellerDto, apiV1SellersMeAccessGet, apiV1SellersMeGet, toApiProblem } from '@upbazaar/data-access';
+import {
+  Api,
+  SellerAccessDto,
+  SellerDto,
+  apiV1SellersMeAccessGet,
+  apiV1SellersMeGet,
+  callerShowsErrors,
+  toApiProblem,
+} from '@upbazaar/data-access';
+import { ToastService } from '@upbazaar/ui';
 
 /**
  * The permissions the seller portal's areas depend on, mirroring the API's. Every role - owner,
@@ -32,6 +41,10 @@ export class SellerAccess {
   private readonly api = inject(Api);
   private readonly auth = inject(AuthService);
   private readonly user = inject(CurrentUserStore);
+  private readonly toast = inject(ToastService);
+
+  /** The load under way, shared by everyone who asks while it runs. */
+  private loading: Promise<SellerDto | null> | null = null;
 
   private readonly accessSignal = signal<SellerAccessDto | null>(null);
   private readonly sellerSignal = signal<SellerDto | null>(null);
@@ -51,13 +64,25 @@ export class SellerAccess {
   /** Approved on the server and the session already knows it. */
   readonly canSell = computed(() => this.isApproved() && this.user.has(SellerPermissions.Orders));
 
-  /** Loads the caller's place in a shop, and the owner's shop record; returns the latter. */
-  async load(): Promise<SellerDto | null> {
+  /**
+   * Loads the caller's place in a shop, and the owner's shop record; returns the latter.
+   *
+   * The shell asks as soon as it knows who is signed in, and the application page asks as it
+   * opens - at the same moment, on a first visit. Both get the one load under way rather than each
+   * sending the same two requests. A later call, once that has finished, loads afresh.
+   */
+  load(): Promise<SellerDto | null> {
+    this.loading ??= this.fetch().finally(() => (this.loading = null));
+
+    return this.loading;
+  }
+
+  private async fetch(): Promise<SellerDto | null> {
     try {
-      this.accessSignal.set(await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeAccessGet, {})));
+      this.accessSignal.set(await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeAccessGet, {}, callerShowsErrors())));
       this.sellerSignal.set(
         this.role() === null || this.role() === 'Owner'
-          ? await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeGet, {}))
+          ? await this.orNullIfMissing(() => this.api.invoke(apiV1SellersMeGet, {}, callerShowsErrors()))
           : null
       );
     } finally {
@@ -87,15 +112,27 @@ export class SellerAccess {
     this.loadedSignal.set(false);
   }
 
+  /**
+   * "Not found" here is an answer, not a failure: someone who has not applied has no shop and no
+   * application, and the page shows them the empty form. So these requests are sent with
+   * callerShowsErrors, which keeps the error reporter from raising a red toast for each - and a
+   * real failure, which it would otherwise have reported, is reported here instead.
+   */
   private async orNullIfMissing<T>(fetch: () => Promise<T>): Promise<T | null> {
     try {
       return await fetch();
     } catch (error) {
-      if (toApiProblem(error).status !== 404) {
-        throw error;
+      const problem = toApiProblem(error);
+
+      if (problem.status === 404) {
+        return null;
       }
 
-      return null;
+      if (problem.status !== 401) {
+        this.toast.error(problem.title, problem.code);
+      }
+
+      throw error;
     }
   }
 }

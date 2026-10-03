@@ -14,6 +14,8 @@ import { DateIstPipe } from '@upbazaar/util';
  */
 @Component({
   selector: 'upb-return-decision',
+  // A custom element is inline by default, and the page's spacing between cards skips inline boxes.
+  host: { class: 'block' },
   imports: [TranslocoPipe, DateIstPipe, MatButtonModule, MatFormFieldModule, MatInputModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

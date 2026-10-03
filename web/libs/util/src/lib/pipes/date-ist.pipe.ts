@@ -47,7 +47,37 @@ export function formatIst(
     return '';
   }
 
-  return new Intl.DateTimeFormat(locale, { ...FORMATS[format], timeZone: TIME_ZONE }).format(date);
+  // The digits are asked for outright: hi-IN writes Western ones today, and this keeps it so
+  // whatever a browser's own preference for Hindi is.
+  const formatter = new Intl.DateTimeFormat(locale, { ...FORMATS[format], timeZone: TIME_ZONE, numberingSystem: 'latn' });
+
+  return locale.startsWith('hi') ? withHindiDayPeriod(formatter, date) : formatter.format(date);
+}
+
+/** Before and after noon, as Hindi writes them out. */
+const HINDI_DAY_PERIOD = { am: 'पूर्वाह्न', pm: 'अपराह्न' } as const;
+
+/**
+ * A Hindi date with its am/pm marker in Hindi too.
+ *
+ * The platform's own Hindi data leaves the marker in Latin letters - Intl gives
+ * "23 अक्तू॰ 2026, 12:08 am" for hi-IN - which reads as a stray English word at the end of a Hindi
+ * date. So the marker alone is swapped, part by part, for पूर्वाह्न or अपराह्न; everything else is
+ * exactly what Intl wrote. A marker that is neither "am" nor "pm" - a browser that already writes
+ * it in Hindi - is left as it came.
+ */
+function withHindiDayPeriod(formatter: Intl.DateTimeFormat, date: Date): string {
+  return formatter
+    .formatToParts(date)
+    .map((part) => (part.type === 'dayPeriod' ? hindiDayPeriod(part.value) : part.value))
+    .join('');
+}
+
+function hindiDayPeriod(marker: string): string {
+  // "am", "AM" and "a.m." are all the same marker.
+  const key = marker.toLowerCase().replace(/[^a-z]/g, '');
+
+  return key === 'am' || key === 'pm' ? HINDI_DAY_PERIOD[key] : marker;
 }
 
 /**

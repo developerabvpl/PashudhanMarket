@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   Api,
@@ -33,13 +34,13 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 @Component({
   selector: 'upb-order-lookup',
-  imports: [TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderParcels],
+  imports: [MatButtonModule, TranslocoPipe, InrCurrencyPipe, DateIstPipe, PageState, OrderParcels],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-3xl px-4 py-8">
       <h1 class="text-2xl font-semibold text-ink">{{ 'admin.orderLookup' | transloco }}</h1>
 
-      <form class="mt-4 flex gap-2" (submit)="find($event)">
+      <form class="mt-4 flex items-center gap-2" (submit)="find($event)">
         <label class="flex-1">
           <span class="upb-sr-only">{{ 'admin.orderNumberOrId' | transloco }}</span>
           <input
@@ -51,12 +52,8 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             [value]="orderId() ?? ''"
           />
         </label>
-        <button
-          type="submit"
-          class="rounded-control bg-brand-600 px-4 py-2 font-medium text-white hover:bg-brand-700"
-        >
-          {{ 'admin.find' | transloco }}
-        </button>
+        <!-- A Material button in the portal's theme, like every other action in the admin portal. -->
+        <button mat-flat-button color="primary" type="submit">{{ 'admin.find' | transloco }}</button>
       </form>
 
       @switch (state()) { @case ('loading') {

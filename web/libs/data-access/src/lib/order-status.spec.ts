@@ -1,4 +1,4 @@
-import { isPartialReturn, orderProgress, partReturn, partStatusKey } from './order-status';
+import { isPartialReturn, orderProgress, partReturn, partReturnStatusKey, partStatusKey } from './order-status';
 
 const line = (quantity: number, returnQuantity = 0) => ({ quantity, returnQuantity });
 
@@ -89,5 +89,19 @@ describe('parcel status keys', () => {
     expect(partStatusKey({ status: 'Delivered', lines: [line(3, 1)], returnRequest: { status: 'Requested' } })).toBe(
       'orders.partStatus.Delivered'
     );
+  });
+});
+
+describe('partReturnStatusKey', () => {
+  it('words a queue row by what the API says is going back', () => {
+    expect(partReturnStatusKey('Returned', 'Full')).toBe('orders.returnStatus.Returned');
+    expect(partReturnStatusKey('Returned', 'Partial')).toBe('orders.returnStatus.PartlyReturned');
+    expect(partReturnStatusKey('Returning', 'Full')).toBe('orders.returnStatus.Returning');
+    expect(partReturnStatusKey('Delivered', 'None')).toBe('orders.partStatus.Delivered');
+  });
+
+  it('keeps the courier wording for a parcel that is not a buyer return, and for an API that does not say', () => {
+    expect(partReturnStatusKey('Returned', 'None')).toBe('orders.partStatus.Returned');
+    expect(partReturnStatusKey('Returned', undefined)).toBe('orders.partStatus.Returned');
   });
 });

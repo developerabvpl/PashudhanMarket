@@ -34,10 +34,16 @@ import { DateIstPipe, InrCurrencyPipe } from '@upbazaar/util';
         @for (tile of tiles; track tile.key) {
         <div class="upb-card p-4">
           <dt class="text-xs text-ink-muted">{{ tile.label | transloco }}</dt>
-          <dd class="mt-1 text-lg font-semibold text-ink">{{ b[tile.key] | inr }}</dd>
+          <dd class="mt-1 text-lg font-semibold text-ink">{{ shown(b, tile.key) | inr }}</dd>
+          @if (tile.key === 'payableAmount' && carried(b) < 0) {
+          <dd class="mt-1 text-xs font-medium text-warning">{{ 'settlements.carriedForward' | transloco: { amount: (carried(b) | inr) } }}</dd>
+          }
         </div>
         }
       </dl>
+      @if (carried(b) < 0) {
+      <p class="text-sm text-ink-muted" role="note">{{ 'settlements.carriedForwardNote' | transloco: { amount: (-carried(b) | inr) } }}</p>
+      }
       }
 
       <div class="upb-card">
@@ -116,6 +122,24 @@ export class EarningsPage {
   ];
 
   protected readonly pageSize = 25;
+
+  /**
+   * What is ready for Monday's run, when that comes to less than nothing.
+   *
+   * Courier charges are owed as soon as the courier bills them, while the sale they belong to waits
+   * out the buyer's return window - so early on, what is ready can be charges alone. The run pays
+   * nothing then and sets them against the seller's next earnings (PayoutRunner). The tile used to
+   * show that as a payout of "-770", as if money were to be taken from the seller on Monday; it is a
+   * payout of nothing with the shortfall carried forward, and the page now says so.
+   */
+  protected carried(balance: SellerBalanceDto): number {
+    return Math.min(0, balance.payableAmount);
+  }
+
+  /** A tile's figure: as the API gives it, except that Monday's payout is never less than nothing. */
+  protected shown(balance: SellerBalanceDto, key: keyof SellerBalanceDto & `${string}Amount`): number {
+    return key === 'payableAmount' ? Math.max(0, balance.payableAmount) : balance[key];
+  }
   protected readonly balance = signal<SellerBalanceDto | null>(null);
   protected readonly earnings = signal<readonly EarningDto[]>([]);
   protected readonly payouts = signal<readonly PayoutSummaryDto[]>([]);

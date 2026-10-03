@@ -65,5 +65,34 @@ describe('EarningsPage', () => {
     expect(text).toContain('UPB-260923-ABCDEF');
     expect(text).toContain('In return window');
     expect(text).toContain('(10%)');
+    expect(text).not.toContain('Carried forward');
+  });
+
+  it('shows a next payout of nothing, and the shortfall carried forward, when courier charges outweigh what is ready', async () => {
+    const invoke = vi.fn(async (fn: unknown) => {
+      switch (fn) {
+        case apiV1SellerSettlementsBalanceGet:
+          return { accruingAmount: 2400, onHoldAmount: 0, payableAmount: -770, pendingPayoutAmount: 0, paidAmount: 0, currency: 'INR' };
+        default:
+          return { items: [], page: 1, pageSize: 25, totalCount: 0, hasNextPage: false, totalPages: 0 };
+      }
+    });
+
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideI18n(translations), { provide: Api, useValue: { invoke } }],
+    });
+
+    const fixture = TestBed.createComponent(EarningsPage);
+    await fixture.whenStable();
+
+    const tiles = [...fixture.nativeElement.querySelectorAll('dl > div')].map((tile) => (tile as HTMLElement).textContent ?? '');
+    const payout = tiles.find((tile) => tile.includes("In next Monday's payout")) ?? '';
+
+    // The payout itself is nothing - never a negative amount - and the charges are named beside it.
+    expect(payout).toContain('₹0.00');
+    expect(payout).toContain('Carried forward');
+    expect(payout).toContain('770.00');
+    expect(payout.replace(/Carried forward.*/, '')).not.toContain('770');
+    expect(fixture.nativeElement.querySelector('[role="note"]').textContent).toContain('770.00');
   });
 });

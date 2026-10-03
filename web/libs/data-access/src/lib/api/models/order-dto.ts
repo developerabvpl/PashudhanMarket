@@ -9,6 +9,7 @@ export interface OrderDto {
   canCancel: boolean;
   cancellationReason: (string | null);
   cancelledAtUtc: (string | null);
+  cashCollected?: (number | null);
   couponCode: (string | null);
   currency: string;
   deliveryAddress: DeliveryAddressDto;

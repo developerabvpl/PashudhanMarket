@@ -1,11 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 /**
- * Where permissionGuard sends a signed-in user who lacks the permission. Naming the missing
- * permission turns "access denied" into something an admin can actually act on.
+ * The permission a guard turned the visitor away for, for a developer only. A permission key such
+ * as `settlements.own.read` means nothing to a seller's packer or a member of staff, so the page
+ * says in plain words that the account may not open it and whom to ask; the key shows, small, only
+ * in a development build, where it tells the developer which guard refused.
+ */
+export function missingPermissionForDevelopers(route: ActivatedRoute): string | null {
+  return isDevMode() ? route.snapshot.queryParamMap.get('required') : null;
+}
+
+/**
+ * Where permissionGuard sends a signed-in user who lacks the permission, on the storefront. The
+ * portals show {@link PortalForbiddenPage} instead, which says the same with a Material button.
  */
 @Component({
   selector: 'upb-forbidden-page',
@@ -17,9 +27,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
       <p class="mt-3 text-ink-muted">{{ 'forbidden.body' | transloco }}</p>
 
       @if (required) {
-      <p class="mt-4 font-mono text-sm text-ink-muted">
-        {{ 'forbidden.required' | transloco: { permissions: required } }}
-      </p>
+      <p class="mt-4 font-mono text-xs text-ink-muted">{{ required }}</p>
       }
 
       <button
@@ -35,7 +43,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 export class ForbiddenPage {
   private readonly location = inject(Location);
 
-  protected readonly required = inject(ActivatedRoute).snapshot.queryParamMap.get('required');
+  protected readonly required = missingPermissionForDevelopers(inject(ActivatedRoute));
 
   back(): void {
     this.location.back();

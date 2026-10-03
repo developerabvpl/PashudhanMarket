@@ -7,6 +7,7 @@ export interface ReturnRequestSummaryDto {
   orderId: string;
   orderNumber: string;
   partId: string;
+  partReturn?: string;
   partStatus: string;
   paymentMethod: string;
   reason: string;

@@ -6,6 +6,30 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- The language in the upb.lang cookie, applied before anything is painted: see Language in app.routes.server.ts. Run by index.html.spec.ts. -->
+    <script>
+      (function () {
+        try {
+          var match = document.cookie.match(/(?:^|;\s*)upb\.lang=(en|hi)(?:;|$)/);
+          var root = document.documentElement;
+
+          if (match && match[1] !== root.lang) {
+            root.lang = match[1];
+            root.classList.add('upb-lang-pending');
+            setTimeout(function () {
+              root.classList.remove('upb-lang-pending');
+            }, 4000);
+          }
+        } catch (e) {
+          /* No cookies to read: the page stays as it was served. */
+        }
+      })();
+    </script>
+    <style>
+      html.upb-lang-pending upb-root {
+        visibility: hidden;
+      }
+    </style>
   </head>
   <body>
     <upb-root></upb-root>

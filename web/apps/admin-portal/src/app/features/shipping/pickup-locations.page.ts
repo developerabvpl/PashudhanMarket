@@ -74,8 +74,10 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       <form *hasPermission="shipmentsWrite" class="upb-card mt-6 grid gap-3 p-4 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-start" (submit)="save($event)">
         <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ 'shipping.sellerIdOptional' | transloco }}</mat-label>
+          <!-- A short label with the explanation beneath: the long one was cut off in the narrow field. -->
+          <mat-label>{{ 'shipping.sellerId' | transloco }}</mat-label>
           <input matInput name="sellerId" [value]="sellerId()" (input)="sellerId.set(value($event))" />
+          <mat-hint>{{ 'shipping.sellerIdHint' | transloco }}</mat-hint>
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'shipping.pickupName' | transloco }}</mat-label>

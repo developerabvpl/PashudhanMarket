@@ -40,7 +40,9 @@ export const ADMIN_NAV: readonly PortalNavEntry[] = [
     kind: 'group',
     label: 'nav.shipping',
     links: [
-      { kind: 'link', label: 'nav.shipments', route: '/shipping', permission: ShippingPermissions.ShipmentsRead, exact: true },
+      // Named for the page it opens. It read "Shipments", but there is no list of shipments: each
+      // order's are on the order, and /shipping is where couriers collect from.
+      { kind: 'link', label: 'nav.pickupLocations', route: '/shipping', permission: ShippingPermissions.ShipmentsRead, exact: true },
       { kind: 'link', label: 'nav.cod', route: '/shipping/cod', permission: ShippingPermissions.CodRead },
     ],
   },

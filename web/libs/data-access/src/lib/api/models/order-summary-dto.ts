@@ -3,6 +3,8 @@
 
 export interface OrderSummaryDto {
   amountPaid: (number | null);
+  cashCollected?: (number | null);
+  cashRefundTotal?: number;
   currency: string;
   id: string;
   itemCount: number;

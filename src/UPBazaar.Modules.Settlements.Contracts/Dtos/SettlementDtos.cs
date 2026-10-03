@@ -135,7 +135,7 @@ public sealed record PayoutDto(
 /// <summary>A seller's money at a glance.</summary>
 /// <param name="AccruingAmount">Delivered, waiting for the return window to close or, for cash on delivery, for the courier to pay the cash over.</param>
 /// <param name="OnHoldAmount">Waiting for a return request to be decided.</param>
-/// <param name="PayableAmount">Window closed: goes into the next payout run.</param>
+/// <param name="PayableAmount">Window closed: goes into the next payout run. Less than nothing when courier charges, owed at once, outweigh what is ready: the run then pays nothing and carries them into later payouts, and a client shows a payout of nothing with the shortfall carried forward.</param>
 /// <param name="PendingPayoutAmount">In a payout not yet transferred.</param>
 /// <param name="PaidAmount">Transferred, all time.</param>
 /// <param name="Currency">ISO currency code.</param>

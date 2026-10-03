@@ -76,7 +76,20 @@ internal sealed class OrderReader(UPBazaarDbContext dbContext)
                             : p.Lines.Any(l => l.ReturnRequestedQuantity > 0) && p.Lines.Any(l => l.ReturnRequestedQuantity < l.Quantity)
                                 ? "Partial"
                                 : "Full")
-                    .ToList()));
+                    .ToList(),
+                // Cash paid at the door, by the same rule as Order.CashCollected: what was due on
+                // each delivered parcel - its goods less discount, and its delivery share unless a
+                // coupon lifted it.
+                x.Order.PaymentMethod == PaymentMethod.CashOnDelivery && x.Order.Parts.Any(p => p.DeliveredAtUtc != null)
+                    ? (decimal?)(x.Order.Parts.Where(p => p.DeliveredAtUtc != null).SelectMany(p => p.Lines).Sum(l => (l.UnitPrice * l.Quantity) - l.Discount)
+                        + x.Order.Parts.Where(p => p.DeliveredAtUtc != null && !p.FreeDelivery).Sum(p => p.DeliveryFee))
+                    : null,
+                // And what of it goes back to the buyer's UPI id: the refund fixed on each accepted return.
+                x.Order.PaymentMethod == PaymentMethod.CashOnDelivery
+                    ? x.Order.Parts
+                        .Where(p => p.ReturnRequest != null && p.ReturnRequest.Status == ReturnRequestStatus.Approved)
+                        .Sum(p => p.ReturnRequest!.RefundDue ?? 0m)
+                    : 0m));
 }
 
 /// <summary>Maps orders to the DTOs the API and other modules see.</summary>
@@ -105,7 +118,8 @@ internal static class OrderMappings
         order.CanCancel,
         order.CouponCode,
         order.AmountPaid,
-        order.RefundTotal);
+        order.RefundTotal,
+        order.CashCollected);
 
     private static OrderPartDto ToDto(OrderPart part) => new(
         part.PublicId,

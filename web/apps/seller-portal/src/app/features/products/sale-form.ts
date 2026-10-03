@@ -22,6 +22,8 @@ import { DateIstPipe, InrCurrencyPipe, endOfIstDay, startOfIstDay } from '@upbaz
  */
 @Component({
   selector: 'upb-sale-form',
+  // A custom element is inline by default, and the page's spacing between cards skips inline boxes.
+  host: { class: 'block' },
   imports: [MatButtonModule, MatFormFieldModule, MatInputModule, TranslocoPipe, FieldErrors, DateIstPipe, InrCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

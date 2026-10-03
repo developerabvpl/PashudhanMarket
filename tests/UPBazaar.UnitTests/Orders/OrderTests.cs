@@ -358,6 +358,63 @@ public sealed class OrderTests
         number[11..].ShouldNotContain('I');
     }
 
+    [Fact]
+    public void Cash_collected_is_what_was_due_on_the_delivered_parcels_and_stays_when_they_are_returned()
+    {
+        // Seller A: 250 of goods, seller B: 60; a delivery charge of 49 shared between them.
+        var order = Place(PaymentMethod.CashOnDelivery, deliveryFee: 49m);
+        var a = order.Parts.Single(p => p.SellerId == SellerA);
+        var b = order.Parts.Single(p => p.SellerId == SellerB);
+
+        // Nothing is paid until the courier hands a parcel over.
+        order.CashCollected.ShouldBeNull();
+
+        order.AdvancePart(a.PublicId, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
+        order.CashCollected.ShouldBe(a.AmountDue);
+
+        order.AdvancePart(b.PublicId, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
+        order.CashCollected.ShouldBe(359m);
+
+        // Both parcels go back: the total falls to the delivery charge, which is not refunded,
+        // while what was paid at the door is still what was paid.
+        foreach (var part in order.Parts)
+        {
+            order.RequestReturn(part.PublicId, ReturnReason.NoLongerNeeded, null, "asha@okicici", Now).IsSuccess.ShouldBeTrue();
+            order.ApproveReturn(part.PublicId, null, "seller", Now).IsSuccess.ShouldBeTrue();
+            order.CompleteReturn(part.PublicId, Now).IsSuccess.ShouldBeTrue();
+        }
+
+        order.Total.ShouldBe(49m);
+        order.CashCollected.ShouldBe(359m);
+        order.Parts.Sum(p => p.ReturnRequest!.RefundDue).ShouldBe(310m);
+    }
+
+    [Fact]
+    public void Cash_collected_leaves_out_a_parcel_the_courier_brought_back_and_an_order_paid_online()
+    {
+        var order = Place(PaymentMethod.CashOnDelivery, deliveryFee: 49m);
+        var a = order.Parts.Single(p => p.SellerId == SellerA);
+        var b = order.Parts.Single(p => p.SellerId == SellerB);
+
+        order.AdvancePart(a.PublicId, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
+        order.AdvancePart(b.PublicId, OrderPartStatus.Shipped, Now, Window).IsSuccess.ShouldBeTrue();
+        order.StartReturn(b.PublicId).IsSuccess.ShouldBeTrue();
+        order.CompleteReturn(b.PublicId, Now).IsSuccess.ShouldBeTrue();
+
+        // The undelivered parcel collected nothing at the door.
+        order.CashCollected.ShouldBe(a.AmountDue);
+
+        var online = Place(PaymentMethod.Online, deliveryFee: 49m);
+        online.ConfirmPayment(online.Total, "pay_1", Now).IsSuccess.ShouldBeTrue();
+
+        foreach (var part in online.Parts)
+        {
+            online.AdvancePart(part.PublicId, OrderPartStatus.Delivered, Now, Window).IsSuccess.ShouldBeTrue();
+        }
+
+        online.CashCollected.ShouldBeNull();
+    }
+
     private static Order Place(PaymentMethod method, decimal deliveryFee = 0m) =>
         Order.Place(
             OrderNumber.New(Now),

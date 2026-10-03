@@ -8,7 +8,6 @@ import {
   ShipmentDto,
   apiV1OrdersOrderIdCancelPost,
   apiV1ShippingOrdersOrderIdShipmentsGet,
-  isBuyerReturn,
   partReturn,
   ordersGetMine,
 } from '@upbazaar/data-access';
@@ -16,7 +15,7 @@ import { PageState, ToastService } from '@upbazaar/ui';
 import { DateIstPipe, InrCurrencyPipe, joinParts } from '@upbazaar/util';
 import { SeoService } from '../../core/seo.service';
 import { OrderPayPanel } from '../payments/order-pay-panel';
-import { orderBadge, partStatusBadge } from './order-labels';
+import { lineReturnKey, orderBadge, partStatusBadge } from './order-labels';
 import { OrderPaymentCard } from './order-payment-card';
 import { ReturnPanel } from './return-panel';
 import { ReviewPanel } from './review-panel';
@@ -89,10 +88,9 @@ import { ReviewPanel } from './review-panel';
                 <a class="min-w-0 text-ink hover:text-brand-700" [routerLink]="['/products', line.productId]">
                   {{ line.name }}
                   <span class="text-ink-muted">× {{ line.quantity }}</span>
-                  @if (buyerReturn(part) && line.returnQuantity) {
-                  <span class="block text-xs text-ink-muted">
-                    {{ (part.status === 'Returned' ? 'orders.lineReturned' : 'orders.lineReturning') | transloco: { count: line.returnQuantity, quantity: line.quantity } }}
-                  </span>
+                  <!-- Which units are going back, from the moment the buyer asks: "1 of 3 asked to return". -->
+                  @if (lineReturn(part, line.returnQuantity); as note) {
+                  <span class="block text-xs text-ink-muted">{{ note | transloco: { count: line.returnQuantity, quantity: line.quantity } }}</span>
                   }
                 </a>
                 <span class="shrink-0 font-medium text-ink" [class.line-through]="part.status === 'Cancelled'">
@@ -196,7 +194,7 @@ export class OrderDetailPage {
     return orderBadge(order?.status ?? '', order?.parts.map((p) => p.status), order?.parts.map(partReturn));
   });
   protected readonly partBadge = partStatusBadge;
-  protected readonly buyerReturn = isBuyerReturn;
+  protected readonly lineReturn = lineReturnKey;
 
   /**
    * The address a line at a time, leaving out what the buyer left blank, so an empty district or

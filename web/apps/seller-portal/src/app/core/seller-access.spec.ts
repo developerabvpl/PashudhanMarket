@@ -1,9 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { AuthService, CurrentUserStore } from '@upbazaar/auth';
-import { Api, SellerAccessDto, SellerDto, apiV1SellersMeAccessGet } from '@upbazaar/data-access';
+import { Api, CALLER_SHOWS_ERRORS, SellerAccessDto, SellerDto, apiV1SellersMeAccessGet } from '@upbazaar/data-access';
+import { ToastService } from '@upbazaar/ui';
 import { SellerAccess, SellerPermissions, approvedSellerGuard } from './seller-access';
 
 function seller(status: string): SellerDto {
@@ -105,5 +106,59 @@ describe('approvedSellerGuard', () => {
 
     expect(await run()).toBe(true);
     expect(refresh).not.toHaveBeenCalled();
+  });
+});
+
+describe('SellerAccess.load', () => {
+  function setup(invoke: ReturnType<typeof vi.fn>): { access: SellerAccess; toast: ToastService } {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Api, useValue: { invoke } },
+        { provide: AuthService, useValue: { refresh: vi.fn() } },
+        { provide: CurrentUserStore, useValue: { has: () => false, refresh: vi.fn() } },
+      ],
+    });
+
+    return { access: TestBed.inject(SellerAccess), toast: TestBed.inject(ToastService) };
+  }
+
+  it('treats "not applied yet" as an empty state: the requests are marked quiet and no toast is raised', async () => {
+    const invoke = vi.fn(() => Promise.reject(new HttpErrorResponse({ status: 404, error: { title: 'Seller not found.', code: 'sellers.not_found' } })));
+    const { access, toast } = setup(invoke);
+
+    expect(await access.load()).toBeNull();
+
+    expect(access.loaded()).toBe(true);
+    expect(access.role()).toBeNull();
+    expect(toast.toasts()).toEqual([]);
+    expect(invoke).toHaveBeenCalledTimes(2);
+
+    for (const call of invoke.mock.calls as unknown as [unknown, unknown, HttpContext][]) {
+      expect(call[2].get(CALLER_SHOWS_ERRORS)).toBe(true);
+    }
+  });
+
+  it('sends one pair of requests when the shell and the page ask at the same moment', async () => {
+    const invoke = vi.fn(() => Promise.reject(new HttpErrorResponse({ status: 404 })));
+    const { access } = setup(invoke);
+
+    await Promise.all([access.load(), access.load()]);
+
+    expect(invoke).toHaveBeenCalledTimes(2);
+
+    // Once that load is over, asking again loads afresh: the page wants the application as it stands now.
+    await access.load();
+
+    expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it('still reports a real failure, once, since the error reporter was told to stay quiet', async () => {
+    const invoke = vi.fn(() => Promise.reject(new HttpErrorResponse({ status: 500, error: { title: 'Something went wrong.' } })));
+    const { access, toast } = setup(invoke);
+
+    await expect(access.load()).rejects.toBeInstanceOf(HttpErrorResponse);
+
+    expect(toast.toasts()).toHaveLength(1);
+    expect(toast.toasts()[0].tone).toBe('error');
   });
 });

@@ -5,11 +5,14 @@ export interface OrderRefund {
   readonly amount: number;
   /** `payment`: back through the online payment it came from. `upi`: sent to the buyer's UPI id. */
   readonly to: 'payment' | 'upi';
-  /** What was paid online, shown above a refund of it; null for cash on delivery. */
+  /**
+   * What the buyer paid, shown above the refund of it: online, or in cash at the door for the
+   * parcels delivered. Null only when the API does not say what cash was collected.
+   */
   readonly paid: number | null;
 }
 
-type RefundableOrder = Pick<OrderDto, 'paymentMethod' | 'amountPaid' | 'refundTotal' | 'parts'>;
+type RefundableOrder = Pick<OrderDto, 'paymentMethod' | 'amountPaid' | 'refundTotal' | 'parts'> & Partial<Pick<OrderDto, 'cashCollected'>>;
 
 /**
  * What the Payment card says is going back, or null when nothing is.
@@ -24,7 +27,12 @@ type RefundableOrder = Pick<OrderDto, 'paymentMethod' | 'amountPaid' | 'refundTo
  * requests: the same figure the parcel's own message quotes, and owed from acceptance just as an
  * online refund is. A cancelled or undelivered cash parcel collected nothing, so it adds nothing.
  * It is worked out here rather than folded into the API's `refundTotal`, which stays "of the amount
- * paid online" for the order list, the admin portal and Payments.
+ * paid online" for the admin portal and Payments.
+ *
+ * Beside it goes what the buyer paid at the door (`cashCollected`), as "Paid online" goes beside an
+ * online refund: the order's total has by then fallen to what they keep - the delivery charge
+ * alone, when everything went back - and a refund larger than the only total on the card made no
+ * sense without it.
  */
 export function orderRefund(order: RefundableOrder): OrderRefund | null {
   const paid = order.amountPaid ?? null;
@@ -41,7 +49,7 @@ export function orderRefund(order: RefundableOrder): OrderRefund | null {
     .filter((part) => part.returnRequest?.status === 'Approved')
     .reduce((sum, part) => sum + (part.returnRequest?.refundDue ?? 0), 0);
 
-  return due > 0 ? { amount: due, to: 'upi', paid: null } : null;
+  return due > 0 ? { amount: due, to: 'upi', paid: order.cashCollected ?? null } : null;
 }
 
 /**
