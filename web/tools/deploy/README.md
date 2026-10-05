@@ -1,15 +1,24 @@
-# UP Bazaar storefront — deployment bundle
+# UP Bazaar — deployment bundle
 
-Built from the UP Bazaar workspace by `tools/scripts/package-storefront.mjs`. Self-contained:
-copy the whole folder to the server. Nothing in it runs — it is a folder of static files.
+Built from the UP Bazaar workspace by `tools/scripts/package-site.mjs`. Self-contained: copy the
+whole folder to the server. Nothing in it runs — it is a folder of static files.
+
+One website on one domain serves all three applications:
+
+    /           the storefront
+    /seller/    the seller portal
+    /admin/     the admin portal
+    /api/...    forwarded to the .NET API
 
 ## What is in here
 
-    index.html            the application shell
+    index.html            the storefront's shell
     products/             one prerendered folder per product, plus the listing
     *.js, *.css           the application, filenames content-hashed
     media/                product photographs and other assets
-    web.config            IIS site root: default document, two rewrite rules, cache headers
+    seller/               the seller portal, an application of its own
+    admin/                the admin portal, an application of its own
+    web.config            IIS site root: default document, rewrite rules, cache headers
     nginx.conf.example    the same routing for nginx
     README.md             this file
 
@@ -53,6 +62,26 @@ are rendered in the browser by design. The second rule hands them the shell so t
 bookmark or a shared link works. Requests that look like an asset are excluded, so a file that
 failed to deploy answers an honest 404 instead of HTML that the browser cannot parse.
 
+**The portals.** `/seller/...` and `/admin/...` each get their own portal's page, and the portal's
+router takes it from there. These rules sit above the storefront's so that `/seller/orders` is not
+answered with the storefront. `/seller` and `/admin` without the trailing slash are redirected to
+add it.
+
+### One domain, three sign-ins
+
+A browser gives every page on a domain the same storage. Each application therefore keeps its
+sign-in under its own name, so signing in to the storefront does not sign anyone in to a portal,
+and signing out of one leaves the others alone. That separates the sessions; it does not wall the
+applications off from each other the way separate host names would, so keep a
+Content-Security-Policy in front of the site.
+
+### The visitor's address
+
+The API limits sign-in attempts per address. It takes that address from the `X-Forwarded-For`
+header, which ARR adds by default, and believes it only from a proxy on the same machine. If the
+API runs on another machine, list the proxy's address in the API's `ForwardedHeaders:KnownProxies`
+setting; otherwise every visitor is counted as one.
+
 ## Verifying a deployment
 
     curl -s -o /dev/null -w "%{http_code}\n" https://<host>/products
@@ -75,8 +104,8 @@ stock level at once, without a redeploy. What does lag is the HTML crawlers read
 prices as of the last build, and a newly published product has no prerendered page until the
 next one. Rebuild on a schedule, or after a batch of changes, with the API reachable:
 
-    PRERENDER_API_ORIGIN=http://<api host>:5199 npx nx build storefront
-    node tools/scripts/package-storefront.mjs
+    PRERENDER_API_ORIGIN=http://<api host>:5199 npx nx run-many -t build -p storefront seller-portal admin-portal
+    node tools/scripts/package-site.mjs
 
 If crawler-visible prices ever have to be exact, the two product routes in
 `app.routes.server.ts` go to `RenderMode.Server` and the host needs a Node process again.
@@ -90,6 +119,8 @@ at this folder and a `try_files` fallback is the whole configuration.
 
 | Symptom | Cause |
 | --- | --- |
+| `/seller/` or `/admin/` shows the storefront, or a blank page | The portal rules are missing from `web.config`, or the portal folder was not copied |
+| Signing in to a portal loads, then scripts 404 | The portal's `index.html` has `<base href="/">`: it was copied from the build instead of packaged |
 | Home page loads, every other URL 404s | URL Rewrite is missing, or the site's physical path is a subfolder |
 | Page renders in a browser but `view-source` is empty | The shell is being served instead of the prerendered file — check the prerendered-page rule |
 | Product page paints, then empties or jumps to the listing | `/api` is not reaching the API: ARR missing, proxy not enabled, or the API is down |

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AuthTokensDto } from '@upbazaar/data-access';
-import { AuthTokenStore } from './auth-token-store';
+import { AUTH_SESSION_KEY, AuthTokenStore } from './auth-token-store';
 
 function tokens(overrides: Partial<AuthTokensDto> = {}): AuthTokensDto {
   return {
@@ -92,5 +92,42 @@ describe('AuthTokenStore', () => {
 
     expect(store.isAuthenticated()).toBe(false);
     expect(localStorage.getItem('upbazaar.session')).toBeNull();
+  });
+});
+
+describe('AuthTokenStore with a key of its own', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: AUTH_SESSION_KEY, useValue: 'upbazaar.admin.session' }],
+    });
+  });
+
+  it('does not take up the session another app on the same domain left', () => {
+    // What the storefront would have stored when a buyer signed in.
+    localStorage.setItem(
+      'upbazaar.session',
+      JSON.stringify({
+        accessToken: 'buyer',
+        accessTokenExpiresAtUtc: Date.now() + 900_000,
+        refreshToken: 'buyer-refresh',
+        refreshTokenExpiresAtUtc: Date.now() + 86_400_000,
+      })
+    );
+
+    expect(TestBed.inject(AuthTokenStore).isAuthenticated()).toBe(false);
+  });
+
+  it('keeps its session under its own key and leaves the other alone on sign-out', () => {
+    localStorage.setItem('upbazaar.session', 'the storefront session');
+    const store = TestBed.inject(AuthTokenStore);
+
+    store.set(tokens());
+    expect(localStorage.getItem('upbazaar.admin.session')).not.toBeNull();
+
+    store.clear();
+    expect(localStorage.getItem('upbazaar.admin.session')).toBeNull();
+    expect(localStorage.getItem('upbazaar.session')).toBe('the storefront session');
   });
 });

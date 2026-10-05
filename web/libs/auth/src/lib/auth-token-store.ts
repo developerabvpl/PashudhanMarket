@@ -1,4 +1,4 @@
-import { DOCUMENT, Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { DOCUMENT, Injectable, InjectionToken, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AuthTokensDto } from '@upbazaar/data-access';
 
@@ -10,7 +10,22 @@ interface StoredSession {
   readonly refreshTokenExpiresAtUtc: number;
 }
 
-const STORAGE_KEY = 'upbazaar.session';
+/**
+ * The browser storage key an app keeps its session under.
+ *
+ * Storage belongs to the origin, not to the app. With the storefront and both portals served from
+ * one domain - /, /seller/ and /admin/ - a shared key would make them one session: signing in to
+ * one would sign in all three, signing out of one would sign out the rest, and a buyer opening
+ * /admin/ would arrive already "signed in" as someone staff tools refuse. So each portal names its
+ * own key, and the storefront keeps the default.
+ *
+ * A separate key separates sessions; it does not hide one app's token from a script running in
+ * another on the same origin.
+ */
+export const AUTH_SESSION_KEY = new InjectionToken<string>('AUTH_SESSION_KEY', {
+  providedIn: 'root',
+  factory: () => 'upbazaar.session',
+});
 
 /**
  * Holds the tokens and nothing else.
@@ -33,6 +48,7 @@ export class AuthTokenStore {
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly document = inject(DOCUMENT);
+  private readonly storageKey = inject(AUTH_SESSION_KEY);
   private readonly session = signal<StoredSession | null>(this.restore());
 
   readonly accessToken = computed(() => this.session()?.accessToken ?? null);
@@ -61,7 +77,7 @@ export class AuthTokenStore {
     // single-use and the server treats a used one as stolen - signing every tab out - so each
     // tab must pick up the pair the other one was handed rather than spend its stale copy.
     this.document.defaultView?.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY || event.key === null) {
+      if (event.key === this.storageKey || event.key === null) {
         this.session.set(this.restore());
       }
     });
@@ -98,7 +114,7 @@ export class AuthTokenStore {
   }
 
   private restore(): StoredSession | null {
-    const stored = this.storage()?.getItem(STORAGE_KEY);
+    const stored = this.storage()?.getItem(this.storageKey);
 
     if (!stored) {
       return null;
@@ -123,10 +139,10 @@ export class AuthTokenStore {
     }
 
     if (session === null) {
-      storage.removeItem(STORAGE_KEY);
+      storage.removeItem(this.storageKey);
       return;
     }
 
-    storage.setItem(STORAGE_KEY, JSON.stringify(session));
+    storage.setItem(this.storageKey, JSON.stringify(session));
   }
 }

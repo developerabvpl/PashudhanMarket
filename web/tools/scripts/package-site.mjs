@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 /**
- * Assembles everything the storefront needs on a server into one directory.
+ * Assembles the whole site - storefront and both portals - into one directory for one domain.
  *
- *   npx nx build storefront
- *   node tools/scripts/package-storefront.mjs [--out dist/deploy]
+ *   npx nx run-many -t build -p storefront seller-portal admin-portal
+ *   node tools/scripts/package-site.mjs [--out dist/deploy]
+ *
+ * The storefront is the site root; the seller portal goes in seller/ and the admin portal in
+ * admin/, so one IIS website (or one nginx server block) serves /, /seller/ and /admin/, and
+ * forwards /api to the .NET API.
  *
  * The Angular build alone is not deployable. It leaves out the catalogue stub and the JSON it
  * serves, which live under tools/ and are where all seventy products come from, and it says
@@ -25,6 +29,15 @@ import { fileURLToPath } from 'node:url';
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const BUILD = resolve(workspaceRoot, 'dist/apps/storefront');
+
+/**
+ * The portals and the folder each is served from. The folder name is the URL path: the web
+ * server's rules (tools/deploy/web.config, nginx.conf.example) name the same two.
+ */
+const PORTALS = [
+  { project: 'seller-portal', path: 'seller' },
+  { project: 'admin-portal', path: 'admin' },
+];
 const DEPLOY = resolve(workspaceRoot, 'tools/deploy');
 
 /**
@@ -50,11 +63,41 @@ function parseOut(argv) {
   return resolve(workspaceRoot, flag === -1 ? 'dist/deploy' : argv[flag + 1]);
 }
 
+function portalBuild(portal) {
+  return resolve(workspaceRoot, 'dist/apps', portal.project, 'browser');
+}
+
+/**
+ * Points a portal's page at the folder it is served from.
+ *
+ * A portal is built for a site root, which is how it runs in development and how it would run on
+ * a domain of its own. Everything it loads - scripts, styles, lazy chunks, fonts - it names
+ * relative to the page's base, and the router reads its base from the same tag, so changing this
+ * one tag is all that moving it under /seller/ or /admin/ takes. Done here rather than at build
+ * time so the same build serves either way.
+ */
+function serveFrom(indexFile, basePath) {
+  const html = readFileSync(indexFile, 'utf8');
+  const rebased = html.replace(/<base href="\/"\s*\/?>/, `<base href="${basePath}">`);
+
+  if (rebased === html) {
+    throw new Error(`${indexFile} has no <base href="/"> to point at ${basePath}.`);
+  }
+
+  writeFileSync(indexFile, rebased);
+}
+
 function main() {
   const out = parseOut(process.argv);
 
   if (!existsSync(join(BUILD, 'browser/index.html'))) {
     throw new Error(`No build at ${BUILD}. Run "npx nx build storefront" first.`);
+  }
+
+  for (const portal of PORTALS) {
+    if (!existsSync(join(portalBuild(portal), 'index.html'))) {
+      throw new Error(`No build of ${portal.project}. Run "npx nx build ${portal.project}" first.`);
+    }
   }
 
   if (!existsSync(DEPLOY)) {
@@ -65,6 +108,16 @@ function main() {
   mkdirSync(out, { recursive: true });
 
   cpSync(join(BUILD, 'browser'), out, { recursive: true });
+
+  for (const portal of PORTALS) {
+    if (existsSync(join(out, portal.path))) {
+      // A storefront route of the same name would be shadowed by the portal's folder.
+      throw new Error(`The storefront build already has a "${portal.path}" folder.`);
+    }
+
+    cpSync(portalBuild(portal), join(out, portal.path), { recursive: true });
+    serveFrom(join(out, portal.path, 'index.html'), `/${portal.path}/`);
+  }
 
   for (const file of FILES) {
     const target = join(out, file.to);
@@ -96,9 +149,10 @@ function main() {
     .filter((entry) => entry.isDirectory()).length;
 
   process.stdout.write(
-    `Packaged the storefront into ${out}\n` +
-      `  ${catalog.products.length} products, ${catalog.categories.length} categories, ` +
+    `Packaged the site into ${out}\n` +
+      `  /         storefront: ${catalog.products.length} products, ${catalog.categories.length} categories, ` +
       `${pages} prerendered product pages\n` +
+      PORTALS.map((portal) => `  /${portal.path}/`.padEnd(12) + `${portal.project}\n`).join('') +
       '  IIS: point a site at this folder. Nothing to run, nothing to convert to an application.\n' +
       '  The only module required is URL Rewrite; web.config does the rest.\n' +
       "  Full instructions are in the bundle's README.md\n"

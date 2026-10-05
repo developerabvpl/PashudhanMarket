@@ -75,7 +75,13 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddBackgroundJobs(builder.Configuration);
 
+builder.Services.AddProxyForwardedHeaders(builder.Configuration);
+
 var app = builder.Build();
+
+// Before anything that reads the caller's address: the request log and the sign-in rate limit
+// should both see the visitor, not the reverse proxy that passed the request on.
+app.UseForwardedHeaders();
 
 // Correlation first: everything downstream, including the request log line and the exception
 // handler, reads the id it sets.

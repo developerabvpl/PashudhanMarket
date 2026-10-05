@@ -44,9 +44,15 @@ through it, from `PRERENDER_API_ORIGIN` (default `http://localhost:5199`). With 
 build fails rather than shipping an empty shop.
 
 ```bash
-PRERENDER_API_ORIGIN=http://localhost:5199 npx nx build storefront
-node tools/scripts/package-storefront.mjs      # -> dist/deploy
+PRERENDER_API_ORIGIN=http://localhost:5199 npx nx run-many -t build -p storefront seller-portal admin-portal
+node tools/scripts/package-site.mjs      # -> dist/deploy
 ```
+
+**One folder, one domain.** `dist/deploy` holds the whole site: the storefront at `/`, the seller
+portal at `/seller/` and the admin portal at `/admin/`. The portals are built for a site root, as
+they run in development; the packaging script points each one's page at its folder. Because the
+three share a domain they share browser storage, so each keeps its sign-in under its own key
+(`AUTH_SESSION_KEY`).
 
 **The web server must forward `/api` to the API.** The prerendered pages are static, but the
 browser calls `/api/v1/catalog/...` (and everything else) on its own origin. Without that route

@@ -29,9 +29,9 @@ public sealed class SignInRateLimitOptions
 /// second line: a fixed window per client address across all the sign-in endpoints together,
 /// answered with 429 and a Retry-After once used up.
 ///
-/// The address is the connection's. Behind a reverse proxy it is the proxy's, and every client
-/// would share one window - so a deployment behind one must configure forwarded headers, with the
-/// proxy as a known proxy, before this is switched on.
+/// The address is the connection's, which behind a reverse proxy would be the proxy's, with every
+/// client sharing one window. <see cref="ForwardedHeadersSetup"/> puts the visitor's address back
+/// when a trusted proxy passes it on; a proxy on another machine has to be named there.
 /// </summary>
 public static class RateLimitingSetup
 {
