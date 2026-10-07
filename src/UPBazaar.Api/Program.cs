@@ -83,6 +83,10 @@ var app = builder.Build();
 // should both see the visitor, not the reverse proxy that passed the request on.
 app.UseForwardedHeaders();
 
+// The website's own pages and assets, when it is packaged with the API. Ahead of the request
+// log: one page is thirty files, and a line for each would bury the API calls.
+app.UseSiteFiles();
+
 // Correlation first: everything downstream, including the request log line and the exception
 // handler, reads the id it sets.
 app.UseCorrelationId();
